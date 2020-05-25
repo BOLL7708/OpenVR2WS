@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenVR2WS", "OpenVR2WS\OpenVR2WS.csproj", "{9F3B158B-96C0-4FD3-B20E-42B3C324E6BA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9F3B158B-96C0-4FD3-B20E-42B3C324E6BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F3B158B-96C0-4FD3-B20E-42B3C324E6BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F3B158B-96C0-4FD3-B20E-42B3C324E6BA}.Debug|x64.ActiveCfg = Debug|x64
+		{9F3B158B-96C0-4FD3-B20E-42B3C324E6BA}.Debug|x64.Build.0 = Debug|x64
+		{9F3B158B-96C0-4FD3-B20E-42B3C324E6BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F3B158B-96C0-4FD3-B20E-42B3C324E6BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F3B158B-96C0-4FD3-B20E-42B3C324E6BA}.Release|x64.ActiveCfg = Release|x64
+		{9F3B158B-96C0-4FD3-B20E-42B3C324E6BA}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0ADB9269-68BD-48A1-A629-2F3786BDBE5E}
+	EndGlobalSection
+EndGlobal
