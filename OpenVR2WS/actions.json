@@ -1,0 +1,27 @@
+{
+	"default_bindings": [{
+		"controller_type": "knuckles",
+		"binding_url": "bindings_knuckles.json"
+	}],
+	"actions": [{
+			"name": "/actions/input/in/TriggerL",
+			"requirement": "optional",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/input/in/TriggerR",
+			"requirement": "optional",
+			"type": "boolean"
+		}
+	],
+	"action_sets": [{
+		"name": "/actions/input",
+		"usage": "leftright"
+	}],
+	"localization": [{
+		"language_tag": "en_US",
+		"/actions/input": "Keys",
+		"/actions/input/in/TriggerL": "Left Trigger",
+		"/actions/input/in/TriggerR": "Right Trigger"
+	}]
+}

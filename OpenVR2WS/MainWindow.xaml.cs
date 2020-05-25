@@ -20,9 +20,16 @@ namespace OpenVR2WS
     /// </summary>
     public partial class MainWindow : Window
     {
+        private MainController _controller = new MainController();
+
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void Button_Test_Click(object sender, RoutedEventArgs e)
+        {
+            _controller.Test();
         }
     }
 }
