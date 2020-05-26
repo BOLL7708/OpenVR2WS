@@ -11,6 +11,8 @@ namespace OpenVR2WS
     class SuperServer
     {
         private WebSocketServer _server = new WebSocketServer();
+        private HashSet<WebSocketSession> _sessions = new HashSet<WebSocketSession>(); // Was getting crashes when loading all sessions from _server directly
+        private readonly object _sessionsLock = new object();
 
         #region Actions
         public Action<WebSocketSession, string> MessageReceievedAction { get; set; } = (session, message) =>
@@ -56,6 +58,10 @@ namespace OpenVR2WS
         #region Listeners 
         private void Server_NewSessionConnected(WebSocketSession session)
         {
+            lock(_sessionsLock)
+            {
+                _sessions.Add(session);
+            }
             StatusMessageAction.Invoke($"New session connected: {session.SessionID}");
         }
 
@@ -71,6 +77,10 @@ namespace OpenVR2WS
 
         private void Server_SessionClosed(WebSocketSession session, SuperSocket.SocketBase.CloseReason value)
         {
+            lock (_sessionsLock)
+            {
+                _sessions.Remove(session);
+            }
             StatusMessageAction.Invoke($"Session closed: {session.SessionID}");
         }
         #endregion
@@ -78,17 +88,20 @@ namespace OpenVR2WS
         #region Send
         public void SendMessage(WebSocketSession session, string message)
         {
-            session.Send(message);
+            if (_server.State != SuperSocket.SocketBase.ServerState.Running) return;
+            if(session != null && session.Connected) session.Send(message);
         }
         public void SendMessageToAll(string message)
         {
-            _server.Broadcast(_server.GetAllSessions(), message, (session, success) =>
+            lock (_sessionsLock)
             {
-                if (!success) Debug.WriteLine($"Failed to send message to session: {session.SessionID}");
-            });
+                if (_server.State != SuperSocket.SocketBase.ServerState.Running) return;
+                foreach (var session in _sessions) SendMessage(session, message);
+            }
         }
         public void SendObject(WebSocketSession session, object obj)
         {
+            if (_server.State != SuperSocket.SocketBase.ServerState.Running) return;
             var json = _server.JsonSerialize(obj);
             session.Send(json);
         }

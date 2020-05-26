@@ -99,8 +99,8 @@ namespace OpenVR2WS
         private void RegisterActions()
         {
             _vr.RegisterActionSet("/actions/input");
-            _vr.RegisterDigitalAction($"/actions/input/in/TriggerL", (data, handle) => { Debug.WriteLine($"Action for LEFT TRIGGER: {data.bState} ({data.bChanged})"); });
-            _vr.RegisterDigitalAction($"/actions/input/in/TriggerR", (data, handle) => { Debug.WriteLine($"Action for RIGHT TRIGGER: {data.bState} ({data.bChanged})"); });
+            _vr.RegisterDigitalAction($"/actions/input/in/TriggerL", (data, handle) => { _server.SendMessageToAll($"Action for LEFT TRIGGER: {data.bState} ({data.bChanged})"); });
+            _vr.RegisterDigitalAction($"/actions/input/in/TriggerR", (data, handle) => { _server.SendMessageToAll($"Action for RIGHT TRIGGER: {data.bState} ({data.bChanged})"); });
         }
 
         private void RegisterEvents()
@@ -108,6 +108,10 @@ namespace OpenVR2WS
             _vr.RegisterEvent(EVREventType.VREvent_SceneApplicationChanged, (data) => {
                 var appId = _vr.GetRunningApplicationId();
                 _server.SendMessageToAll($"Application ID is: {appId}"); // Replace this with function call SendResult()
+            });
+            _vr.RegisterEvent(EVREventType.VREvent_EnterStandbyMode, (data) =>
+            {
+                _server.SendMessageToAll("Entered standby.");
             });
         }
         #endregion
