@@ -34,6 +34,7 @@ namespace OpenVR2WS
             {
                 Debug.WriteLine($"Message received: {message}");
                 _server.SendMessage(session, "Thanks!");
+                // TODO: If performing VR tasks, check it is actually initialized
             };
             _server.StatusMessageAction = (status) =>
             {
@@ -53,9 +54,9 @@ namespace OpenVR2WS
             _server.SendMessageToAll("This is a test.");
         }
 
-        private void SendResult(Object result)
+        private void SendResult(Object result) // TODO: This needs some class for actual delivery... to make nice JSON.
         {
-            // _server.SendMessageToAll(); // TODO: Figure out a general return format
+             _server.SendObjectToAll(result);
         }
         #endregion
 
@@ -67,6 +68,7 @@ namespace OpenVR2WS
             if (!_workerThread.IsAlive) _workerThread.Start();
         }
 
+        private volatile bool _shouldShutDown = false;
         private void Worker()
         {
             Thread.CurrentThread.IsBackground = true;
@@ -76,22 +78,36 @@ namespace OpenVR2WS
             {
                 if(_vr.IsInitialized())
                 {
-                    Thread.Sleep(10);
+                    Thread.Sleep(10); // TODO: Connect to headset Hz
                     if (!initComplete)
                     {
+                        // Happens once
                         initComplete = true;
                         _vr.LoadAppManifest("./app.vrmanifest");
                         _vr.LoadActionManifest("./actions.json");
                         RegisterActions();
                         RegisterEvents();
+                        Debug.WriteLine("Initialization complete!");
                     } else
                     {
-                        _vr.UpdateEvents(true);
+                        // Happens every loop
+                        _vr.UpdateEvents(false);
                         _vr.UpdateActionStates();
                     }
                 } else
                 {
+                    // Idle with attempted init
                     Thread.Sleep(1000);
+                    _vr.Init();
+                }
+                if(_shouldShutDown)
+                {
+                    // Shutting down
+                    _shouldShutDown = false;
+                    initComplete = false;
+                    _vr.AcknowledgeShutdown();
+                    _vr.Shutdown();
+                    Debug.WriteLine("Shutting down!");
                 }
             }
         }
@@ -105,13 +121,46 @@ namespace OpenVR2WS
 
         private void RegisterEvents()
         {
-            _vr.RegisterEvent(EVREventType.VREvent_SceneApplicationChanged, (data) => {
-                var appId = _vr.GetRunningApplicationId();
-                _server.SendMessageToAll($"Application ID is: {appId}"); // Replace this with function call SendResult()
+            _vr.RegisterEvent(EVREventType.VREvent_Quit, (data) => {
+                _shouldShutDown = true;
             });
+            _vr.RegisterEvent(EVREventType.VREvent_TrackedDeviceActivated, (data) =>
+            {
+                _server.SendMessageToAll("Update indexes, device properties? controller roles!");
+            });
+            _vr.RegisterEvents(new[] { 
+                EVREventType.VREvent_TrackedDeviceDeactivated, 
+                EVREventType.VREvent_TrackedDeviceRoleChanged 
+            }, (data) => {
+                _server.SendMessageToAll("Update controller roles");
+            });
+            _vr.RegisterEvents(new[] { 
+                EVREventType.VREvent_ChaperoneDataHasChanged, 
+                EVREventType.VREvent_ChaperoneUniverseHasChanged 
+            }, (data) => {
+                _server.SendMessageToAll("Update chaperone");
+            });
+            _vr.RegisterEvents(new[] { 
+                EVREventType.VREvent_TrackedDeviceUpdated, 
+                EVREventType.VREvent_PropertyChanged 
+            }, (data) => {
+                _server.SendMessageToAll("Update device indexes and properties");
+            });
+            _vr.RegisterEvents(new[] {
+                EVREventType.VREvent_SceneApplicationChanged,
+                EVREventType.VREvent_SceneApplicationStateChanged
+            }, (data) => {
+                _server.SendMessageToAll("Update running application");
+            });
+
+
             _vr.RegisterEvent(EVREventType.VREvent_EnterStandbyMode, (data) =>
             {
                 _server.SendMessageToAll("Entered standby.");
+            });
+            _vr.RegisterEvent(EVREventType.VREvent_LeaveStandbyMode, (data) =>
+            {
+                _server.SendMessageToAll("Left standby.");
             });
         }
         #endregion

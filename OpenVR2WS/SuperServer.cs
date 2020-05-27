@@ -89,21 +89,27 @@ namespace OpenVR2WS
         public void SendMessage(WebSocketSession session, string message)
         {
             if (_server.State != SuperSocket.SocketBase.ServerState.Running) return;
-            if(session != null && session.Connected) session.Send(message);
+            if (session != null && session.Connected) session.Send(message);
         }
         public void SendMessageToAll(string message)
         {
             lock (_sessionsLock)
             {
-                if (_server.State != SuperSocket.SocketBase.ServerState.Running) return;
-                foreach (var session in _sessions) SendMessage(session, message);
+                foreach (var session in _sessions)
+                {
+                    SendMessage(session, message);
+                }
             }
         }
         public void SendObject(WebSocketSession session, object obj)
         {
-            if (_server.State != SuperSocket.SocketBase.ServerState.Running) return;
             var json = _server.JsonSerialize(obj);
-            session.Send(json);
+            SendMessage(session, json);
+        }
+        public void SendObjectToAll(object obj)
+        {
+            var json = _server.JsonSerialize(obj);
+            SendMessageToAll(json);
         }
         #endregion
     }
