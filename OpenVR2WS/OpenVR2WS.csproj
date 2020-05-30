@@ -105,7 +105,7 @@
     </ApplicationDefinition>
     <Compile Include="Data.cs" />
     <Compile Include="MainController.cs" />
-    <Compile Include="Output\CumulativeStatistics.cs" />
+    <Compile Include="Output\CumulativeStats.cs" />
     <Compile Include="Output\PlayArea.cs" />
     <Compile Include="Output\Vectors.cs" />
     <Compile Include="SuperServer.cs" />

@@ -20,6 +20,7 @@ namespace OpenVR2WS
         private SuperServer _server = new SuperServer();
         private Properties.Settings _settings = Properties.Settings.Default;
         private EasyOpenVRSingleton _vr = EasyOpenVRSingleton.Instance;
+        private StringEnumConverter _converter = new StringEnumConverter();
 
         // Data storage
 
@@ -40,7 +41,7 @@ namespace OpenVR2WS
         {
             _server.MessageReceievedAction = (session, message) =>
             {
-                Debug.WriteLine($"Message received: {message}");
+                // Debug.WriteLine($"Message received: {message}");
                 var command = new Command();
                 try { command = JsonConvert.DeserializeObject<Command>(message); }
                 catch (Exception e) { Debug.WriteLine($"JSON Parsing Exception: {e.Message}"); }
@@ -54,8 +55,7 @@ namespace OpenVR2WS
                 Debug.WriteLine($"Status received: {status}");
                 if(connected && _vr.IsInitialized())
                 {
-                    SendApplicationId(session);
-                    SendPlayArea(session);
+                    SendDefaults(session);
                 }
             };
             RestartServer(_settings.Port);
@@ -72,21 +72,22 @@ namespace OpenVR2WS
         }
 
         // If session is null, it will send to all registered sessions
-        private void SendResult(string key, Object data, WebSocketSession session = null, uint[] devices = null) // TODO: This needs some class for actual delivery... to make nice JSON.
+        private void SendResult(string key, Object data, WebSocketSession session = null, uint device = uint.MaxValue) // TODO: This needs some class for actual delivery... to make nice JSON.
         {
             var result = new Dictionary<string, dynamic>();
-            if (devices == null) devices = new uint[0];
             result["key"] = key;
             result["data"] = data;
-            result["devices"] = devices;
-            _server.SendObject(session, result);
+            result["device"] = device;
+            var jsonString = JsonConvert.SerializeObject(result, _converter);
+            _server.SendMessage(session, jsonString);
         }
 
         private class Command
         {
             [JsonConverter(typeof(StringEnumConverter))]
             public CommandEnum command = CommandEnum.None;
-            public uint[] devices = new uint[0];
+            public string value = "";
+            public uint device = 0;
         }
 
         enum CommandEnum
@@ -94,7 +95,9 @@ namespace OpenVR2WS
             None,
             CumulativeStats,
             PlayArea,
-            ApplicationId
+            ApplicationInfo,
+            DeviceIds,
+            DeviceProperty
         }
 
         private void HandleCommand(WebSocketSession session, Command command)
@@ -109,8 +112,19 @@ namespace OpenVR2WS
                 case CommandEnum.PlayArea: 
                     SendPlayArea(session);
                     break;
-                case CommandEnum.ApplicationId:
-                    SendApplicationId(session);
+                case CommandEnum.ApplicationInfo:
+                    SendApplicationInfo(session);
+                    break;
+                case CommandEnum.DeviceIds:
+                    SendDeviceIds(session);
+                    break;
+                case CommandEnum.DeviceProperty:
+                    switch(command.value)
+                    {
+                        case "DisplayFrequency":
+                            SendDeviceProperty(command.device, ETrackedDeviceProperty.Prop_DisplayFrequency_Float, session);
+                            break;
+                    }
                     break;
             }
         }
@@ -147,8 +161,7 @@ namespace OpenVR2WS
                         Data.UpdateInputDeviceHandles();
                         RegisterActions();
                         RegisterEvents();
-                        SendApplicationId();
-                        SendPlayArea();
+                        SendDefaults();
                         Debug.WriteLine("Initialization complete!");
                     } else
                     {
@@ -196,32 +209,34 @@ namespace OpenVR2WS
                 Data.UpdateControllerRoles();
                 Data.UpdateInputDeviceHandles();
                 Data.UpdateDeviceIndices(data.trackedDeviceIndex);
-                _server.SendMessageToAll("Update indexes, device properties? controller roles!");
+                SendDeviceIds();
             });
             _vr.RegisterEvents(new[] { 
                 EVREventType.VREvent_TrackedDeviceDeactivated, 
-                EVREventType.VREvent_TrackedDeviceRoleChanged 
+                EVREventType.VREvent_TrackedDeviceRoleChanged,
+                EVREventType.VREvent_TrackedDeviceUpdated
             }, (data) => {
                 Data.UpdateControllerRoles();
-                _server.SendMessageToAll("Update controller roles");
+                Data.UpdateInputDeviceHandles();
+                SendDeviceIds();
             });
             _vr.RegisterEvents(new[] { 
                 EVREventType.VREvent_ChaperoneDataHasChanged, 
                 EVREventType.VREvent_ChaperoneUniverseHasChanged 
             }, (data) => {
-                _server.SendMessageToAll("Update chaperone");
+                SendPlayArea();
             });
-            _vr.RegisterEvents(new[] { 
-                EVREventType.VREvent_TrackedDeviceUpdated,
-                EVREventType.VREvent_PropertyChanged // TODO: Spammy...
-            }, (data) => {
-                _server.SendMessageToAll($"Update device indexes and properties, index: {data.trackedDeviceIndex}");
+            _vr.RegisterEvent(EVREventType.VREvent_PropertyChanged, (data) =>
+            {
+                // Look for things here that is useful, like battery states
+                Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop)); 
+                SendDeviceProperty(data.trackedDeviceIndex, data.data.property.prop);
             });
             _vr.RegisterEvents(new[] {
                 EVREventType.VREvent_SceneApplicationChanged,
                 EVREventType.VREvent_SceneApplicationStateChanged
             }, (data) => {
-                SendApplicationId();
+                SendApplicationInfo();
                 // TODO: Start game timer to keep track of session length
             });
 
@@ -237,10 +252,18 @@ namespace OpenVR2WS
         }
         #endregion
 
-        #region Private Helper Functions
+        #region Send Data
         private volatile string _currentAppId = "";
         private double _currentAppSessionTime = 0.0;
-        private void SendApplicationId(WebSocketSession session=null)
+
+        private void SendDefaults(WebSocketSession session=null)
+        {
+            SendApplicationInfo(session);
+            SendPlayArea(session);
+            SendDeviceIds(session);
+        }
+
+        private void SendApplicationInfo(WebSocketSession session=null)
         {
             var appId = _vr.GetRunningApplicationId();
             if(appId != _currentAppId)
@@ -248,7 +271,10 @@ namespace OpenVR2WS
                 _currentAppId = appId;
                 _currentAppSessionTime = Utils.NowMs();
             }
-            SendResult("ApplicationId", appId, session);
+            var data = new Dictionary<string, dynamic>();
+            data["id"] = appId;
+            data["sessionStartMs"] = _currentAppSessionTime;
+            SendResult("ApplicationInfo", data, session);
         }
 
         private void SendPlayArea(WebSocketSession session=null)
@@ -256,6 +282,49 @@ namespace OpenVR2WS
             var rect = _vr.GetPlayAreaRect();
             var size = _vr.GetPlayAreaSize();
             SendResult("PlayArea", new PlayArea(rect, size));
+        }
+
+        private void SendDeviceIds(WebSocketSession session=null)
+        {
+            var data = new Dictionary<string, dynamic>();
+            data["controllerRoles"] = Data.controllerRoles;
+            data["deviceToIndex"] = Data.deviceToIndex;
+            data["indexToDevice"] = Data.indexToDevice;
+            data["inputDeviceHandles"] = Data.inputDeviceHandles;
+            SendResult("DeviceIds", data);
+        }
+
+        private void SendDeviceProperty(uint deviceIndex, ETrackedDeviceProperty property, WebSocketSession session=null)
+        {
+            var propName = Enum.GetName(typeof(ETrackedDeviceProperty), property);
+            var data = new Dictionary<string, dynamic>();
+            var propArray = propName.Split('_');
+            var dataType = propArray.Last();
+            var arrayType = dataType == "Array" ? propArray[propArray.Length - 2] : ""; // Matri34, Int32, Float, Vector4, 
+            object propertyValue = null;
+            switch(dataType)
+            {
+                case "String": propertyValue = _vr.GetStringTrackedDeviceProperty(deviceIndex, property); break;
+                case "Bool": propertyValue = _vr.GetBooleanTrackedDeviceProperty(deviceIndex, property); break;
+                case "Float": propertyValue = _vr.GetFloatTrackedDeviceProperty(deviceIndex, property); break;
+                case "Matrix34": Debug.WriteLine($"{dataType} property: {propArray[1]}"); break;
+                case "Uint64": propertyValue = _vr.GetLongTrackedDeviceProperty(deviceIndex, property); break;
+                case "Int32": propertyValue = _vr.GetIntegerTrackedDeviceProperty(deviceIndex, property); break;
+                case "Binary": Debug.WriteLine($"{dataType} property: {propArray[1]}"); break;
+                case "Array": Debug.WriteLine($"{dataType}<{arrayType}> property: {propArray[1]}"); break;
+                case "Vector3": Debug.WriteLine($"{dataType} property: {propArray[1]}"); break;
+                default: Debug.WriteLine($"{dataType} unhandled property: {propArray[1]}"); break;
+            }
+            data["name"] = propArray[1];
+            data["value"] = propertyValue;
+            data["type"] = dataType;
+            SendResult("DeviceProperty", data, session, deviceIndex);
+        }
+
+        private void SendDeviceProperties(WebSocketSession session=null)
+        {
+            var data = new Dictionary<string, dynamic>();
+
         }
         #endregion
     }

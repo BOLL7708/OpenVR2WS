@@ -94,17 +94,6 @@ namespace OpenVR2WS
                 if(session != null) SendMessage(session, message);
             }
         }
-        public void SendObject(WebSocketSession session, object obj)
-        {
-            var json = _server.JsonSerialize(obj);
-            if (session == null) SendMessageToAll(json);
-            else SendMessage(session, json);
-        }
-        public void SendObjectToAll(object obj)
-        {
-            var json = _server.JsonSerialize(obj);
-            SendMessageToAll(json);
-        }
         #endregion
     }
 }
