@@ -1,6 +1,7 @@
 ﻿using SuperSocket.WebSocket;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -11,8 +12,7 @@ namespace OpenVR2WS
     class SuperServer
     {
         private WebSocketServer _server = new WebSocketServer();
-        private HashSet<WebSocketSession> _sessions = new HashSet<WebSocketSession>(); // Was getting crashes when loading all sessions from _server directly
-        private readonly object _sessionsLock = new object();
+        private ConcurrentDictionary<string, WebSocketSession> _sessions = new ConcurrentDictionary<string, WebSocketSession>(); // Was getting crashes when loading all sessions from _server directly
 
         #region Actions
         public Action<WebSocketSession, string> MessageReceievedAction { get; set; } = (session, message) =>
@@ -23,9 +23,9 @@ namespace OpenVR2WS
         {
             Debug.WriteLine($"SuperServer.DataReceivedAction not set, missed data: {data.Length}");
         };
-        public Action<string> StatusMessageAction { get; set; } = (message) =>
+        public Action<WebSocketSession, bool, string> StatusMessageAction { get; set; } = (session, connected, message) =>
         {
-            Debug.WriteLine($"SuperServer.StatusMessageAction not set, missed status: {message}");
+            Debug.WriteLine($"SuperServer.StatusMessageAction not set, missed status: {connected} {message}");
         };
         #endregion
 
@@ -58,11 +58,8 @@ namespace OpenVR2WS
         #region Listeners 
         private void Server_NewSessionConnected(WebSocketSession session)
         {
-            lock(_sessionsLock)
-            {
-                _sessions.Add(session);
-            }
-            StatusMessageAction.Invoke($"New session connected: {session.SessionID}");
+            _sessions[session.SessionID] = session;
+            StatusMessageAction.Invoke(session, true, $"New session connected: {session.SessionID}");
         }
 
         private void Server_NewMessageReceived(WebSocketSession session, string value)
@@ -77,11 +74,9 @@ namespace OpenVR2WS
 
         private void Server_SessionClosed(WebSocketSession session, SuperSocket.SocketBase.CloseReason value)
         {
-            lock (_sessionsLock)
-            {
-                _sessions.Remove(session);
-            }
-            StatusMessageAction.Invoke($"Session closed: {session.SessionID}");
+            WebSocketSession oldSession;
+            _sessions.TryRemove(session.SessionID, out oldSession); 
+            StatusMessageAction.Invoke(null, false, $"Session closed: {session.SessionID}");
         }
         #endregion
 
@@ -90,21 +85,20 @@ namespace OpenVR2WS
         {
             if (_server.State != SuperSocket.SocketBase.ServerState.Running) return;
             if (session != null && session.Connected) session.Send(message);
+            else SendMessageToAll(message);
         }
         public void SendMessageToAll(string message)
         {
-            lock (_sessionsLock)
+            foreach (var session in _sessions.Values)
             {
-                foreach (var session in _sessions)
-                {
-                    SendMessage(session, message);
-                }
+                if(session != null) SendMessage(session, message);
             }
         }
         public void SendObject(WebSocketSession session, object obj)
         {
             var json = _server.JsonSerialize(obj);
-            SendMessage(session, json);
+            if (session == null) SendMessageToAll(json);
+            else SendMessage(session, json);
         }
         public void SendObjectToAll(object obj)
         {

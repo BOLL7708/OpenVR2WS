@@ -18,7 +18,7 @@
 var wsUri = "ws://localhost:7708";
 var output;
 var websocket;
-var connected = false;
+var active = false;
 
 function init()
 {
@@ -29,7 +29,8 @@ function init()
 function loop() 
 {
 	console.log("Loop!");
-	if(!connected) {
+	if(!active) {
+		active = true;
 		if(typeof websocket !== 'undefined') websocket.close();
 		websocket = new WebSocket(wsUri);
 		websocket.onopen = function(evt) { onOpen(evt) };
@@ -37,16 +38,16 @@ function loop()
 		websocket.onmessage = function(evt) { onMessage(evt) };
 		websocket.onerror = function(evt) { onError(evt) };
 	}
-	setTimeout(loop, 2000);
+	setTimeout(loop, 5000);
 }
 function onOpen(evt)
 {
-	connected = true;
+	active = true;
 	writeToScreen("CONNECTED", true);
 }
 function onClose(evt)
 {
-	connected = false;
+	active = false;
 	writeToScreen("DISCONNECTED");
 }
 function onMessage(evt)
@@ -66,11 +67,13 @@ function doSend(message)
 
 function writeToScreen(message, clear=false)
 {
-	var pre = document.createElement("p");
-	pre.style.wordWrap = "break-word";
-	pre.innerHTML = message;
+	var now = new Date();
+	var time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+	var p = document.createElement("p");
+	p.style.wordWrap = "break-word";
+	p.innerHTML = time+" "+message;
 	if(clear) output.innerHTML = "";
-	output.appendChild(pre);
+	output.prepend(p);
 }
 
 window.addEventListener("load", init, false);

@@ -4,24 +4,30 @@
 		"binding_url": "bindings_knuckles.json"
 	}],
 	"actions": [{
-			"name": "/actions/input/in/TriggerL",
+			"name": "/actions/default/in/TriggerClick",
 			"requirement": "optional",
 			"type": "boolean"
 		},
 		{
-			"name": "/actions/input/in/TriggerR",
+			"name": "/actions/default/in/TriggerTouch",
 			"requirement": "optional",
 			"type": "boolean"
+		},
+		{
+			"name": "/actions/default/in/TriggerValue",
+			"requirement": "optional",
+			"type": "vector1"
 		}
 	],
 	"action_sets": [{
-		"name": "/actions/input",
-		"usage": "leftright"
+		"name": "/actions/default",
+		"usage": "single"
 	}],
 	"localization": [{
 		"language_tag": "en_US",
-		"/actions/input": "Keys",
-		"/actions/input/in/TriggerL": "Left Trigger",
-		"/actions/input/in/TriggerR": "Right Trigger"
+		"/actions/default": "Default",
+		"/actions/default/in/Trigger": "TriggerClick",
+		"/actions/default/in/TriggerTouch": "Trigger Touch",
+		"/actions/default/in/TriggerValue": "Trigger Value"
 	}]
 }
