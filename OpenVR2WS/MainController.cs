@@ -72,7 +72,7 @@ namespace OpenVR2WS
         }
 
         // If session is null, it will send to all registered sessions
-        private void SendResult(string key, Object data, WebSocketSession session = null, uint device = uint.MaxValue) // TODO: This needs some class for actual delivery... to make nice JSON.
+        private void SendResult(string key, Object data, WebSocketSession session = null, int device = -1) // TODO: This needs some class for actual delivery... to make nice JSON.
         {
             var result = new Dictionary<string, dynamic>();
             result["key"] = key;
@@ -87,7 +87,7 @@ namespace OpenVR2WS
             [JsonConverter(typeof(StringEnumConverter))]
             public CommandEnum command = CommandEnum.None;
             public string value = "";
-            public uint device = 0;
+            public int device = -1;
         }
 
         enum CommandEnum
@@ -102,6 +102,7 @@ namespace OpenVR2WS
 
         private void HandleCommand(WebSocketSession session, Command command)
         {
+            if (!_vr.IsInitialized()) return;
             switch(command.command)
             {
                 case CommandEnum.None: break;
@@ -119,12 +120,14 @@ namespace OpenVR2WS
                     SendDeviceIds(session);
                     break;
                 case CommandEnum.DeviceProperty:
-                    switch(command.value)
+                    var property = ETrackedDeviceProperty.Prop_Invalid;
+                    try{ property = (ETrackedDeviceProperty) Enum.Parse(typeof(ETrackedDeviceProperty), command.value); } 
+                    catch(Exception e) { Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}"); }
+                    if (property != ETrackedDeviceProperty.Prop_Invalid)
                     {
-                        case "DisplayFrequency":
-                            SendDeviceProperty(command.device, ETrackedDeviceProperty.Prop_DisplayFrequency_Float, session);
-                            break;
+                        SendDeviceProperty(command.device, property, session);
                     }
+                    else SendResult("Error", $"Faulty property: {command.value}", session); // TODO: Convert to error func
                     break;
             }
         }
@@ -230,7 +233,11 @@ namespace OpenVR2WS
             {
                 // Look for things here that is useful, like battery states
                 Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop)); 
-                SendDeviceProperty(data.trackedDeviceIndex, data.data.property.prop);
+                SendDeviceProperty((int) data.trackedDeviceIndex, data.data.property.prop);
+            });
+            _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (data) =>
+            {
+                SendResult("Debug", data.data);
             });
             _vr.RegisterEvents(new[] {
                 EVREventType.VREvent_SceneApplicationChanged,
@@ -294,37 +301,33 @@ namespace OpenVR2WS
             SendResult("DeviceIds", data);
         }
 
-        private void SendDeviceProperty(uint deviceIndex, ETrackedDeviceProperty property, WebSocketSession session=null)
+        private void SendDeviceProperty(int deviceIndex, ETrackedDeviceProperty property, WebSocketSession session=null)
         {
+            if (deviceIndex == -1) return;
+            var index = (uint)deviceIndex;
             var propName = Enum.GetName(typeof(ETrackedDeviceProperty), property);
             var data = new Dictionary<string, dynamic>();
             var propArray = propName.Split('_');
             var dataType = propArray.Last();
-            var arrayType = dataType == "Array" ? propArray[propArray.Length - 2] : ""; // Matri34, Int32, Float, Vector4, 
+            var arrayType = dataType == "Array" ? propArray[propArray.Length - 2] : ""; // Matrix34, Int32, Float, Vector4, 
             object propertyValue = null;
             switch(dataType)
             {
-                case "String": propertyValue = _vr.GetStringTrackedDeviceProperty(deviceIndex, property); break;
-                case "Bool": propertyValue = _vr.GetBooleanTrackedDeviceProperty(deviceIndex, property); break;
-                case "Float": propertyValue = _vr.GetFloatTrackedDeviceProperty(deviceIndex, property); break;
+                case "String": propertyValue = _vr.GetStringTrackedDeviceProperty(index, property); break;
+                case "Bool": propertyValue = _vr.GetBooleanTrackedDeviceProperty(index, property); break;
+                case "Float": propertyValue = _vr.GetFloatTrackedDeviceProperty(index, property); break;
                 case "Matrix34": Debug.WriteLine($"{dataType} property: {propArray[1]}"); break;
-                case "Uint64": propertyValue = _vr.GetLongTrackedDeviceProperty(deviceIndex, property); break;
-                case "Int32": propertyValue = _vr.GetIntegerTrackedDeviceProperty(deviceIndex, property); break;
+                case "Uint64": propertyValue = _vr.GetLongTrackedDeviceProperty(index, property); break;
+                case "Int32": propertyValue = _vr.GetIntegerTrackedDeviceProperty(index, property); break;
                 case "Binary": Debug.WriteLine($"{dataType} property: {propArray[1]}"); break;
                 case "Array": Debug.WriteLine($"{dataType}<{arrayType}> property: {propArray[1]}"); break;
                 case "Vector3": Debug.WriteLine($"{dataType} property: {propArray[1]}"); break;
                 default: Debug.WriteLine($"{dataType} unhandled property: {propArray[1]}"); break;
             }
-            data["name"] = propArray[1];
+            data["name"] = propName;
             data["value"] = propertyValue;
             data["type"] = dataType;
             SendResult("DeviceProperty", data, session, deviceIndex);
-        }
-
-        private void SendDeviceProperties(WebSocketSession session=null)
-        {
-            var data = new Dictionary<string, dynamic>();
-
         }
         #endregion
     }
