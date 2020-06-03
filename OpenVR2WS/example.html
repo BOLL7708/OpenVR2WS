@@ -76,12 +76,24 @@ function writeToScreen(message, clear=false)
 	output.prepend(p);
 }
 
+function requestAnalogInputData() {
+	writeToScreen("REQUEST");
+	doSend(JSON.stringify({"key": "InputAnalog", "value":"", "device":-1}));
+}
+
+function requestPoseInputData() {
+	writeToScreen("REQUEST");
+	doSend(JSON.stringify({"key": "InputPose", "value":"", "device":-1}));
+}
+
 window.addEventListener("load", init, false);
 
 		</script>
 	</head>
 	<body>
 		<h2>WebSocket Test</h2>
+		<button onclick="requestAnalogInputData();">Get Analog Data</button>
+		<button onclick="requestPoseInputData();">Get Pose Data</button>
 		<div id="output"></div>
 	</body>
 </html>

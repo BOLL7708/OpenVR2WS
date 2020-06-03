@@ -1,4 +1,5 @@
 ﻿using BOLL7708;
+using OpenVR2WS.Output;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Valve.VR;
+using static BOLL7708.EasyOpenVRSingleton;
 
 namespace OpenVR2WS
 {
@@ -22,7 +24,10 @@ namespace OpenVR2WS
         };
         public static ConcurrentDictionary<uint, ETrackedDeviceClass> indexToDevice = new ConcurrentDictionary<uint, ETrackedDeviceClass>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
         public static ConcurrentDictionary<uint, ETrackedControllerRole> controllerRoles = new ConcurrentDictionary<uint, ETrackedControllerRole>();
-        public static ConcurrentDictionary<EasyOpenVRSingleton.InputSource, ulong> inputDeviceHandles = new ConcurrentDictionary<EasyOpenVRSingleton.InputSource, ulong>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
+        public static ConcurrentDictionary<ulong, InputSource> handleToSource = new ConcurrentDictionary<ulong, InputSource>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
+        public static ConcurrentDictionary<InputSource, ulong> sourceToHandle = new ConcurrentDictionary<InputSource, ulong>();
+        public static ConcurrentDictionary<string, dynamic> analogInputActionData = new ConcurrentDictionary<string, dynamic>();
+        public static ConcurrentDictionary<InputSource, dynamic> poseInputActionData = new ConcurrentDictionary<InputSource, dynamic>();
 
         /*
          * This will update the device class for an index what was just connected.
@@ -89,14 +94,13 @@ namespace OpenVR2WS
 
         public static void UpdateControllerRoles()
         {
-            var vr = EasyOpenVRSingleton.Instance;
-            var leftIndex = vr.GetIndexForControllerRole(ETrackedControllerRole.LeftHand);
+            var leftIndex = Instance.GetIndexForControllerRole(ETrackedControllerRole.LeftHand);
             if (leftIndex != uint.MaxValue)
             {
                 controllerRoles[leftIndex] = ETrackedControllerRole.LeftHand;
                 SaveDeviceClass(ETrackedDeviceClass.Controller, leftIndex);
             }
-            var rightIndex = vr.GetIndexForControllerRole(ETrackedControllerRole.RightHand);
+            var rightIndex = Instance.GetIndexForControllerRole(ETrackedControllerRole.RightHand);
             if (rightIndex != uint.MaxValue)
             {
                 controllerRoles[rightIndex] = ETrackedControllerRole.RightHand;
@@ -106,21 +110,35 @@ namespace OpenVR2WS
 
         public static void UpdateInputDeviceHandles()
         {
-            var vr = EasyOpenVRSingleton.Instance;
-            GetInputHandle(EasyOpenVRSingleton.InputSource.Chest);
-            GetInputHandle(EasyOpenVRSingleton.InputSource.Head);
-            GetInputHandle(EasyOpenVRSingleton.InputSource.LeftFoot);
-            GetInputHandle(EasyOpenVRSingleton.InputSource.LeftHand);
-            GetInputHandle(EasyOpenVRSingleton.InputSource.LeftShoulder);
-            GetInputHandle(EasyOpenVRSingleton.InputSource.RightFoot);
-            GetInputHandle(EasyOpenVRSingleton.InputSource.RightHand);
-            GetInputHandle(EasyOpenVRSingleton.InputSource.RightShoulder);
-            GetInputHandle(EasyOpenVRSingleton.InputSource.Waist);
+            GetInputHandle(InputSource.Chest);
+            GetInputHandle(InputSource.Head);
+            GetInputHandle(InputSource.LeftFoot);
+            GetInputHandle(InputSource.LeftHand);
+            GetInputHandle(InputSource.LeftShoulder);
+            GetInputHandle(InputSource.RightFoot);
+            GetInputHandle(InputSource.RightHand);
+            GetInputHandle(InputSource.RightShoulder);
+            GetInputHandle(InputSource.Waist);
 
-            void GetInputHandle(EasyOpenVRSingleton.InputSource source)
+            void GetInputHandle(InputSource source)
             {
-                inputDeviceHandles[source] = vr.GetInputSourceHandle(source);
+                var handle = Instance.GetInputSourceHandle(source);
+                handleToSource[handle] = source;
+                sourceToHandle[source] = handle;
             }
+        }
+
+        public static void UpdateOrAddAnalogInputActionData(InputAnalogActionData_t data, InputActionInfo info)
+        {
+            var source = handleToSource[info.sourceHandle];
+            var key = $"{source}:{info.pathEnd}";
+            analogInputActionData[key] = new Vec3() { x=data.x, y=data.y, z=data.z };
+        }
+
+        public static void UpdateOrAddPoseInputActionData(InputPoseActionData_t data, InputActionInfo info)
+        {
+            var source = handleToSource[info.sourceHandle];
+            poseInputActionData[source] = data.pose; // TODO: Convert this to something nice looking
         }
     }
 }

@@ -143,6 +143,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="bindings_indexhmd.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="bindings_knuckles.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

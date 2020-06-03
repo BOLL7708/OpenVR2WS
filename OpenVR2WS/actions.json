@@ -1,22 +1,86 @@
 {
-	"default_bindings": [{
-		"controller_type": "knuckles",
-		"binding_url": "bindings_knuckles.json"
-	}],
-	"actions": [{
+	"default_bindings": [
+		{
+			"controller_type": "knuckles",
+			"binding_url": "bindings_knuckles.json"
+		},
+		{
+			"controller_type": "indexhmd",
+			"binding_url": "bindings_indexhmd.json"
+		}
+	],
+	"actions": [
+		{
+			"name": "/actions/default/in/Proximity",
+			"type": "boolean"
+		},
+		{
 			"name": "/actions/default/in/TriggerClick",
-			"requirement": "optional",
 			"type": "boolean"
-		},
-		{
+		},{
 			"name": "/actions/default/in/TriggerTouch",
-			"requirement": "optional",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/TriggerValue",
+			"type": "vector1"
+		},
+		{
+			"name": "/actions/default/in/ButtonAClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonATouch",
 			"type": "boolean"
 		},
 		{
-			"name": "/actions/default/in/TriggerValue",
-			"requirement": "optional",
+			"name": "/actions/default/in/ButtonBClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonBTouch",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/default/in/ButtonSystemClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonSystemTouch",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/default/in/TrackpadTouch",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/TrackpadClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/TrackpadPosition",
+			"type": "vector2"
+		},{
+			"name": "/actions/default/in/TrackpadForce",
 			"type": "vector1"
+		},
+		{
+			"name": "/actions/default/in/JoystickClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/JoystickTouch",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/JoystickPosition",
+			"type": "vector2"
+		},
+		{
+			"name": "/actions/default/in/GripClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/GripTouch",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/GripForce",
+			"type": "vector1"
+		},
+		{
+			"name": "/actions/default/in/Pose",
+			"type": "pose"
 		}
 	],
 	"action_sets": [{
@@ -26,7 +90,7 @@
 	"localization": [{
 		"language_tag": "en_US",
 		"/actions/default": "Default",
-		"/actions/default/in/Trigger": "TriggerClick",
+		"/actions/default/in/TriggerClick": "Trigger Click",
 		"/actions/default/in/TriggerTouch": "Trigger Touch",
 		"/actions/default/in/TriggerValue": "Trigger Value"
 	}]

@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using SuperSocket.WebSocket;
 using OpenVR2WS.Output;
+using static BOLL7708.EasyOpenVRSingleton;
 
 namespace OpenVR2WS
 {
@@ -46,7 +47,7 @@ namespace OpenVR2WS
                 try { command = JsonConvert.DeserializeObject<Command>(message); }
                 catch (Exception e) { Debug.WriteLine($"JSON Parsing Exception: {e.Message}"); }
 
-                if (command.command != CommandEnum.None) HandleCommand(session, command);
+                if (command.key != CommandEnum.None) HandleCommand(session, command);
                 else _server.SendMessage(session, "Invalid command!");
                 // TODO: If performing VR tasks, check it is actually initialized
             };
@@ -72,20 +73,33 @@ namespace OpenVR2WS
         }
 
         // If session is null, it will send to all registered sessions
-        private void SendResult(string key, Object data, WebSocketSession session = null, int device = -1) // TODO: This needs some class for actual delivery... to make nice JSON.
+        private void SendResult(CommandEnum command, Object data=null, WebSocketSession session = null)
+        {
+            var key = Enum.GetName(typeof(CommandEnum), command);
+            SendResult(key, data, session);
+        }
+        private void SendResult(string key, Object data=null, WebSocketSession session = null)
         {
             var result = new Dictionary<string, dynamic>();
             result["key"] = key;
             result["data"] = data;
-            result["device"] = device;
             var jsonString = JsonConvert.SerializeObject(result, _converter);
             _server.SendMessage(session, jsonString);
+        }
+
+        private void SendInput(InputDigitalActionData_t data, InputActionInfo info) {
+            var source = Data.handleToSource[info.sourceHandle];
+            var output = new Dictionary<string, dynamic>() {
+                { "key", $"{source}:{info.pathEnd}" },
+                { "value", data.bState }
+            };
+            SendResult("Input", output);
         }
 
         private class Command
         {
             [JsonConverter(typeof(StringEnumConverter))]
-            public CommandEnum command = CommandEnum.None;
+            public CommandEnum key = CommandEnum.None;
             public string value = "";
             public int device = -1;
         }
@@ -97,18 +111,21 @@ namespace OpenVR2WS
             PlayArea,
             ApplicationInfo,
             DeviceIds,
-            DeviceProperty
+            DeviceProperty,
+            InputAnalog,
+            InputPose
         }
 
         private void HandleCommand(WebSocketSession session, Command command)
         {
+            Debug.WriteLine(Enum.GetName(typeof(CommandEnum), command.key));
             if (!_vr.IsInitialized()) return;
-            switch(command.command)
+            switch(command.key)
             {
                 case CommandEnum.None: break;
                 case CommandEnum.CumulativeStats:
                     var stats = _vr.GetCumulativeStats();
-                    SendResult("CumulativeStats", new CumulativeStats(stats), session);
+                    SendResult(command.key, new CumulativeStats(stats), session);
                     break;
                 case CommandEnum.PlayArea: 
                     SendPlayArea(session);
@@ -125,9 +142,15 @@ namespace OpenVR2WS
                     catch(Exception e) { Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}"); }
                     if (property != ETrackedDeviceProperty.Prop_Invalid)
                     {
-                        SendDeviceProperty(command.device, property, session);
+                        SendDeviceProperty(command.key, command.device, property, session);
                     }
                     else SendResult("Error", $"Faulty property: {command.value}", session); // TODO: Convert to error func
+                    break;
+                case CommandEnum.InputAnalog:
+                    SendResult(command.key, Data.analogInputActionData);
+                    break;
+                case CommandEnum.InputPose:
+                    SendResult(command.key, Data.poseInputActionData);
                     break;
             }
         }
@@ -171,9 +194,9 @@ namespace OpenVR2WS
                         // Happens every loop
                         _vr.UpdateEvents(false);
                         _vr.UpdateActionStates(new[] {
-                            Data.inputDeviceHandles[EasyOpenVRSingleton.InputSource.LeftHand], 
-                            Data.inputDeviceHandles[EasyOpenVRSingleton.InputSource.RightHand], 
-                            Data.inputDeviceHandles[EasyOpenVRSingleton.InputSource.Head]
+                            Data.sourceToHandle[InputSource.LeftHand], 
+                            Data.sourceToHandle[InputSource.RightHand], 
+                            Data.sourceToHandle[InputSource.Head]
                         });
                     }
                 } else
@@ -196,10 +219,56 @@ namespace OpenVR2WS
 
         private void RegisterActions()
         {
-            _vr.RegisterActionSet("/actions/default");
-            _vr.RegisterDigitalAction($"/actions/default/in/TriggerClick", (data, handle) => { _server.SendMessageToAll($"Action for Trigger Click: {data.bState} ({data.bChanged}) {handle}"); });
-            _vr.RegisterDigitalAction($"/actions/default/in/TriggerTouch", (data, handle) => { _server.SendMessageToAll($"Action for Trigger Touch: {data.bState} ({data.bChanged}) {handle}"); });
-            // _vr.RegisterAnalogAction($"/actions/default/in/TriggerValue", (data, handle) => { _server.SendMessageToAll($"Action for Trigger Value: {data.x}, {data.y}, {data.z}"); });
+            Action<InputDigitalActionData_t, InputActionInfo> SendDigitalInput = (data, info) =>
+            {
+                SendInput(data, info);
+            };
+            Action<InputAnalogActionData_t, InputActionInfo> StoreAnalogInput = (data, info) =>
+            {
+                Data.UpdateOrAddAnalogInputActionData(data, info);
+            };
+            Action<InputPoseActionData_t, InputActionInfo> StorePoseInput = (data, info) =>
+            {
+                Data.UpdateOrAddPoseInputActionData(data, info);
+            };
+
+            _vr.RegisterActionSet(GetAction());
+            _vr.RegisterDigitalAction(GetAction("Proximity"), SendDigitalInput);
+            
+            _vr.RegisterDigitalAction(GetAction("TriggerClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("TriggerTouch"), SendDigitalInput);
+            _vr.RegisterAnalogAction(GetAction("TriggerValue"), StoreAnalogInput);
+            
+            _vr.RegisterDigitalAction(GetAction("ButtonSystemClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonSystemTouch"), SendDigitalInput);
+
+            _vr.RegisterDigitalAction(GetAction("ButtonBClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonBTouch"), SendDigitalInput);
+
+            _vr.RegisterDigitalAction(GetAction("ButtonAClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonATouch"), SendDigitalInput);
+
+            _vr.RegisterDigitalAction(GetAction("TrackpadClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("TrackpadTouch"), SendDigitalInput);
+            _vr.RegisterAnalogAction(GetAction("TrackpadPosition"), StoreAnalogInput);
+            _vr.RegisterAnalogAction(GetAction("TrackpadForce"), StoreAnalogInput);
+
+            _vr.RegisterDigitalAction(GetAction("JoystickClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("JoystickTouch"), SendDigitalInput);
+            _vr.RegisterAnalogAction(GetAction("JoystickPosition"), StoreAnalogInput);
+
+            _vr.RegisterDigitalAction(GetAction("GripClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("GripTouch"), SendDigitalInput);
+            _vr.RegisterAnalogAction(GetAction("GripForce"), StoreAnalogInput);
+
+            _vr.RegisterPoseAction(GetAction("Pose"), StorePoseInput);
+        }
+
+        private string GetAction(string action="")
+        {
+            var actionSet = "/actions/default";
+            if (action.Length > 0) return $"{actionSet}/in/{action}";
+            else return actionSet;
         }
 
         private void RegisterEvents()
@@ -233,7 +302,7 @@ namespace OpenVR2WS
             {
                 // Look for things here that is useful, like battery states
                 Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop)); 
-                SendDeviceProperty((int) data.trackedDeviceIndex, data.data.property.prop);
+                SendDeviceProperty(CommandEnum.DeviceProperty, (int) data.trackedDeviceIndex, data.data.property.prop);
             });
             _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (data) =>
             {
@@ -281,14 +350,14 @@ namespace OpenVR2WS
             var data = new Dictionary<string, dynamic>();
             data["id"] = appId;
             data["sessionStartMs"] = _currentAppSessionTime;
-            SendResult("ApplicationInfo", data, session);
+            SendResult(CommandEnum.ApplicationInfo, data, session);
         }
 
         private void SendPlayArea(WebSocketSession session=null)
         {
             var rect = _vr.GetPlayAreaRect();
             var size = _vr.GetPlayAreaSize();
-            SendResult("PlayArea", new PlayArea(rect, size));
+            SendResult(CommandEnum.PlayArea, new PlayArea(rect, size));
         }
 
         private void SendDeviceIds(WebSocketSession session=null)
@@ -297,15 +366,17 @@ namespace OpenVR2WS
             data["controllerRoles"] = Data.controllerRoles;
             data["deviceToIndex"] = Data.deviceToIndex;
             data["indexToDevice"] = Data.indexToDevice;
-            data["inputDeviceHandles"] = Data.inputDeviceHandles;
-            SendResult("DeviceIds", data);
+            // data["handleToSource"] = Data.handleToSource;
+            // data["sourceToHandle"] = Data.sourceToHandle;
+            SendResult(CommandEnum.DeviceIds, data);
         }
 
-        private void SendDeviceProperty(int deviceIndex, ETrackedDeviceProperty property, WebSocketSession session=null)
+        private void SendDeviceProperty(CommandEnum key, int deviceIndex, ETrackedDeviceProperty property, WebSocketSession session=null)
         {
-            if (deviceIndex == -1) return;
+            if (deviceIndex == -1) return; // Should not really happen, but means the device does not exist
             var index = (uint)deviceIndex;
             var propName = Enum.GetName(typeof(ETrackedDeviceProperty), property);
+            if (propName == null) return; // This happens for vendor reserved properties (10000-10999)
             var data = new Dictionary<string, dynamic>();
             var propArray = propName.Split('_');
             var dataType = propArray.Last();
@@ -324,10 +395,11 @@ namespace OpenVR2WS
                 case "Vector3": Debug.WriteLine($"{dataType} property: {propArray[1]}"); break;
                 default: Debug.WriteLine($"{dataType} unhandled property: {propArray[1]}"); break;
             }
+            data["device"] = deviceIndex;
             data["name"] = propName;
             data["value"] = propertyValue;
             data["type"] = dataType;
-            SendResult("DeviceProperty", data, session, deviceIndex);
+            SendResult(key, data, session);
         }
         #endregion
     }

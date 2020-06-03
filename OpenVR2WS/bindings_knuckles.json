@@ -1,9 +1,19 @@
 {
    "action_manifest_version" : 0,
    "alias_info" : {},
-   "app_key" : "boll7708.openvr2ws",
+   "app_key" : "system.generated.openvr2ws.exe",
    "bindings" : {
       "/actions/default" : {
+         "poses" : [
+            {
+               "output" : "/actions/default/in/pose",
+               "path" : "/user/hand/left/pose/raw"
+            },
+            {
+               "output" : "/actions/default/in/pose",
+               "path" : "/user/hand/right/pose/raw"
+            }
+         ],
          "sources" : [
             {
                "inputs" : {
@@ -34,6 +44,210 @@
                },
                "mode" : "trigger",
                "path" : "/user/hand/right/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "position" : {
+                     "output" : "/actions/default/in/trackpadposition"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/trackpadtouch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "position" : {
+                     "output" : "/actions/default/in/trackpadposition"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/trackpadtouch"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/joystickclick"
+                  },
+                  "position" : {
+                     "output" : "/actions/default/in/joystickposition"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/joysticktouch"
+                  }
+               },
+               "mode" : "joystick",
+               "path" : "/user/hand/left/input/thumbstick"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/joystickclick"
+                  },
+                  "position" : {
+                     "output" : "/actions/default/in/joystickposition"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/joysticktouch"
+                  }
+               },
+               "mode" : "joystick",
+               "path" : "/user/hand/right/input/thumbstick"
+            },
+            {
+               "inputs" : {
+                  "force" : {
+                     "output" : "/actions/default/in/trackpadforce"
+                  }
+               },
+               "mode" : "force_sensor",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "force" : {
+                     "output" : "/actions/default/in/trackpadforce"
+                  }
+               },
+               "mode" : "force_sensor",
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/trackpadclick"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/trackpadclick"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/buttonbclick"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/buttonbtouch"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/b"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/buttonbclick"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/buttonbtouch"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/b"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/buttonaclick"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/buttonatouch"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/a"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/buttonaclick"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/buttonatouch"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/a"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/gripclick"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/griptouch"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/grip"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/gripclick"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/griptouch"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/grip"
+            },
+            {
+               "inputs" : {
+                  "force" : {
+                     "output" : "/actions/default/in/gripforce"
+                  }
+               },
+               "mode" : "force_sensor",
+               "path" : "/user/hand/left/input/grip"
+            },
+            {
+               "inputs" : {
+                  "force" : {
+                     "output" : "/actions/default/in/gripforce"
+                  }
+               },
+               "mode" : "force_sensor",
+               "path" : "/user/hand/right/input/grip"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/buttonsystemclick"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/buttonsystemtouch"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/system"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/buttonsystemclick"
+                  },
+                  "touch" : {
+                     "output" : "/actions/default/in/buttonsystemtouch"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/system"
             }
          ]
       }
