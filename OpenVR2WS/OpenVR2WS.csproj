@@ -107,6 +107,7 @@
     <Compile Include="MainController.cs" />
     <Compile Include="Output\CumulativeStats.cs" />
     <Compile Include="Output\PlayArea.cs" />
+    <Compile Include="Output\Pose.cs" />
     <Compile Include="Output\Vectors.cs" />
     <Compile Include="SuperServer.cs" />
     <Compile Include="Utils.cs" />

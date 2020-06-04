@@ -29,7 +29,7 @@ namespace OpenVR2WS
 
         private void Button_Test_Click(object sender, RoutedEventArgs e)
         {
-            _controller.Test();
+            
         }
     }
 }

@@ -42,14 +42,12 @@ namespace OpenVR2WS
         {
             _server.MessageReceievedAction = (session, message) =>
             {
-                // Debug.WriteLine($"Message received: {message}");
                 var command = new Command();
                 try { command = JsonConvert.DeserializeObject<Command>(message); }
                 catch (Exception e) { Debug.WriteLine($"JSON Parsing Exception: {e.Message}"); }
 
                 if (command.key != CommandEnum.None) HandleCommand(session, command);
                 else _server.SendMessage(session, "Invalid command!");
-                // TODO: If performing VR tasks, check it is actually initialized
             };
             _server.StatusMessageAction = (session, connected, status) =>
             {
@@ -67,11 +65,6 @@ namespace OpenVR2WS
             _server.Start(port);
         }
 
-        public void Test()
-        {
-            _server.SendMessageToAll("This is a test.");
-        }
-
         // If session is null, it will send to all registered sessions
         private void SendResult(CommandEnum command, Object data=null, WebSocketSession session = null)
         {
@@ -83,14 +76,22 @@ namespace OpenVR2WS
             var result = new Dictionary<string, dynamic>();
             result["key"] = key;
             result["data"] = data;
-            var jsonString = JsonConvert.SerializeObject(result, _converter);
-            _server.SendMessage(session, jsonString);
+            var jsonString = "";
+            try
+            {
+                jsonString = JsonConvert.SerializeObject(result, _converter);
+            }
+            catch (Exception e) {
+                Debug.WriteLine($"Could not serialize output for {key}: {e.Message}");
+            }
+            if(jsonString != "") _server.SendMessage(session, jsonString);
         }
 
         private void SendInput(InputDigitalActionData_t data, InputActionInfo info) {
             var source = Data.handleToSource[info.sourceHandle];
             var output = new Dictionary<string, dynamic>() {
-                { "key", $"{source}:{info.pathEnd}" },
+                { "source", source },
+                { "input", info.pathEnd },
                 { "value", data.bState }
             };
             SendResult("Input", output);
@@ -118,7 +119,6 @@ namespace OpenVR2WS
 
         private void HandleCommand(WebSocketSession session, Command command)
         {
-            Debug.WriteLine(Enum.GetName(typeof(CommandEnum), command.key));
             if (!_vr.IsInitialized()) return;
             switch(command.key)
             {
@@ -147,10 +147,10 @@ namespace OpenVR2WS
                     else SendResult("Error", $"Faulty property: {command.value}", session); // TODO: Convert to error func
                     break;
                 case CommandEnum.InputAnalog:
-                    SendResult(command.key, Data.analogInputActionData);
+                    SendResult(command.key, Data.analogInputActionData, session);
                     break;
                 case CommandEnum.InputPose:
-                    SendResult(command.key, Data.poseInputActionData);
+                    SendResult(command.key, Data.poseInputActionData, session);
                     break;
             }
         }
@@ -183,7 +183,6 @@ namespace OpenVR2WS
                         _vr.LoadAppManifest("./app.vrmanifest");
                         _vr.LoadActionManifest("./actions.json");
                         Data.UpdateDeviceIndices();
-                        Data.UpdateControllerRoles();
                         Data.UpdateInputDeviceHandles();
                         RegisterActions();
                         RegisterEvents();
@@ -278,7 +277,6 @@ namespace OpenVR2WS
             });
             _vr.RegisterEvent(EVREventType.VREvent_TrackedDeviceActivated, (data) =>
             {
-                Data.UpdateControllerRoles();
                 Data.UpdateInputDeviceHandles();
                 Data.UpdateDeviceIndices(data.trackedDeviceIndex);
                 SendDeviceIds();
@@ -288,7 +286,6 @@ namespace OpenVR2WS
                 EVREventType.VREvent_TrackedDeviceRoleChanged,
                 EVREventType.VREvent_TrackedDeviceUpdated
             }, (data) => {
-                Data.UpdateControllerRoles();
                 Data.UpdateInputDeviceHandles();
                 SendDeviceIds();
             });
@@ -363,11 +360,10 @@ namespace OpenVR2WS
         private void SendDeviceIds(WebSocketSession session=null)
         {
             var data = new Dictionary<string, dynamic>();
-            data["controllerRoles"] = Data.controllerRoles;
             data["deviceToIndex"] = Data.deviceToIndex;
             data["indexToDevice"] = Data.indexToDevice;
-            // data["handleToSource"] = Data.handleToSource;
-            // data["sourceToHandle"] = Data.sourceToHandle;
+            data["sourceToIndex"] = Data.sourceToIndex;
+            data["indexToSource"] = Data.indexToSource;
             SendResult(CommandEnum.DeviceIds, data);
         }
 

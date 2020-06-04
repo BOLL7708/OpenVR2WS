@@ -15,19 +15,19 @@ namespace OpenVR2WS
     {
         public static ConcurrentDictionary<dynamic, dynamic> deviceToIndex = new ConcurrentDictionary<dynamic, dynamic>()
         {
-            [ETrackedDeviceClass.HMD] = null,
-            [ETrackedDeviceClass.Controller] = new List<uint>(),
-            [ETrackedControllerRole.LeftHand] = null,
-            [ETrackedControllerRole.RightHand] = null,
-            [ETrackedDeviceClass.TrackingReference] = new List<uint>(),
-            [ETrackedDeviceClass.GenericTracker] = new List<uint>()
+            [ETrackedDeviceClass.HMD] = new HashSet<uint>(),
+            [ETrackedDeviceClass.Controller] = new HashSet<uint>(),
+            [ETrackedDeviceClass.TrackingReference] = new HashSet<uint>(),
+            [ETrackedDeviceClass.GenericTracker] = new HashSet<uint>(),
+            [ETrackedDeviceClass.DisplayRedirect] = new HashSet<uint>()
         };
         public static ConcurrentDictionary<uint, ETrackedDeviceClass> indexToDevice = new ConcurrentDictionary<uint, ETrackedDeviceClass>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
-        public static ConcurrentDictionary<uint, ETrackedControllerRole> controllerRoles = new ConcurrentDictionary<uint, ETrackedControllerRole>();
         public static ConcurrentDictionary<ulong, InputSource> handleToSource = new ConcurrentDictionary<ulong, InputSource>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
         public static ConcurrentDictionary<InputSource, ulong> sourceToHandle = new ConcurrentDictionary<InputSource, ulong>();
-        public static ConcurrentDictionary<string, dynamic> analogInputActionData = new ConcurrentDictionary<string, dynamic>();
-        public static ConcurrentDictionary<InputSource, dynamic> poseInputActionData = new ConcurrentDictionary<InputSource, dynamic>();
+        public static ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData = new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>>();
+        public static ConcurrentDictionary<InputSource, Pose> poseInputActionData = new ConcurrentDictionary<InputSource, Pose>();
+        public static ConcurrentDictionary<InputSource, int> sourceToIndex = new ConcurrentDictionary<InputSource, int>();
+        public static ConcurrentDictionary<int, InputSource> indexToSource = new ConcurrentDictionary<int, InputSource>();
 
         /*
          * This will update the device class for an index what was just connected.
@@ -61,63 +61,26 @@ namespace OpenVR2WS
         private static void SaveDeviceClass(ETrackedDeviceClass deviceClass, uint index)
         {
             indexToDevice[index] = deviceClass;
-            switch (deviceClass)
-            {
-                case ETrackedDeviceClass.HMD:
-                    deviceToIndex[ETrackedDeviceClass.HMD] = index;
-                    break;
-                case ETrackedDeviceClass.Controller:
-                    if (!deviceToIndex[ETrackedDeviceClass.Controller].Contains(index))
-                    {
-                        deviceToIndex[ETrackedDeviceClass.Controller].Add(index);
-                    }
-                    if (controllerRoles.ContainsKey(index))
-                    {
-                        var role = controllerRoles[index];
-                        deviceToIndex[role] = index;
-                    }
-                    break;
-                case ETrackedDeviceClass.TrackingReference:
-                    if (!deviceToIndex[ETrackedDeviceClass.TrackingReference].Contains(index))
-                    {
-                        deviceToIndex[ETrackedDeviceClass.TrackingReference].Add(index);
-                    }
-                    break;
-                case ETrackedDeviceClass.GenericTracker:
-                    if (!deviceToIndex[ETrackedDeviceClass.GenericTracker].Contains(index))
-                    {
-                        deviceToIndex[ETrackedDeviceClass.GenericTracker].Add(index);
-                    }
-                    break;
-            }
-        }
-
-        public static void UpdateControllerRoles()
-        {
-            var leftIndex = Instance.GetIndexForControllerRole(ETrackedControllerRole.LeftHand);
-            if (leftIndex != uint.MaxValue)
-            {
-                controllerRoles[leftIndex] = ETrackedControllerRole.LeftHand;
-                SaveDeviceClass(ETrackedDeviceClass.Controller, leftIndex);
-            }
-            var rightIndex = Instance.GetIndexForControllerRole(ETrackedControllerRole.RightHand);
-            if (rightIndex != uint.MaxValue)
-            {
-                controllerRoles[rightIndex] = ETrackedControllerRole.RightHand;
-                SaveDeviceClass(ETrackedDeviceClass.Controller, rightIndex);
-            }
+            deviceToIndex[deviceClass].Add(index);
+            indexToDevice[index] = deviceClass;
         }
 
         public static void UpdateInputDeviceHandles()
         {
-            GetInputHandle(InputSource.Chest);
-            GetInputHandle(InputSource.Head);
-            GetInputHandle(InputSource.LeftFoot);
             GetInputHandle(InputSource.LeftHand);
+            GetInputHandle(InputSource.LeftElbow);
             GetInputHandle(InputSource.LeftShoulder);
-            GetInputHandle(InputSource.RightFoot);
+            GetInputHandle(InputSource.LeftKnee);
+            GetInputHandle(InputSource.LeftFoot);
+
             GetInputHandle(InputSource.RightHand);
+            GetInputHandle(InputSource.RightElbow);
             GetInputHandle(InputSource.RightShoulder);
+            GetInputHandle(InputSource.RightKnee);
+            GetInputHandle(InputSource.RightFoot);
+
+            GetInputHandle(InputSource.Head);
+            GetInputHandle(InputSource.Chest);
             GetInputHandle(InputSource.Waist);
 
             void GetInputHandle(InputSource source)
@@ -125,20 +88,23 @@ namespace OpenVR2WS
                 var handle = Instance.GetInputSourceHandle(source);
                 handleToSource[handle] = source;
                 sourceToHandle[source] = handle;
+                var info = Instance.GetOriginTrackedDeviceInfo(handle);
+                indexToSource[(int) info.trackedDeviceIndex] = source;
+                sourceToIndex[source] = (int) info.trackedDeviceIndex;
             }
         }
 
         public static void UpdateOrAddAnalogInputActionData(InputAnalogActionData_t data, InputActionInfo info)
         {
             var source = handleToSource[info.sourceHandle];
-            var key = $"{source}:{info.pathEnd}";
-            analogInputActionData[key] = new Vec3() { x=data.x, y=data.y, z=data.z };
+            if (!analogInputActionData.ContainsKey(source)) analogInputActionData[source] = new ConcurrentDictionary<string, Vec3>();
+            analogInputActionData[source][info.pathEnd] = new Vec3() { x=data.x, y=data.y, z=data.z };
         }
 
         public static void UpdateOrAddPoseInputActionData(InputPoseActionData_t data, InputActionInfo info)
         {
             var source = handleToSource[info.sourceHandle];
-            poseInputActionData[source] = data.pose; // TODO: Convert this to something nice looking
+            poseInputActionData[source] = new Pose(data.pose);
         }
     }
 }

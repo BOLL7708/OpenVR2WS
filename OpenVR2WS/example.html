@@ -5,30 +5,58 @@
 		<title>WebSocket Test</title>
 		<style>
 			body {
+				color: white;
 				background: black; 
-				color: lime;
 				font-family: Consolas, monospace;
+				font-size: 75%;
 			}
 			pre, p {
 				margin: 0; padding: 0;
 			}
+			div {
+				padding: 1px;
+				margin: 1px;
+			}
+			.pre {
+				border: 1px gray solid;
+				float: left;
+				white-space: pre;
+			}
+			#output { color: aqua; }
+			#requests { color: white; }
+			#deviceIds { color: lightgray; }
+			#input { color: lime; }
+			#inputAnalog { color: yellow; } 
+			#inputPose { color: pink; }
+			#applicationInfo { color: orange; }
+			#playArea { color: tomato; }
+			
 		</style>
 		<script language="javascript" type="text/javascript">
 
 var wsUri = "ws://localhost:7708";
-var output;
+var output, deviceId, input, inputAnalog, inputPose, requests, applicationInfo, playArea;
 var websocket;
-var active = false;
+var active = false, stop = false;
+var inputStates = {};
+var deviceProperties = {};
 
 function init()
 {
 	output = document.getElementById("output");
-	loop();
+	requests = document.getElementById("requests");
+	deviceIds = document.getElementById("deviceIds");
+	input = document.getElementById("input");
+	inputAnalog = document.getElementById("inputAnalog");
+	inputPose = document.getElementById("inputPose");
+	applicationInfo = document.getElementById("applicationInfo");
+	playArea = document.getElementById("playArea");
+	
+	connectLoop();
 }
 
-function loop() 
+function connectLoop() 
 {
-	console.log("Loop!");
 	if(!active) {
 		active = true;
 		if(typeof websocket !== 'undefined') websocket.close();
@@ -38,8 +66,18 @@ function loop()
 		websocket.onmessage = function(evt) { onMessage(evt) };
 		websocket.onerror = function(evt) { onError(evt) };
 	}
-	setTimeout(loop, 5000);
+	setTimeout(connectLoop, 5000);
 }
+function requestLoop() 
+{
+	if(stop) return;
+	if(active) {
+		requestAnalogInputData();
+		requestPoseInputData();
+	}
+	setTimeout(requestLoop, 100);
+}
+
 function onOpen(evt)
 {
 	active = true;
@@ -47,13 +85,38 @@ function onOpen(evt)
 }
 function onClose(evt)
 {
+	requestLoop(true);
 	active = false;
 	writeToScreen("DISCONNECTED");
 }
 function onMessage(evt)
 {
-	writeToScreen('<span style="color: aqua;">RESPONSE: ' + evt.data+'</span>');
+	var data = JSON.parse(evt.data);
+	var text = JSON.stringify(data, null, 2);
+	if(data == null) writeToScreen(title("Response") + text);
+	else {
+		switch(data.key) {
+			case "DeviceIds": deviceIds.innerHTML = title(data.key)+text; break;
+			case "Input":
+				if(typeof inputStates[data.data.source] == 'undefined') inputStates[data.data.source] = {};
+				inputStates[data.data.source][data.data.input] = data.data.value;
+				input.innerHTML = title(data.key)+JSON.stringify(inputStates, null, 2);
+				break;
+			case "InputAnalog": inputAnalog.innerHTML = title(data.key)+text; break;
+			case "InputPose": inputPose.innerHTML = title(data.key)+text; break;
+			case "ApplicationInfo": applicationInfo.innerHTML = title(data.key)+text; break;
+			case "PlayArea": playArea.innerHTML = title(data.key)+text; break;
+			default:  writeToScreen(title("Response") + text);
+		}
+	}
+
 }
+function title(title) {
+	var now = new Date();
+	var time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
+	return time+" <strong>"+title+"</strong>:\n"
+}
+	
 function onError(evt)
 {
 	writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
@@ -61,29 +124,30 @@ function onError(evt)
 
 function doSend(message)
 {
-	writeToScreen("SENT: " + message);
-	websocket.send(message);
+	var text = JSON.stringify(message);
+	// requests.innerHTML = "SENT: " + text;
+	websocket.send(text);
 }
 
 function writeToScreen(message, clear=false)
 {
-	var now = new Date();
-	var time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
 	var p = document.createElement("p");
 	p.style.wordWrap = "break-word";
-	p.innerHTML = time+" "+message;
+	p.innerHTML = message;
 	if(clear) output.innerHTML = "";
 	output.prepend(p);
 }
 
 function requestAnalogInputData() {
-	writeToScreen("REQUEST");
-	doSend(JSON.stringify({"key": "InputAnalog", "value":"", "device":-1}));
+	doSend({"key": "InputAnalog", "value":"", "device":-1});
 }
 
 function requestPoseInputData() {
-	writeToScreen("REQUEST");
-	doSend(JSON.stringify({"key": "InputPose", "value":"", "device":-1}));
+	doSend({"key": "InputPose", "value":"", "device":-1});
+}
+
+function startLoop() {
+	requestLoop();
 }
 
 window.addEventListener("load", init, false);
@@ -92,8 +156,22 @@ window.addEventListener("load", init, false);
 	</head>
 	<body>
 		<h2>WebSocket Test</h2>
-		<button onclick="requestAnalogInputData();">Get Analog Data</button>
-		<button onclick="requestPoseInputData();">Get Pose Data</button>
-		<div id="output"></div>
+		
+		<div>
+			<!--<button onclick="requestAnalogInputData();">Get Analog Data</button>
+			<button onclick="requestPoseInputData();">Get Pose Data</button>
+			<div id="requests"></div>
+			<button onclick="doSend({'key': 'PlayArea'});">Get PlayArea</button>-->
+			<button onclick="stop = false; requestLoop();">Start Loop</button>
+			<button onclick="stop = true;">Stop Loop</button>
+		</div>
+		-->
+		<div class="pre" id="output"></div>
+		<div class="pre" id="applicationInfo"></div>
+		<div class="pre" id="playArea"></div>
+		<div class="pre" id="deviceIds"></div>
+		<div class="pre" id="input"></div>
+		<div class="pre" id="inputAnalog"></div>
+		<div class="pre" id="inputPose"></div>
 	</body>
 </html>
