@@ -47,7 +47,7 @@ namespace OpenVR2WS
                 catch (Exception e) { Debug.WriteLine($"JSON Parsing Exception: {e.Message}"); }
 
                 if (command.key != CommandEnum.None) HandleCommand(session, command);
-                else _server.SendMessage(session, "Invalid command!");
+                else _server.SendMessage(session, $"Invalid command: {message}");
             };
             _server.StatusMessageAction = (session, connected, status) =>
             {
@@ -102,6 +102,7 @@ namespace OpenVR2WS
             [JsonConverter(typeof(StringEnumConverter))]
             public CommandEnum key = CommandEnum.None;
             public string value = "";
+            public string value2 = "";
             public int device = -1;
         }
 
@@ -114,7 +115,8 @@ namespace OpenVR2WS
             DeviceIds,
             DeviceProperty,
             InputAnalog,
-            InputPose
+            InputPose,
+            Setting
         }
 
         private void HandleCommand(WebSocketSession session, Command command)
@@ -151,6 +153,9 @@ namespace OpenVR2WS
                     break;
                 case CommandEnum.InputPose:
                     SendResult(command.key, Data.poseInputActionData, session);
+                    break;
+                case CommandEnum.Setting:
+                    SendSetting(command.key, command.value, command.value2, session);
                     break;
             }
         }
@@ -395,6 +400,16 @@ namespace OpenVR2WS
             data["name"] = propName;
             data["value"] = propertyValue;
             data["type"] = dataType;
+            SendResult(key, data, session);
+        }
+
+        private void SendSetting(CommandEnum key, string section, string setting, WebSocketSession session= null) {
+            // TODO: Add switch on type
+            var value =_vr.GetFloatSetting(section, setting);
+            var data = new Dictionary<string, dynamic>();
+            data["section"] = section;
+            data["setting"] = setting;
+            data["value"] = value;
             SendResult(key, data, session);
         }
         #endregion

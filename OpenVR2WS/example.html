@@ -106,7 +106,7 @@ function onMessage(evt)
 			case "InputPose": inputPose.innerHTML = title(data.key)+text; break;
 			case "ApplicationInfo": applicationInfo.innerHTML = title(data.key)+text; break;
 			case "PlayArea": playArea.innerHTML = title(data.key)+text; break;
-			default:  writeToScreen(title("Response") + text);
+			default: writeToScreen(title("Response") + text);
 		}
 	}
 
