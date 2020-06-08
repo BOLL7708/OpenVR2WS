@@ -89,8 +89,11 @@ namespace OpenVR2WS
                 handleToSource[handle] = source;
                 sourceToHandle[source] = handle;
                 var info = Instance.GetOriginTrackedDeviceInfo(handle);
-                indexToSource[(int) info.trackedDeviceIndex] = source;
-                sourceToIndex[source] = (int) info.trackedDeviceIndex;
+                if(info.trackedDeviceIndex != uint.MaxValue)
+                {
+                    indexToSource[(int) info.trackedDeviceIndex] = source;
+                    sourceToIndex[source] = (int) info.trackedDeviceIndex;
+                }
             }
         }
 

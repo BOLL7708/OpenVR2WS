@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BOLL7708;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,10 +10,11 @@ namespace OpenVR2WS.Output
 {
     class Pose
     {
-        public int[] matrix = null; // TODO: Figure out what to do with this...
+        public HmdMatrix34_t matrix = new HmdMatrix34_t(); // TODO: Figure out what to do with this...
         public Vec3 position = new Vec3();
         public Vec3 velocity = new Vec3();
         public Vec3 angularVelocity = new Vec3();
+        public Vec3 orientation = new Vec3();
 
         public Pose(TrackedDevicePose_t poseData)
         {
@@ -20,6 +22,11 @@ namespace OpenVR2WS.Output
         }
 
         public void Update(TrackedDevicePose_t poseData) {
+            var orientation = EasyOpenVRSingleton.Utils.RotationMatrixToYPR(poseData.mDeviceToAbsoluteTracking);
+            this.orientation.x = orientation.pitch;
+            this.orientation.y = orientation.yaw;
+            this.orientation.z = orientation.roll;
+
             position.x = poseData.mDeviceToAbsoluteTracking.m3;
             position.y = poseData.mDeviceToAbsoluteTracking.m7;
             position.z = poseData.mDeviceToAbsoluteTracking.m11;

@@ -121,7 +121,8 @@ namespace OpenVR2WS
 
         private void HandleCommand(WebSocketSession session, Command command)
         {
-            if (!_vr.IsInitialized()) return;
+            // Debug.WriteLine($"Command receieved: {Enum.GetName(typeof(CommandEnum), command.key)}");
+            if (!_vr.IsInitialized() || _shouldShutDown) return;
             switch(command.key)
             {
                 case CommandEnum.None: break;
@@ -180,7 +181,7 @@ namespace OpenVR2WS
             {
                 if(_vr.IsInitialized())
                 {
-                    Thread.Sleep(50); // TODO: Connect to headset Hz
+                    Thread.Sleep(10); // TODO: Connect to headset Hz
                     if (!initComplete)
                     {
                         // Happens once
@@ -321,11 +322,11 @@ namespace OpenVR2WS
 
             _vr.RegisterEvent(EVREventType.VREvent_EnterStandbyMode, (data) =>
             {
-                _server.SendMessageToAll("Entered standby.");
+                // _server.SendMessageToAll("Entered standby.");
             });
             _vr.RegisterEvent(EVREventType.VREvent_LeaveStandbyMode, (data) =>
             {
-                _server.SendMessageToAll("Left standby.");
+                // _server.SendMessageToAll("Left standby.");
             });
         }
         #endregion
