@@ -122,7 +122,7 @@ namespace OpenVR2WS
         private void HandleCommand(WebSocketSession session, Command command)
         {
             // Debug.WriteLine($"Command receieved: {Enum.GetName(typeof(CommandEnum), command.key)}");
-            if (!_vr.IsInitialized() || _shouldShutDown) return;
+            if (_stopRunning || !_vr.IsInitialized()) return;
             switch(command.key)
             {
                 case CommandEnum.None: break;
@@ -172,6 +172,7 @@ namespace OpenVR2WS
         }
 
         private volatile bool _shouldShutDown = false;
+        private volatile bool _stopRunning = false;
         private void Worker()
         {
             Thread.CurrentThread.IsBackground = true;
@@ -186,6 +187,7 @@ namespace OpenVR2WS
                     {
                         // Happens once
                         initComplete = true;
+                        _stopRunning = false;
                         _vr.LoadAppManifest("./app.vrmanifest");
                         _vr.LoadActionManifest("./actions.json");
                         Data.UpdateDeviceIndices();
@@ -207,7 +209,7 @@ namespace OpenVR2WS
                 } else
                 {
                     // Idle with attempted init
-                    Thread.Sleep(1000);
+                    Thread.Sleep(2000);
                     _vr.Init();
                 }
                 if(_shouldShutDown)
@@ -280,6 +282,7 @@ namespace OpenVR2WS
         {
             _vr.RegisterEvent(EVREventType.VREvent_Quit, (data) => {
                 _shouldShutDown = true;
+                _stopRunning = true;
             });
             _vr.RegisterEvent(EVREventType.VREvent_TrackedDeviceActivated, (data) =>
             {
