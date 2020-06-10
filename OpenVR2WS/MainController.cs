@@ -269,6 +269,7 @@ namespace OpenVR2WS
             _vr.RegisterAnalogAction(GetAction("GripForce"), StoreAnalogInput);
 
             _vr.RegisterPoseAction(GetAction("Pose"), StorePoseInput);
+            _vr.RegisterPoseAction(GetAction("Pose2"), StorePoseInput);
         }
 
         private string GetAction(string action="")
@@ -363,7 +364,8 @@ namespace OpenVR2WS
         {
             var rect = _vr.GetPlayAreaRect();
             var size = _vr.GetPlayAreaSize();
-            SendResult(CommandEnum.PlayArea, new PlayArea(rect, size));
+            var height = _vr.GetFloatSetting(OpenVR.k_pch_CollisionBounds_Section, OpenVR.k_pch_CollisionBounds_WallHeight_Float);
+            SendResult(CommandEnum.PlayArea, new PlayArea(rect, size, height));
         }
 
         private void SendDeviceIds(WebSocketSession session=null)

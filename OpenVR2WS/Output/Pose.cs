@@ -10,7 +10,7 @@ namespace OpenVR2WS.Output
 {
     class Pose
     {
-        public HmdMatrix34_t matrix = new HmdMatrix34_t(); // TODO: Figure out what to do with this...
+        // public HmdMatrix34_t matrix = new HmdMatrix34_t(); // TODO: Figure out what to do with this...
         public Vec3 position = new Vec3();
         public Vec3 velocity = new Vec3();
         public Vec3 angularVelocity = new Vec3();

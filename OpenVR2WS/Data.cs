@@ -25,7 +25,7 @@ namespace OpenVR2WS
         public static ConcurrentDictionary<ulong, InputSource> handleToSource = new ConcurrentDictionary<ulong, InputSource>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
         public static ConcurrentDictionary<InputSource, ulong> sourceToHandle = new ConcurrentDictionary<InputSource, ulong>();
         public static ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData = new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>>();
-        public static ConcurrentDictionary<InputSource, Pose> poseInputActionData = new ConcurrentDictionary<InputSource, Pose>();
+        public static ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>> poseInputActionData = new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>>();
         public static ConcurrentDictionary<InputSource, int> sourceToIndex = new ConcurrentDictionary<InputSource, int>();
         public static ConcurrentDictionary<int, InputSource> indexToSource = new ConcurrentDictionary<int, InputSource>();
 
@@ -107,7 +107,8 @@ namespace OpenVR2WS
         public static void UpdateOrAddPoseInputActionData(InputPoseActionData_t data, InputActionInfo info)
         {
             var source = handleToSource[info.sourceHandle];
-            poseInputActionData[source] = new Pose(data.pose);
+            if(!poseInputActionData.ContainsKey(source)) poseInputActionData[source] = new ConcurrentDictionary<string, Pose>();
+            poseInputActionData[source][info.pathEnd] = new Pose(data.pose);
         }
     }
 }

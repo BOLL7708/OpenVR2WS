@@ -9,23 +9,34 @@ namespace OpenVR2WS.Output
 {
     class PlayArea
     {
-        public Vec2 cornerTopLeft = new Vec2();
-        public Vec2 cornerBottomRight = new Vec2();
-        public Vec2 size = new Vec2();
+        public Vec3[] corners = new Vec3[8];
+        public Vec3 size = new Vec3();
 
-        public PlayArea(HmdQuad_t rect = new HmdQuad_t(), HmdVector2_t size = new HmdVector2_t())
+        public PlayArea(HmdQuad_t rect = new HmdQuad_t(), HmdVector2_t size = new HmdVector2_t(), float height = 0)
         {
-            Update(rect, size);
+            Update(rect, size, height);
         }
 
-        public void Update(HmdQuad_t rect, HmdVector2_t size)
+        public void Update(HmdQuad_t rect, HmdVector2_t size, float height)
         {
-            cornerTopLeft.x = rect.vCorners1.v0;
-            cornerTopLeft.y = rect.vCorners1.v2;
-            cornerBottomRight.x = rect.vCorners3.v0;
-            cornerBottomRight.y = rect.vCorners3.v2;
+            corners[0] = new Vec3(rect.vCorners0);
+            corners[1] = new Vec3(rect.vCorners1);
+            corners[2] = new Vec3(rect.vCorners2);
+            corners[3] = new Vec3(rect.vCorners3);
+            
+            corners[4] = new Vec3(rect.vCorners0);
+            corners[5] = new Vec3(rect.vCorners1);
+            corners[6] = new Vec3(rect.vCorners2);
+            corners[7] = new Vec3(rect.vCorners3);
+
+            corners[4].y = height;
+            corners[5].y = height;
+            corners[6].y = height;
+            corners[7].y = height;
+
             this.size.x = size.v0;
-            this.size.y = size.v1;
+            this.size.y = height;
+            this.size.z = size.v1;
         }
     }
 }
