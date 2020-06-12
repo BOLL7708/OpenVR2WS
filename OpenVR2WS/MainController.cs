@@ -270,6 +270,7 @@ namespace OpenVR2WS
 
             _vr.RegisterPoseAction(GetAction("Pose"), StorePoseInput);
             _vr.RegisterPoseAction(GetAction("Pose2"), StorePoseInput);
+            _vr.RegisterPoseAction(GetAction("Pose3"), StorePoseInput);
         }
 
         private string GetAction(string action="")

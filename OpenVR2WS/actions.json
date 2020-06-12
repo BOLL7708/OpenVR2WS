@@ -85,6 +85,10 @@
 		{
 			"name": "/actions/default/in/Pose2",
 			"type": "pose"
+		},
+		{
+			"name": "/actions/default/in/Pose3",
+			"type": "pose"
 		}
 	],
 	"action_sets": [{

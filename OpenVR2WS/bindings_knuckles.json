@@ -20,6 +20,14 @@
             {
                "output" : "/actions/default/in/pose2",
                "path" : "/user/hand/right/pose/base"
+            },
+            {
+               "output" : "/actions/default/in/pose3",
+               "path" : "/user/hand/left/pose/handgrip"
+            },
+            {
+               "output" : "/actions/default/in/pose3",
+               "path" : "/user/hand/right/pose/handgrip"
             }
          ],
          "sources" : [
