@@ -269,8 +269,6 @@ namespace OpenVR2WS
             _vr.RegisterAnalogAction(GetAction("GripForce"), StoreAnalogInput);
 
             _vr.RegisterPoseAction(GetAction("Pose"), StorePoseInput);
-            _vr.RegisterPoseAction(GetAction("Pose2"), StorePoseInput);
-            _vr.RegisterPoseAction(GetAction("Pose3"), StorePoseInput);
         }
 
         private string GetAction(string action="")
@@ -353,11 +351,11 @@ namespace OpenVR2WS
             if(appId != _currentAppId)
             {
                 _currentAppId = appId;
-                _currentAppSessionTime = Utils.NowMs();
+                _currentAppSessionTime = Utils.NowUnixUTC();
             }
             var data = new Dictionary<string, dynamic>();
             data["id"] = appId;
-            data["sessionStartMs"] = _currentAppSessionTime;
+            data["sessionStart"] = _currentAppSessionTime;
             SendResult(CommandEnum.ApplicationInfo, data, session);
         }
 

@@ -16,6 +16,8 @@ namespace OpenVR2WS.Output
         public Vec3 velocity = new Vec3();
         public Vec3 angularVelocity = new Vec3();
         public Vec3 orientation = new Vec3();
+        public bool isConnected = false;
+        public bool isTracking = false;
 
         public Pose(TrackedDevicePose_t poseData)
         {
@@ -52,8 +54,9 @@ namespace OpenVR2WS.Output
             angularVelocity.x = poseData.vAngularVelocity.v0;
             angularVelocity.y = poseData.vAngularVelocity.v1;
             angularVelocity.z = poseData.vAngularVelocity.v2;
+
+            isConnected = poseData.bDeviceIsConnected;
+            isTracking = poseData.bPoseIsValid;
         }
     }
-
-
 }
