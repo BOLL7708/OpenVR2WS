@@ -13,14 +13,7 @@ namespace OpenVR2WS
 {
     static class Data
     {
-        public static ConcurrentDictionary<dynamic, dynamic> deviceToIndex = new ConcurrentDictionary<dynamic, dynamic>()
-        {
-            [ETrackedDeviceClass.HMD] = new HashSet<uint>(),
-            [ETrackedDeviceClass.Controller] = new HashSet<uint>(),
-            [ETrackedDeviceClass.TrackingReference] = new HashSet<uint>(),
-            [ETrackedDeviceClass.GenericTracker] = new HashSet<uint>(),
-            [ETrackedDeviceClass.DisplayRedirect] = new HashSet<uint>()
-        };
+        public static ConcurrentDictionary<dynamic, dynamic> deviceToIndex = new ConcurrentDictionary<dynamic, dynamic>();
         public static ConcurrentDictionary<uint, ETrackedDeviceClass> indexToDevice = new ConcurrentDictionary<uint, ETrackedDeviceClass>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
         public static ConcurrentDictionary<ulong, InputSource> handleToSource = new ConcurrentDictionary<ulong, InputSource>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
         public static ConcurrentDictionary<InputSource, ulong> sourceToHandle = new ConcurrentDictionary<InputSource, ulong>();
@@ -89,10 +82,10 @@ namespace OpenVR2WS
                 handleToSource[handle] = source;
                 sourceToHandle[source] = handle;
                 var info = Instance.GetOriginTrackedDeviceInfo(handle);
-                if(info.trackedDeviceIndex != uint.MaxValue)
+                if (info.trackedDeviceIndex != uint.MaxValue)
                 {
-                    indexToSource[(int) info.trackedDeviceIndex] = source;
-                    sourceToIndex[source] = (int) info.trackedDeviceIndex;
+                    indexToSource[(int)info.trackedDeviceIndex] = source;
+                    sourceToIndex[source] = (int)info.trackedDeviceIndex;
                 }
             }
         }
@@ -101,14 +94,30 @@ namespace OpenVR2WS
         {
             var source = handleToSource[info.sourceHandle];
             if (!analogInputActionData.ContainsKey(source)) analogInputActionData[source] = new ConcurrentDictionary<string, Vec3>();
-            analogInputActionData[source][info.pathEnd] = new Vec3() { x=data.x, y=data.y, z=data.z };
+            analogInputActionData[source][info.pathEnd] = new Vec3() { x = data.x, y = data.y, z = data.z };
         }
 
         public static void UpdateOrAddPoseInputActionData(InputPoseActionData_t data, InputActionInfo info)
         {
             var source = handleToSource[info.sourceHandle];
-            if(!poseInputActionData.ContainsKey(source)) poseInputActionData[source] = new ConcurrentDictionary<string, Pose>();
+            if (!poseInputActionData.ContainsKey(source)) poseInputActionData[source] = new ConcurrentDictionary<string, Pose>();
             poseInputActionData[source][info.pathEnd] = new Pose(data.pose);
+        }
+
+        public static void reset()
+        {
+            deviceToIndex[ETrackedDeviceClass.HMD] = new HashSet<uint>();
+            deviceToIndex[ETrackedDeviceClass.Controller] = new HashSet<uint>();
+            deviceToIndex[ETrackedDeviceClass.TrackingReference] = new HashSet<uint>();
+            deviceToIndex[ETrackedDeviceClass.GenericTracker] = new HashSet<uint>();
+            deviceToIndex[ETrackedDeviceClass.DisplayRedirect] = new HashSet<uint>();
+            indexToDevice.Clear();
+            handleToSource.Clear();
+            sourceToHandle.Clear();
+            analogInputActionData.Clear();
+            poseInputActionData.Clear();
+            sourceToIndex.Clear();
+            indexToSource.Clear();
         }
     }
 }

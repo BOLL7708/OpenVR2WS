@@ -27,6 +27,7 @@ namespace OpenVR2WS
 
 
         public MainController() {
+            Data.reset();
             InitServer();
 
             _vr.SetDebugLogAction((message) => {
@@ -219,6 +220,7 @@ namespace OpenVR2WS
                     initComplete = false;
                     _vr.AcknowledgeShutdown();
                     _vr.Shutdown();
+                    Data.reset();
                     Debug.WriteLine("Shutting down!");
                 }
             }
