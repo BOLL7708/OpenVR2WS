@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Forms;
 
 namespace OpenVR2WS
 {
@@ -24,6 +25,9 @@ namespace OpenVR2WS
         private Properties.Settings _settings = Properties.Settings.Default;
         private System.Windows.Forms.NotifyIcon _notifyIcon;
         private static Mutex _mutex = null;
+        private int _currentDeliveredSecond = 0;
+        private int _currentReceivedSecond = 0;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -32,14 +36,14 @@ namespace OpenVR2WS
             _mutex = new Mutex(true, Properties.Resources.AppName, out bool createdNew);
             if (!createdNew)
             {
-                MessageBox.Show(
-                Application.Current.MainWindow,
+                System.Windows.MessageBox.Show(
+                System.Windows.Application.Current.MainWindow,
                 "This application is already running!",
                 Properties.Resources.AppName,
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
                 );
-                Application.Current.Shutdown();
+                System.Windows.Application.Current.Shutdown();
             }
 
             // Tray icon
@@ -62,6 +66,7 @@ namespace OpenVR2WS
             _controller = new MainController((status, value) => {
                 Dispatcher.Invoke(() =>
                 {
+                    var now = DateTime.Now;
                     switch (status) {
                         case SuperServer.ServerStatus.Connected:
                             Label_ServerStatus.Background = Brushes.OliveDrab;
@@ -76,10 +81,16 @@ namespace OpenVR2WS
                             Label_ServerStatus.Content = "Error";
                             break;
                         case SuperServer.ServerStatus.DeliveredCount:
-                            Label_MessagesDelivered.Content = value.ToString();
+                            if (now.Second != _currentDeliveredSecond) {
+                                _currentDeliveredSecond = now.Second;
+                                Label_MessagesDelivered.Content = value.ToString();
+                            }
                             break;
                         case SuperServer.ServerStatus.ReceivedCount:
-                            Label_MessagesReceived.Content = value.ToString();
+                            if (now.Second != _currentReceivedSecond) {
+                                _currentReceivedSecond = now.Second;
+                                Label_MessagesReceived.Content = value.ToString();
+                            }
                             break;
                         case SuperServer.ServerStatus.SessionCount:
                             Label_ConnectedClients.Content = value.ToString();
@@ -145,7 +156,7 @@ namespace OpenVR2WS
         private void NotifyIcon_Click(object sender, EventArgs e)
         {
             WindowState = WindowState.Normal;
-            ShowInTaskbar = !_settings.Tray;
+            ShowInTaskbar = true;
             Show();
             Activate();
         }
