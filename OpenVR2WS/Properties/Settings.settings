@@ -5,5 +5,11 @@
     <Setting Name="Port" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">7708</Value>
     </Setting>
+    <Setting Name="Minimize" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="Tray" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

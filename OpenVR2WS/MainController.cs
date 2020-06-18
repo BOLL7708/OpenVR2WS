@@ -22,13 +22,16 @@ namespace OpenVR2WS
         private Properties.Settings _settings = Properties.Settings.Default;
         private EasyOpenVRSingleton _vr = EasyOpenVRSingleton.Instance;
         private StringEnumConverter _converter = new StringEnumConverter();
+        private Action<bool> _openvrStatusAction;
 
         // Data storage
 
 
-        public MainController() {
+        public MainController(Action<SuperServer.ServerStatus, int> serverStatus, Action<bool> openvrStatus)
+        {
+            _openvrStatusAction = openvrStatus;
             Data.reset();
-            InitServer();
+            InitServer(serverStatus);
 
             _vr.SetDebugLogAction((message) => {
                 Debug.WriteLine($"Debug log: {message}");
@@ -39,8 +42,9 @@ namespace OpenVR2WS
         }
 
         #region WebSocketServer
-        private void InitServer()
+        private void InitServer(Action<SuperServer.ServerStatus, int> serverStatus)
         {
+            _server.StatusAction = serverStatus;
             _server.MessageReceievedAction = (session, message) =>
             {
                 var command = new Command();
@@ -161,7 +165,6 @@ namespace OpenVR2WS
                     break;
             }
         }
-
         #endregion
 
         #region VRWorkerThread
@@ -197,6 +200,7 @@ namespace OpenVR2WS
                         RegisterEvents();
                         SendDefaults();
                         Debug.WriteLine("Initialization complete!");
+                        _openvrStatusAction.Invoke(true);
                     } else
                     {
                         // Happens every loop
@@ -222,6 +226,7 @@ namespace OpenVR2WS
                     _vr.Shutdown();
                     Data.reset();
                     Debug.WriteLine("Shutting down!");
+                    _openvrStatusAction.Invoke(false);
                 }
             }
         }
@@ -321,10 +326,7 @@ namespace OpenVR2WS
                 EVREventType.VREvent_SceneApplicationStateChanged
             }, (data) => {
                 SendApplicationInfo();
-                // TODO: Start game timer to keep track of session length
             });
-
-
             _vr.RegisterEvent(EVREventType.VREvent_EnterStandbyMode, (data) =>
             {
                 // _server.SendMessageToAll("Entered standby.");
@@ -420,5 +422,12 @@ namespace OpenVR2WS
             SendResult(key, data, session);
         }
         #endregion
+
+        public void Shutdown() {
+            _openvrStatusAction = (status) => { };
+            _server.ResetActions();
+            _shouldShutDown = true;
+            _server.Stop();
+        }
     }
 }

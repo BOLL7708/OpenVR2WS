@@ -5,9 +5,55 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenVR2WS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="145.647" Width="264.621">
-    <Grid>
-        <Button x:Name="Button_Test" Content="Button" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="75" Click="Button_Test_Click"/>
-
-    </Grid>
+        Title="MainWindow" Height="320" Width="320" Closing="Window_Closing">
+    <DockPanel LastChildFill="True" Margin="10">
+        <GroupBox Header="Status &amp; Setup &amp; Help" DockPanel.Dock="Top" Background="WhiteSmoke">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Margin="5">
+                    <Label Content="OpenVR status:"/>
+                    <Label x:Name="Label_OpenVRStatus" Content="openvr status" Background="Gray" Foreground="White"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
+                    <Label Content="Server status:"/>
+                    <Label x:Name="Label_ServerStatus" Content="server status" Background="Gray" Foreground="White"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
+                    <Label x:Name="Label_ServerPort" Content="Server port:"/>
+                    <TextBox x:Name="TextBox_ServerPort" Text="port" IsEnabled="False" VerticalContentAlignment="Center"/>
+                    <Button x:Name="Button_ServerPort" Content="Set port" Margin="5 0 0 0" Padding="10 0 10 0" Click="Button_ServerPort_Click"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
+                    <TextBlock x:Name="textBlock_Example" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="5 0 0 0">
+                        <Hyperlink NavigateUri="example.html" Click="ClickedURL">Example</Hyperlink>
+                    </TextBlock>
+                    <TextBlock x:Name="textBlock_Help" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10 0 10 0">
+                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS" Click="ClickedURL">Help</Hyperlink>
+                    </TextBlock>
+                    <TextBlock x:Name="textBlock_Issue" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
+                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS/issues" Click="ClickedURL">Report issue</Hyperlink>
+                    </TextBlock>
+                    <TextBlock x:Name="textBlock_Twitter" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
+                        <Hyperlink NavigateUri="https://twitter.com/BOLL7708" Click="ClickedURL">Contact</Hyperlink>
+                    </TextBlock>
+                    <Label x:Name="Label_Version" Content="version" Padding="0"/>
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+        <GroupBox Header="Statistics" Background="Ivory">
+            <StackPanel Orientation="Vertical" Margin="5">
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Connected clients:"/>
+                    <Label x:Name="Label_ConnectedClients" Content="0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Messages received:"/>
+                    <Label x:Name="Label_MessagesReceived" Content="0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="Messages delivered:"/>
+                    <Label x:Name="Label_MessagesDelivered" Content="0"/>
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+    </DockPanel>
 </Window>
