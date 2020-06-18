@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenVR2WS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="360" Width="320" Closing="Window_Closing" Icon="resources/logo.ico">
+        Title="MainWindow" Height="360" Width="320" Closing="Window_Closing" Icon="resources/logo.ico" StateChanged="Window_StateChanged">
     <DockPanel LastChildFill="True" Margin="10">
         <GroupBox Header="Status &amp; Help" DockPanel.Dock="Top" Background="WhiteSmoke">
             <StackPanel Orientation="Vertical">

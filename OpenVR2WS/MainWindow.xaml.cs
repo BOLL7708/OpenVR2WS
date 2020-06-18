@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,15 +22,43 @@ namespace OpenVR2WS
     {
         private MainController _controller;
         private Properties.Settings _settings = Properties.Settings.Default;
+        private System.Windows.Forms.NotifyIcon _notifyIcon;
+        private static Mutex _mutex = null;
         public MainWindow()
         {
             InitializeComponent();
+
+            // Prevent multiple instances
+            _mutex = new Mutex(true, Properties.Resources.AppName, out bool createdNew);
+            if (!createdNew)
+            {
+                MessageBox.Show(
+                Application.Current.MainWindow,
+                "This application is already running!",
+                Properties.Resources.AppName,
+                MessageBoxButton.OK,
+                MessageBoxImage.Information
+                );
+                Application.Current.Shutdown();
+            }
+
+            // Tray icon
+            var icon = Properties.Resources.Logo.Clone() as System.Drawing.Icon;
+            _notifyIcon = new System.Windows.Forms.NotifyIcon();
+            _notifyIcon.Click += NotifyIcon_Click;
+            _notifyIcon.Text = $"Click to show the {Properties.Resources.AppName} window";
+            _notifyIcon.Icon = icon;
+            _notifyIcon.Visible = true;
+
+
+            // Window setup
             Title = Properties.Resources.AppName;
             Label_Version.Content = Properties.Resources.Version;
             TextBox_ServerPort.Text = _settings.Port.ToString();
             CheckBox_LaunchMinimized.IsChecked = _settings.LaunchMinimized;
             CheckBox_Tray.IsChecked = _settings.Tray;
 
+            // Controller
             _controller = new MainController((status, value) => {
                 Dispatcher.Invoke(() =>
                 {
@@ -108,6 +138,32 @@ namespace OpenVR2WS
         {
             _settings.Tray = e.RoutedEvent.Name == "Checked";
             _settings.Save();
+            ShowInTaskbar = !_settings.Tray;
+        }
+
+        // Restore window
+        private void NotifyIcon_Click(object sender, EventArgs e)
+        {
+            WindowState = WindowState.Normal;
+            ShowInTaskbar = !_settings.Tray;
+            Show();
+            Activate();
+        }
+
+        // Not doing this will leave the icon after app closure
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            _notifyIcon.Dispose();
+            base.OnClosing(e);
+        }
+
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            switch (WindowState)
+            {
+                case WindowState.Minimized: ShowInTaskbar = !_settings.Tray; break; // Setting here for tray icon only
+                default: ShowInTaskbar = true; Show(); break;
+            }
         }
     }
 }
