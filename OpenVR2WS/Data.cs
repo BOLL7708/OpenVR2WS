@@ -13,14 +13,12 @@ namespace OpenVR2WS
 {
     static class Data
     {
-        public static ConcurrentDictionary<dynamic, dynamic> deviceToIndex = new ConcurrentDictionary<dynamic, dynamic>();
-        public static ConcurrentDictionary<uint, ETrackedDeviceClass> indexToDevice = new ConcurrentDictionary<uint, ETrackedDeviceClass>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
+        public static ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>> deviceToIndex = new ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>>();
         public static ConcurrentDictionary<ulong, InputSource> handleToSource = new ConcurrentDictionary<ulong, InputSource>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
         public static ConcurrentDictionary<InputSource, ulong> sourceToHandle = new ConcurrentDictionary<InputSource, ulong>();
         public static ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData = new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>>();
         public static ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>> poseInputActionData = new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>>();
         public static ConcurrentDictionary<InputSource, int> sourceToIndex = new ConcurrentDictionary<InputSource, int>();
-        public static ConcurrentDictionary<int, InputSource> indexToSource = new ConcurrentDictionary<int, InputSource>();
 
         /*
          * This will update the device class for an index what was just connected.
@@ -53,9 +51,7 @@ namespace OpenVR2WS
          */
         private static void SaveDeviceClass(ETrackedDeviceClass deviceClass, uint index)
         {
-            indexToDevice[index] = deviceClass;
             deviceToIndex[deviceClass].Add(index);
-            indexToDevice[index] = deviceClass;
         }
 
         public static void UpdateInputDeviceHandles()
@@ -84,7 +80,6 @@ namespace OpenVR2WS
                 var info = Instance.GetOriginTrackedDeviceInfo(handle);
                 if (info.trackedDeviceIndex != uint.MaxValue)
                 {
-                    indexToSource[(int)info.trackedDeviceIndex] = source;
                     sourceToIndex[source] = (int)info.trackedDeviceIndex;
                 }
             }
@@ -111,13 +106,11 @@ namespace OpenVR2WS
             deviceToIndex[ETrackedDeviceClass.TrackingReference] = new HashSet<uint>();
             deviceToIndex[ETrackedDeviceClass.GenericTracker] = new HashSet<uint>();
             deviceToIndex[ETrackedDeviceClass.DisplayRedirect] = new HashSet<uint>();
-            indexToDevice.Clear();
             handleToSource.Clear();
             sourceToHandle.Clear();
             analogInputActionData.Clear();
             poseInputActionData.Clear();
             sourceToIndex.Clear();
-            indexToSource.Clear();
         }
     }
 }

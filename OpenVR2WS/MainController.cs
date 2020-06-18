@@ -181,12 +181,14 @@ namespace OpenVR2WS
         {
             Thread.CurrentThread.IsBackground = true;
             var initComplete = false;
+            var headsetHzUpdated = false;
+            var headsetHzMs = 1000/90;
 
             while(true)
             {
                 if(_vr.IsInitialized())
                 {
-                    Thread.Sleep(10); // TODO: Connect to headset Hz
+                    Thread.Sleep(headsetHzMs);
                     if (!initComplete)
                     {
                         // Happens once
@@ -210,6 +212,15 @@ namespace OpenVR2WS
                             Data.sourceToHandle[InputSource.RightHand], 
                             Data.sourceToHandle[InputSource.Head]
                         });
+                        if (!headsetHzUpdated && Data.sourceToIndex.ContainsKey(InputSource.Head)) {
+                            int id = Data.sourceToIndex[InputSource.Head];
+                            float hz = _vr.GetFloatTrackedDeviceProperty((uint) id, ETrackedDeviceProperty.Prop_DisplayFrequency_Float);
+                            if(hz != 0)
+                            {
+                                headsetHzMs = (int) Math.Round(1000.0 / hz);
+                                headsetHzUpdated = true;
+                            }
+                        }
                     }
                 } else
                 {
@@ -375,9 +386,7 @@ namespace OpenVR2WS
         {
             var data = new Dictionary<string, dynamic>();
             data["deviceToIndex"] = Data.deviceToIndex;
-            data["indexToDevice"] = Data.indexToDevice;
             data["sourceToIndex"] = Data.sourceToIndex;
-            data["indexToSource"] = Data.indexToSource;
             SendResult(CommandEnum.DeviceIds, data);
         }
 
