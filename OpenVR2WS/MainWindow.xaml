@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenVR2WS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="320" Width="320" Closing="Window_Closing">
+        Title="MainWindow" Height="360" Width="320" Closing="Window_Closing" Icon="pack://siteoforigin:,,,/resources/logo.ico">
     <DockPanel LastChildFill="True" Margin="10">
-        <GroupBox Header="Status &amp; Setup &amp; Help" DockPanel.Dock="Top" Background="WhiteSmoke">
+        <GroupBox Header="Status &amp; Help" DockPanel.Dock="Top" Background="WhiteSmoke">
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Margin="5">
                     <Label Content="OpenVR status:"/>
@@ -16,11 +16,6 @@
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
                     <Label Content="Server status:"/>
                     <Label x:Name="Label_ServerStatus" Content="server status" Background="Gray" Foreground="White"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
-                    <Label x:Name="Label_ServerPort" Content="Server port:"/>
-                    <TextBox x:Name="TextBox_ServerPort" Text="port" IsEnabled="False" VerticalContentAlignment="Center"/>
-                    <Button x:Name="Button_ServerPort" Content="Set port" Margin="5 0 0 0" Padding="10 0 10 0" Click="Button_ServerPort_Click"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
                     <TextBlock x:Name="textBlock_Example" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="5 0 0 0">
@@ -36,6 +31,19 @@
                         <Hyperlink NavigateUri="https://twitter.com/BOLL7708" Click="ClickedURL">Contact</Hyperlink>
                     </TextBlock>
                     <Label x:Name="Label_Version" Content="version" Padding="0"/>
+                </StackPanel>
+            </StackPanel>
+        </GroupBox>
+        <GroupBox Header="Settings" DockPanel.Dock="Top" Background="AliceBlue">
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Margin="5">
+                    <CheckBox x:Name="CheckBox_LaunchMinimized" Content="Launch minimized " Checked="CheckBox_LaunchMinimized_Checked" Unchecked="CheckBox_LaunchMinimized_Checked"/>
+                    <CheckBox x:Name="CheckBox_Tray" Content="to tray" Checked="CheckBox_Tray_Checked" Unchecked="CheckBox_Tray_Checked"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
+                    <Label x:Name="Label_ServerPort" Content="Server port:"/>
+                    <TextBox x:Name="TextBox_ServerPort" Text="port" IsEnabled="False" VerticalContentAlignment="Center"/>
+                    <Button x:Name="Button_ServerPort" Content="Set port" Margin="5 0 0 0" Padding="10 0 10 0" Click="Button_ServerPort_Click"/>
                 </StackPanel>
             </StackPanel>
         </GroupBox>

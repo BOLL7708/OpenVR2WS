@@ -178,6 +178,9 @@
     <Content Include="openvr_api.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="resources\Logo.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="actions.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

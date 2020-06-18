@@ -16,18 +16,19 @@ using System.Windows.Shapes;
 
 namespace OpenVR2WS
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private MainController _controller;
-
+        private Properties.Settings _settings = Properties.Settings.Default;
         public MainWindow()
         {
             InitializeComponent();
             Title = Properties.Resources.AppName;
-            TextBox_ServerPort.Text = Properties.Settings.Default.Port.ToString();
+            Label_Version.Content = Properties.Resources.Version;
+            TextBox_ServerPort.Text = _settings.Port.ToString();
+            CheckBox_LaunchMinimized.IsChecked = _settings.LaunchMinimized;
+            CheckBox_Tray.IsChecked = _settings.Tray;
+
             _controller = new MainController((status, value) => {
                 Dispatcher.Invoke(() =>
                 {
@@ -72,22 +73,6 @@ namespace OpenVR2WS
                 });
         }
 
-        
-
-        private void Button_ServerPort_Click(object sender, RoutedEventArgs e)
-        {
-            InputDialog dlg = new InputDialog(Properties.Settings.Default.Port, "Port");
-            dlg.Owner = this;
-            dlg.ShowDialog();
-            var result = dlg.DialogResult == true ? dlg.value : 0;
-            if (result != 0)
-            {
-                _controller.RestartServer(result);
-                Properties.Settings.Default.Port = result;
-                TextBox_ServerPort.Text = result.ToString();
-            }
-        }
-
         private void ClickedURL(object sender, RoutedEventArgs e)
         {
             var link = (Hyperlink)sender;
@@ -97,6 +82,32 @@ namespace OpenVR2WS
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             _controller.Shutdown();
+        }
+
+        private void Button_ServerPort_Click(object sender, RoutedEventArgs e)
+        {
+            InputDialog dlg = new InputDialog(_settings.Port, "Port");
+            dlg.Owner = this;
+            dlg.ShowDialog();
+            var result = dlg.DialogResult == true ? dlg.value : 0;
+            if (result != 0)
+            {
+                _controller.RestartServer(result);
+                _settings.Port = result;
+                TextBox_ServerPort.Text = result.ToString();
+            }
+        }
+
+        private void CheckBox_LaunchMinimized_Checked(object sender, RoutedEventArgs e)
+        {
+            _settings.LaunchMinimized = e.RoutedEvent.Name == "Checked";
+            _settings.Save();
+        }
+
+        private void CheckBox_Tray_Checked(object sender, RoutedEventArgs e)
+        {
+            _settings.Tray = e.RoutedEvent.Name == "Checked";
+            _settings.Save();
         }
     }
 }

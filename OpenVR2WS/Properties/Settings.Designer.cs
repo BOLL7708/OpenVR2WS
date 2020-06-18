@@ -38,12 +38,12 @@ namespace OpenVR2WS.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool Minimize {
+        public bool LaunchMinimized {
             get {
-                return ((bool)(this["Minimize"]));
+                return ((bool)(this["LaunchMinimized"]));
             }
             set {
-                this["Minimize"] = value;
+                this["LaunchMinimized"] = value;
             }
         }
         
