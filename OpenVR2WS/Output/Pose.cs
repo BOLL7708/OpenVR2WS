@@ -11,7 +11,7 @@ namespace OpenVR2WS.Output
     class Pose
     {
         // public HmdMatrix34_t matrix = new HmdMatrix34_t(); // TODO: Figure out what to do with this...
-        public float[] matrix = new float[12];
+        public float[] rotationMatrix = new float[9];
         public Vec3 position = new Vec3();
         public Vec3 velocity = new Vec3();
         public Vec3 angularVelocity = new Vec3();
@@ -25,18 +25,15 @@ namespace OpenVR2WS.Output
         }
 
         public void Update(TrackedDevicePose_t poseData) {
-            matrix[0] = poseData.mDeviceToAbsoluteTracking.m0;
-            matrix[1] = poseData.mDeviceToAbsoluteTracking.m1;
-            matrix[2] = poseData.mDeviceToAbsoluteTracking.m2;
-            matrix[3] = poseData.mDeviceToAbsoluteTracking.m3;
-            matrix[4] = poseData.mDeviceToAbsoluteTracking.m4;
-            matrix[5] = poseData.mDeviceToAbsoluteTracking.m5;
-            matrix[6] = poseData.mDeviceToAbsoluteTracking.m6;
-            matrix[7] = poseData.mDeviceToAbsoluteTracking.m7;
-            matrix[8] = poseData.mDeviceToAbsoluteTracking.m8;
-            matrix[9] = poseData.mDeviceToAbsoluteTracking.m9;
-            matrix[10] = poseData.mDeviceToAbsoluteTracking.m10;
-            matrix[11] = poseData.mDeviceToAbsoluteTracking.m11;
+            rotationMatrix[0] = poseData.mDeviceToAbsoluteTracking.m0;
+            rotationMatrix[1] = poseData.mDeviceToAbsoluteTracking.m1;
+            rotationMatrix[2] = poseData.mDeviceToAbsoluteTracking.m2;
+            rotationMatrix[3] = poseData.mDeviceToAbsoluteTracking.m4;
+            rotationMatrix[4] = poseData.mDeviceToAbsoluteTracking.m5;
+            rotationMatrix[5] = poseData.mDeviceToAbsoluteTracking.m6;
+            rotationMatrix[6] = poseData.mDeviceToAbsoluteTracking.m8;
+            rotationMatrix[7] = poseData.mDeviceToAbsoluteTracking.m9;
+            rotationMatrix[8] = poseData.mDeviceToAbsoluteTracking.m10;
 
             var orientation = EasyOpenVRSingleton.Utils.RotationMatrixToYPR(poseData.mDeviceToAbsoluteTracking);
             this.orientation.x = orientation.pitch;
