@@ -111,7 +111,14 @@ namespace OpenVR2WS
                             Label_OpenVRStatus.Content = "Disconnected";
                         }
                     });
-                });
+                }
+            );
+            if (_settings.LaunchMinimized)
+            {
+                Hide();
+                WindowState = WindowState.Minimized;
+                ShowInTaskbar = !_settings.Tray;
+            }
         }
 
         private void ClickedURL(object sender, RoutedEventArgs e)
