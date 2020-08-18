@@ -1,9 +1,9 @@
-﻿{
+{
 	"applications": [{
 		"app_key": "boll7708.openvr2ws",
 		"launch_type": "binary",
 		"binary_path_windows": "OpenVR2WS.exe",
-		"is_dashboard_overlay": false,
+		"is_dashboard_overlay": true,
 		"action_manifest_path": "./actions.json",
 		"strings": {
 			"en_us": {

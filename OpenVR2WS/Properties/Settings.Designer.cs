@@ -58,5 +58,17 @@ namespace OpenVR2WS.Properties {
                 this["Tray"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool ExitWithSteam {
+            get {
+                return ((bool)(this["ExitWithSteam"]));
+            }
+            set {
+                this["ExitWithSteam"] = value;
+            }
+        }
     }
 }

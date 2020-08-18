@@ -57,10 +57,15 @@ namespace OpenVR2WS
 
             // Window setup
             Title = Properties.Resources.AppName;
+#if DEBUG
+            Label_Version.Content = $"{Properties.Resources.Version}d";
+#else
             Label_Version.Content = Properties.Resources.Version;
+#endif
             TextBox_ServerPort.Text = _settings.Port.ToString();
             CheckBox_LaunchMinimized.IsChecked = _settings.LaunchMinimized;
             CheckBox_Tray.IsChecked = _settings.Tray;
+            CheckBox_ExitWithSteamVR.IsChecked = _settings.ExitWithSteam;
 
             // Controller
             _controller = new MainController((status, value) => {
@@ -109,6 +114,11 @@ namespace OpenVR2WS
                         {
                             Label_OpenVRStatus.Background = Brushes.Tomato;
                             Label_OpenVRStatus.Content = "Disconnected";
+                            if (_settings.ExitWithSteam) {
+                                _controller.Shutdown();
+                                if (_notifyIcon != null) _notifyIcon.Dispose();
+                                System.Windows.Application.Current.Shutdown();
+                            }
                         }
                     });
                 }
@@ -182,6 +192,12 @@ namespace OpenVR2WS
                 case WindowState.Minimized: ShowInTaskbar = !_settings.Tray; break; // Setting here for tray icon only
                 default: ShowInTaskbar = true; Show(); break;
             }
+        }
+
+        private void CheckBox_ExitWithSteamVR_Checked(object sender, RoutedEventArgs e)
+        {
+            _settings.ExitWithSteam = e.RoutedEvent.Name == "Checked";
+            _settings.Save();
         }
     }
 }

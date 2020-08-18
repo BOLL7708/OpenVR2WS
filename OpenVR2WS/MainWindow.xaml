@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenVR2WS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="360" Width="320" Closing="Window_Closing" Icon="resources/logo.ico" StateChanged="Window_StateChanged">
+        Title="MainWindow" Height="360" Width="360" Closing="Window_Closing" Icon="resources/logo.ico" StateChanged="Window_StateChanged">
     <DockPanel LastChildFill="True" Margin="10">
         <GroupBox Header="Status &amp; Help" DockPanel.Dock="Top" Background="WhiteSmoke">
             <StackPanel Orientation="Vertical">
@@ -38,7 +38,8 @@
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Margin="5">
                     <CheckBox x:Name="CheckBox_LaunchMinimized" Content="Launch minimized " Checked="CheckBox_LaunchMinimized_Checked" Unchecked="CheckBox_LaunchMinimized_Checked"/>
-                    <CheckBox x:Name="CheckBox_Tray" Content="to tray" Checked="CheckBox_Tray_Checked" Unchecked="CheckBox_Tray_Checked"/>
+                    <CheckBox x:Name="CheckBox_Tray" Content="to tray, " Checked="CheckBox_Tray_Checked" Unchecked="CheckBox_Tray_Checked"/>
+                    <CheckBox x:Name="CheckBox_ExitWithSteamVR" Content="exit with SteamVR" Margin="5 0 5 0" Checked="CheckBox_ExitWithSteamVR_Checked" Unchecked="CheckBox_ExitWithSteamVR_Checked"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
                     <Label x:Name="Label_ServerPort" Content="Server port:"/>
