@@ -24,6 +24,7 @@
 			}
 			#output { color: aqua; }
 			#requests { color: white; }
+			#properties { color: gray; }
 			#deviceIds { color: lightgray; }
 			#input { color: lime; }
 			#inputAnalog { color: yellow; } 
@@ -37,11 +38,12 @@
 var params = getParams(window.location.href);
 var port  = (typeof params.port == "undefined") ? 7708 : params.port;
 var wsUri = "ws://localhost:"+port;
-var output, deviceId, input, inputAnalog, inputPose, requests, applicationInfo, playArea;
+var output, deviceId, input, inputAnalog, inputPose, requests, applicationInfo, playArea, properties;
 var websocket;
 var active = false, stop = false;
 var inputStates = {};
 var deviceProperties = {};
+var deviceIds = {};
 
 function getParams(url) {
 	var params = {};
@@ -66,6 +68,7 @@ function init()
 	inputPose = document.getElementById("inputPose");
 	applicationInfo = document.getElementById("applicationInfo");
 	playArea = document.getElementById("playArea");
+	properties = document.getElementById("properties");
 	
 	connectLoop();
 }
@@ -111,7 +114,7 @@ function onMessage(evt)
 	if(data == null) writeToScreen(title("Response") + text);
 	else {
 		switch(data.key) {
-			case "DeviceIds": deviceIds.innerHTML = title(data.key)+text; break;
+			case "DeviceIds": deviceIds.innerHTML = title(data.key)+text; deviceIds = data; break;
 			case "Input":
 				if(typeof inputStates[data.data.source] == 'undefined') inputStates[data.data.source] = {};
 				inputStates[data.data.source][data.data.input] = data.data.value;
@@ -121,11 +124,16 @@ function onMessage(evt)
 			case "InputPose": inputPose.innerHTML = title(data.key)+text; break;
 			case "ApplicationInfo": applicationInfo.innerHTML = title(data.key)+text; break;
 			case "PlayArea": playArea.innerHTML = title(data.key)+text; break;
+			case "DeviceProperty": 
+				if(!deviceProperties.hasOwnProperty(data.data.device)) deviceProperties[data.data.device] = {};
+				deviceProperties[data.data.device][data.data.name] = data.data.value;
+				properties.innerHTML = JSON.stringify(deviceProperties, null, 2);
+				break;
 			default: writeToScreen(title("Response") + text);
 		}
 	}
-
 }
+
 function title(title) {
 	var now = new Date();
 	var time = now.getHours() + ":" + now.getMinutes() + ":" + now.getSeconds();
@@ -153,6 +161,13 @@ function writeToScreen(message, clear=false)
 	output.prepend(p);
 }
 
+function requestProperties() {
+	var hmd = deviceIds.data.deviceToIndex.HMD;
+	var controllers = deviceIds.data.deviceToIndex.Controller;
+	var ids = hmd.concat(controllers);
+	ids.forEach(i => doSend({"key": "DeviceProperty", "value":"Prop_SerialNumber_String", "device":i}));
+}
+
 function requestAnalogInputData() {
 	doSend({"key": "InputAnalog", "value":"", "device":-1});
 }
@@ -177,12 +192,14 @@ window.addEventListener("load", init, false);
 			<button onclick="requestPoseInputData();">Get Pose Data</button>
 			<div id="requests"></div>
 			<button onclick="doSend({'key': 'PlayArea'});">Get PlayArea</button>-->
+			<button onclick="requestProperties();">Get properties</button>
 			<button onclick="stop = false; requestLoop();">Start Loop</button>
 			<button onclick="stop = true;">Stop Loop</button>
 		</div>
 		-->
 		<div class="pre" id="output"></div>
 		<div class="pre" id="applicationInfo"></div>
+		<div class="pre" id="properties"></div>
 		<div class="pre" id="playArea"></div>
 		<div class="pre" id="deviceIds"></div>
 		<div class="pre" id="input"></div>

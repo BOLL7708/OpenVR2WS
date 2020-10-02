@@ -72,6 +72,8 @@ namespace OpenVR2WS
             GetInputHandle(InputSource.Chest);
             GetInputHandle(InputSource.Waist);
 
+            GetInputHandle(InputSource.Gamepad);
+
             void GetInputHandle(InputSource source)
             {
                 var handle = Instance.GetInputSourceHandle(source);

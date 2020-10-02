@@ -254,8 +254,8 @@
    },
    "category" : "steamvr_input",
    "controller_type" : "knuckles",
-   "description" : "OpenVR2WS input configuration for Index Controllers.",
-   "name" : "My OpenVR2WS configuration for Index Controller",
+   "description" : "OpenVR2WS input configuration for Index Controllers",
+   "name" : "Default OpenVR2WS configuration for Index Controllers",
    "options" : {
       "mirror_actions" : false,
       "simulated_controller_type" : "none"

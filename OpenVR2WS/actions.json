@@ -7,6 +7,10 @@
 		{
 			"controller_type": "indexhmd",
 			"binding_url": "bindings_indexhmd.json"
+		},
+		{
+			"controller_type": "gamepad",
+			"binding_url": "bindings_gamepad.json"
 		}
 	],
 	"actions": [
@@ -25,6 +29,36 @@
 			"type": "vector1"
 		},
 		{
+			"name": "/actions/default/in/AltTriggerClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/AltTriggerTouch",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/AltTriggerValue",
+			"type": "vector1"
+		},
+		{
+			"name": "/actions/default/in/ShoulderClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ShoulderTouch",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ShoulderValue",
+			"type": "vector1"
+		},
+		{
+			"name": "/actions/default/in/AltShoulderClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/AltShoulderTouch",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/AltShoulderValue",
+			"type": "vector1"
+		},
+		{
 			"name": "/actions/default/in/ButtonAClick",
 			"type": "boolean"
 		},{
@@ -39,10 +73,52 @@
 			"type": "boolean"
 		},
 		{
+			"name": "/actions/default/in/ButtonXClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonXTouch",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/default/in/ButtonYClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonYTouch",
+			"type": "boolean"
+		},
+		{
 			"name": "/actions/default/in/ButtonSystemClick",
 			"type": "boolean"
 		},{
 			"name": "/actions/default/in/ButtonSystemTouch",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/default/in/ButtonApplicationMenuClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonApplicationMenuTouch",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/default/in/ButtonStartClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonStartTouch",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/default/in/ButtonBackClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonBackTouch",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/default/in/ButtonGuideClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonGuideTouch",
 			"type": "boolean"
 		},
 		{
@@ -59,6 +135,19 @@
 			"type": "vector1"
 		},
 		{
+			"name": "/actions/default/in/DirectionalPadUp",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/DirectionalPadLeft",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/DirectionalPadRight",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/DirectionalPadDown",
+			"type": "boolean"
+		},
+		{
 			"name": "/actions/default/in/JoystickClick",
 			"type": "boolean"
 		},{
@@ -66,6 +155,16 @@
 			"type": "boolean"
 		},{
 			"name": "/actions/default/in/JoystickPosition",
+			"type": "vector2"
+		},
+		{
+			"name": "/actions/default/in/AltJoystickClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/AltJoystickTouch",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/AltJoystickPosition",
 			"type": "vector2"
 		},
 		{
@@ -98,8 +197,66 @@
 	"localization": [{
 		"language_tag": "en_US",
 		"/actions/default": "Default",
+		
+		"/actions/default/in/Proximity": "Proximity Sensor",
+		
 		"/actions/default/in/TriggerClick": "Trigger Click",
 		"/actions/default/in/TriggerTouch": "Trigger Touch",
-		"/actions/default/in/TriggerValue": "Trigger Value"
+		"/actions/default/in/TriggerValue": "Trigger Value",
+		"/actions/default/in/AltTriggerClick": "Alt Trigger Click",
+		"/actions/default/in/AltTriggerTouch": "Alt Trigger Touch",
+		"/actions/default/in/AltTriggerValue": "Alt Trigger Value",
+
+		"/actions/default/in/ShoulderClick": "Shoulder Click",
+		"/actions/default/in/ShoulderTouch": "Shoulder Touch",
+		"/actions/default/in/ShoulderValue": "Shoulder Value",
+		"/actions/default/in/AltShoulderClick": "Alt Shoulder Click",
+		"/actions/default/in/AltShoulderTouch": "Alt Shoulder Touch",
+		"/actions/default/in/AltShoulderValue": "Alt Shoulder Value",
+
+		"/actions/default/in/ButtonAClick": "Button A Click",
+		"/actions/default/in/ButtonATouch": "Button A Touch",
+		"/actions/default/in/ButtonBClick": "Button B Click",
+		"/actions/default/in/ButtonBTouch": "Button B Touch",
+		"/actions/default/in/ButtonXClick": "Button X Click",
+		"/actions/default/in/ButtonXTouch": "Button X Touch",
+		"/actions/default/in/ButtonYClick": "Button Y Click",
+		"/actions/default/in/ButtonYTouch": "Button Y Touch",
+		
+		"/actions/default/in/ButtonSystemClick": "Button System Click",
+		"/actions/default/in/ButtonSystemTouch": "Button System Touch",
+		"/actions/default/in/ButtonApplicationMenuClick": "Button Applicatino Menu Click",
+		"/actions/default/in/ButtonApplicationMenuTouch": "Button Application Menu Touch",
+		"/actions/default/in/ButtonStartClick": "Button Start Click",
+		"/actions/default/in/ButtonStartTouch": "Button Start Touch",
+		"/actions/default/in/ButtonBackClick": "Button Back Click",
+		"/actions/default/in/ButtonBackTouch": "Button Back Touch",
+		"/actions/default/in/ButtonGuideClick": "Button Guide Click",
+		"/actions/default/in/ButtonGuideTouch": "Button Guide Touch",
+
+		"/actions/default/in/TrackpadTouch": "Trackpad Touch",
+		"/actions/default/in/TrackpadClick": "Trackpad Click",
+		"/actions/default/in/TrackpadPosition": "Trackpad Position",
+		"/actions/default/in/TrackpadForce": "Trackpad Force",
+
+		"/actions/default/in/DirectionalPadUp": "Directional Pad Up",
+		"/actions/default/in/DirectionalPadLeft": "Directional Pad Left",
+		"/actions/default/in/DirectionalPadRight": "Directional Pad Right",
+		"/actions/default/in/DirectionalPadDown": "Directional Pad Down",
+
+		"/actions/default/in/JoystickClick": "Joystick Click",
+		"/actions/default/in/JoystickTouch": "Joystick Touch",
+		"/actions/default/in/JoystickPosition": "Joystick Position",
+		"/actions/default/in/AltJoystickClick": "Alt Joystick Click",
+		"/actions/default/in/AltJoystickTouch": "Alt Joystick Touch",
+		"/actions/default/in/AltJoystickPosition": "Alt Joystick Position",
+
+		"/actions/default/in/GripClick": "Grip Click",
+		"/actions/default/in/GripTouch": "Grip Touch",
+		"/actions/default/in/GripForce": "Grip Force",
+
+		"/actions/default/in/Pose": "Pose",
+		"/actions/default/in/Pose2": "Pose 2",
+		"/actions/default/in/Pose3": "Pose 3"
 	}]
 }

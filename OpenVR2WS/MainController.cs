@@ -210,7 +210,8 @@ namespace OpenVR2WS
                         _vr.UpdateActionStates(new[] {
                             Data.sourceToHandle[InputSource.LeftHand], 
                             Data.sourceToHandle[InputSource.RightHand], 
-                            Data.sourceToHandle[InputSource.Head]
+                            Data.sourceToHandle[InputSource.Head],
+                            Data.sourceToHandle[InputSource.Gamepad]
                         });
                         if (!headsetHzUpdated && Data.sourceToIndex.ContainsKey(InputSource.Head)) {
                             int id = Data.sourceToIndex[InputSource.Head];
@@ -263,30 +264,60 @@ namespace OpenVR2WS
             _vr.RegisterDigitalAction(GetAction("TriggerClick"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("TriggerTouch"), SendDigitalInput);
             _vr.RegisterAnalogAction(GetAction("TriggerValue"), StoreAnalogInput);
-            
-            _vr.RegisterDigitalAction(GetAction("ButtonSystemClick"), SendDigitalInput);
-            _vr.RegisterDigitalAction(GetAction("ButtonSystemTouch"), SendDigitalInput);
-
-            _vr.RegisterDigitalAction(GetAction("ButtonBClick"), SendDigitalInput);
-            _vr.RegisterDigitalAction(GetAction("ButtonBTouch"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("AltTriggerClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("AltTriggerTouch"), SendDigitalInput);
+            _vr.RegisterAnalogAction(GetAction("AltTriggerValue"), StoreAnalogInput);
+            _vr.RegisterDigitalAction(GetAction("ShoulderClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ShoulderTouch"), SendDigitalInput);
+            _vr.RegisterAnalogAction(GetAction("ShoulderValue"), StoreAnalogInput);
+            _vr.RegisterDigitalAction(GetAction("AltShoulderClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("AltShoulderTouch"), SendDigitalInput);
+            _vr.RegisterAnalogAction(GetAction("AltShoulderValue"), StoreAnalogInput);
 
             _vr.RegisterDigitalAction(GetAction("ButtonAClick"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("ButtonATouch"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonBClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonBTouch"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonXClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonXTouch"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonYClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonYTouch"), SendDigitalInput);
+
+            _vr.RegisterDigitalAction(GetAction("ButtonSystemClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonSystemTouch"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonApplicationMenuClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonApplicationMenuTouch"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonStartClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonStartTouch"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonBackClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonBackTouch"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonGuideClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonGuideTouch"), SendDigitalInput);
 
             _vr.RegisterDigitalAction(GetAction("TrackpadClick"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("TrackpadTouch"), SendDigitalInput);
             _vr.RegisterAnalogAction(GetAction("TrackpadPosition"), StoreAnalogInput);
             _vr.RegisterAnalogAction(GetAction("TrackpadForce"), StoreAnalogInput);
 
+            _vr.RegisterDigitalAction(GetAction("DirectionalPadUp"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("DirectionalPadLeft"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("DirectionalPadRight"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("DirectionalPadDown"), SendDigitalInput);
+
             _vr.RegisterDigitalAction(GetAction("JoystickClick"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("JoystickTouch"), SendDigitalInput);
             _vr.RegisterAnalogAction(GetAction("JoystickPosition"), StoreAnalogInput);
+            _vr.RegisterDigitalAction(GetAction("AltJoystickClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("AltJoystickTouch"), SendDigitalInput);
+            _vr.RegisterAnalogAction(GetAction("AltJoystickPosition"), StoreAnalogInput);
 
             _vr.RegisterDigitalAction(GetAction("GripClick"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("GripTouch"), SendDigitalInput);
             _vr.RegisterAnalogAction(GetAction("GripForce"), StoreAnalogInput);
 
             _vr.RegisterPoseAction(GetAction("Pose"), StorePoseInput);
+            _vr.RegisterPoseAction(GetAction("Pose2"), StorePoseInput);
+            _vr.RegisterPoseAction(GetAction("Pose3"), StorePoseInput);
         }
 
         private string GetAction(string action="")
