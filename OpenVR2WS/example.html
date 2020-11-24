@@ -111,6 +111,8 @@ function onMessage(evt)
 {
 	var data = JSON.parse(evt.data);
 	var text = JSON.stringify(data, null, 2);
+	// console.log("Message: "+text+", data: "+evt.data);
+	// console.log("Message: "+data.key);
 	if(data == null) writeToScreen(title("Response") + text);
 	else {
 		switch(data.key) {
@@ -176,6 +178,10 @@ function requestPoseInputData() {
 	doSend({"key": "InputPose", "value":"", "device":-1});
 }
 
+function requestDeviceIDs() {
+	doSend({"key": "DeviceIds", "value":"", "device":-1});
+}
+
 function startLoop() {
 	requestLoop();
 }
@@ -192,6 +198,7 @@ window.addEventListener("load", init, false);
 			<button onclick="requestPoseInputData();">Get Pose Data</button>
 			<div id="requests"></div>
 			<button onclick="doSend({'key': 'PlayArea'});">Get PlayArea</button>-->
+			<button onclick="requestDeviceIDs();">Get IDs</button>
 			<button onclick="requestProperties();">Get properties</button>
 			<button onclick="stop = false; requestLoop();">Start Loop</button>
 			<button onclick="stop = true;">Stop Loop</button>

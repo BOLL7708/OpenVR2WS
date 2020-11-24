@@ -11,6 +11,10 @@
 		{
 			"controller_type": "gamepad",
 			"binding_url": "bindings_gamepad.json"
+		},
+		{
+			"controller_type": "vive_controller",
+			"binding_url": "bindings_vive_controller.json"
 		}
 	],
 	"actions": [
@@ -225,7 +229,7 @@
 		
 		"/actions/default/in/ButtonSystemClick": "Button System Click",
 		"/actions/default/in/ButtonSystemTouch": "Button System Touch",
-		"/actions/default/in/ButtonApplicationMenuClick": "Button Applicatino Menu Click",
+		"/actions/default/in/ButtonApplicationMenuClick": "Button Application Menu Click",
 		"/actions/default/in/ButtonApplicationMenuTouch": "Button Application Menu Touch",
 		"/actions/default/in/ButtonStartClick": "Button Start Click",
 		"/actions/default/in/ButtonStartTouch": "Button Start Touch",

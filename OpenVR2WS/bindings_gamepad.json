@@ -1,7 +1,6 @@
 {
    "action_manifest_version" : 0,
    "alias_info" : {},
-   "app_key" : "system.generated.openvr2ws.exe",
    "bindings" : {
       "/actions/default" : {
          "sources" : [
@@ -169,8 +168,8 @@
    },
    "category" : "steamvr_input",
    "controller_type" : "gamepad",
-   "description" : "OpenVR2WS input configuration for the Gamepad",
-   "name" : "Default OpenVR2WS configuration for the Gamepad",
+   "description" : "Default OpenVR2WS input configuration for Gamepad",
+   "name" : "Gamepad",
    "options" : {
       "mirror_actions" : false,
       "simulated_controller_type" : "none"

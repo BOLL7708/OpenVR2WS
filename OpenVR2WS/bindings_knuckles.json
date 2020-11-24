@@ -1,7 +1,6 @@
 {
    "action_manifest_version" : 0,
    "alias_info" : {},
-   "app_key" : "system.generated.openvr2ws.exe",
    "bindings" : {
       "/actions/default" : {
          "poses" : [
@@ -254,8 +253,8 @@
    },
    "category" : "steamvr_input",
    "controller_type" : "knuckles",
-   "description" : "OpenVR2WS input configuration for Index Controllers",
-   "name" : "Default OpenVR2WS configuration for Index Controllers",
+   "description" : "Default OpenVR2WS input configuration for Index Controllers",
+   "name" : "Index Controller",
    "options" : {
       "mirror_actions" : false,
       "simulated_controller_type" : "none"
