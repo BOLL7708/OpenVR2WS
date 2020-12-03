@@ -142,6 +142,8 @@ namespace OpenVR2WS
                     SendApplicationInfo(session);
                     break;
                 case CommandEnum.DeviceIds:
+                    Data.UpdateInputDeviceHandles();
+                    Data.UpdateDeviceIndices();
                     SendDeviceIds(session);
                     break;
                 case CommandEnum.DeviceProperty:
@@ -208,10 +210,14 @@ namespace OpenVR2WS
                         // Happens every loop
                         _vr.UpdateEvents(false);
                         _vr.UpdateActionStates(new[] {
+                            // TODO: Just look for everything here?!
                             Data.sourceToHandle[InputSource.LeftHand], 
                             Data.sourceToHandle[InputSource.RightHand], 
                             Data.sourceToHandle[InputSource.Head],
-                            Data.sourceToHandle[InputSource.Gamepad]
+                            Data.sourceToHandle[InputSource.Gamepad],
+                            Data.sourceToHandle[InputSource.LeftFoot],
+                            Data.sourceToHandle[InputSource.RightFoot],
+                            Data.sourceToHandle[InputSource.Waist]
                         });
                         if (!headsetHzUpdated && Data.sourceToIndex.ContainsKey(InputSource.Head)) {
                             int id = Data.sourceToIndex[InputSource.Head];
@@ -283,6 +289,8 @@ namespace OpenVR2WS
             _vr.RegisterDigitalAction(GetAction("ButtonYClick"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("ButtonYTouch"), SendDigitalInput);
 
+            _vr.RegisterDigitalAction(GetAction("ButtonPowerClick"), SendDigitalInput);
+            _vr.RegisterDigitalAction(GetAction("ButtonPowerTouch"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("ButtonSystemClick"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("ButtonSystemTouch"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("ButtonApplicationMenuClick"), SendDigitalInput);

@@ -15,6 +15,18 @@
 		{
 			"controller_type": "vive_controller",
 			"binding_url": "bindings_vive_controller.json"
+		},
+		{
+			"controller_type": "vive_tracker_left_foot",
+			"binding_url": "bindings_vive_tracker_left_foot.json"
+		},
+		{
+		  "controller_type": "vive_tracker_right_foot",
+		  "binding_url": "bindings_vive_tracker_right_foot.json"
+		},
+		{
+		  "controller_type": "vive_tracker_waist",
+		  "binding_url": "bindings_vive_tracker_waist.json"
 		}
 	],
 	"actions": [
@@ -88,6 +100,13 @@
 			"type": "boolean"
 		},{
 			"name": "/actions/default/in/ButtonYTouch",
+			"type": "boolean"
+		},
+		{
+			"name": "/actions/default/in/ButtonPowerClick",
+			"type": "boolean"
+		},{
+			"name": "/actions/default/in/ButtonPowerTouch",
 			"type": "boolean"
 		},
 		{
@@ -227,6 +246,8 @@
 		"/actions/default/in/ButtonYClick": "Button Y Click",
 		"/actions/default/in/ButtonYTouch": "Button Y Touch",
 		
+		"/actions/default/in/ButtonPowerClick": "Button Power Click",
+		"/actions/default/in/ButtonPowerTouch": "Button Power Touch",
 		"/actions/default/in/ButtonSystemClick": "Button System Click",
 		"/actions/default/in/ButtonSystemTouch": "Button System Touch",
 		"/actions/default/in/ButtonApplicationMenuClick": "Button Application Menu Click",

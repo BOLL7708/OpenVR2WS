@@ -62,7 +62,7 @@ function init()
 {
 	output = document.getElementById("output");
 	requests = document.getElementById("requests");
-	deviceIds = document.getElementById("deviceIds");
+	ids = document.getElementById("deviceIds");
 	input = document.getElementById("input");
 	inputAnalog = document.getElementById("inputAnalog");
 	inputPose = document.getElementById("inputPose");
@@ -111,12 +111,12 @@ function onMessage(evt)
 {
 	var data = JSON.parse(evt.data);
 	var text = JSON.stringify(data, null, 2);
-	// console.log("Message: "+text+", data: "+evt.data);
+	// console.log("Message: "+data.key+", data: "+text);
 	// console.log("Message: "+data.key);
 	if(data == null) writeToScreen(title("Response") + text);
 	else {
 		switch(data.key) {
-			case "DeviceIds": deviceIds.innerHTML = title(data.key)+text; deviceIds = data; break;
+			case "DeviceIds": ids.innerHTML = title(data.key)+text; deviceIds = data; break;
 			case "Input":
 				if(typeof inputStates[data.data.source] == 'undefined') inputStates[data.data.source] = {};
 				inputStates[data.data.source][data.data.input] = data.data.value;
@@ -178,8 +178,12 @@ function requestPoseInputData() {
 	doSend({"key": "InputPose", "value":"", "device":-1});
 }
 
-function requestDeviceIDs() {
-	doSend({"key": "DeviceIds", "value":"", "device":-1});
+function requestDeviceIds() {
+	doSend({"key": "DeviceIds"});
+}
+
+function requestPlayArea() {
+	doSend({"key": "PlayArea"});
 }
 
 function startLoop() {
@@ -196,9 +200,9 @@ window.addEventListener("load", init, false);
 		<div>
 			<!--<button onclick="requestAnalogInputData();">Get Analog Data</button>
 			<button onclick="requestPoseInputData();">Get Pose Data</button>
-			<div id="requests"></div>
-			<button onclick="doSend({'key': 'PlayArea'});">Get PlayArea</button>-->
-			<button onclick="requestDeviceIDs();">Get IDs</button>
+			<div id="requests"></div>-->
+			<button onclick="requestDeviceIds();">Get IDs</button>
+			<button onclick="requestPlayArea();">Get play area</button>
 			<button onclick="requestProperties();">Get properties</button>
 			<button onclick="stop = false; requestLoop();">Start Loop</button>
 			<button onclick="stop = true;">Stop Loop</button>
