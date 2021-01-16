@@ -196,7 +196,7 @@ namespace OpenVR2WS
                         // Happens once
                         initComplete = true;
                         _stopRunning = false;
-                        _vr.LoadAppManifest("./app.vrmanifest");
+                        _vr.AddApplicationManifest("./app.vrmanifest", "boll7708.openvr2ws", true);
                         _vr.LoadActionManifest("./actions.json");
                         Data.UpdateDeviceIndices();
                         Data.UpdateInputDeviceHandles();
