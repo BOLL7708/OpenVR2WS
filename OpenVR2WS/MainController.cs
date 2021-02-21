@@ -364,12 +364,15 @@ namespace OpenVR2WS
             _vr.RegisterEvent(EVREventType.VREvent_PropertyChanged, (data) =>
             {
                 // Look for things here that is useful, like battery states
-                Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop)); 
+                // Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop)); 
                 SendDeviceProperty(CommandEnum.DeviceProperty, (int) data.trackedDeviceIndex, data.data.property.prop);
             });
             _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (data) =>
             {
-                SendResult("Debug", data.data);
+                // SendResult("Debug", data);
+                var fakeData = new Dictionary<string, dynamic>();
+                fakeData.Add("Issue", "https://github.com/ValveSoftware/openvr/issues/1335");
+                SendResult(CommandEnum.Setting, fakeData);
             });
             _vr.RegisterEvents(new[] {
                 EVREventType.VREvent_SceneApplicationChanged,

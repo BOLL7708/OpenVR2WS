@@ -181,8 +181,7 @@ namespace OpenVR2WS
         // Not doing this will leave the icon after app closure
         protected override void OnClosing(CancelEventArgs e)
         {
-            _notifyIcon.Dispose();
-            base.OnClosing(e);
+            if(_notifyIcon != null) _notifyIcon.Dispose();
         }
 
         private void Window_StateChanged(object sender, EventArgs e)
