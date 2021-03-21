@@ -1,0 +1,42 @@
+{
+   "bindings" : {
+      "/actions/default" : {
+         "chords" : [],
+         "haptics" : [],
+         "poses" : [
+            {
+               "output" : "/actions/default/in/pose",
+               "path" : "/user/hand/left/pose/raw"
+            },
+            {
+               "output" : "/actions/default/in/pose",
+               "path" : "/user/hand/right/pose/raw"
+            }
+         ],
+         "skeleton" : [],
+         "sources" : [
+         	{
+				"path": "/user/hand/left/input/power",
+				"mode": "button",
+				"inputs": {
+					"click": {
+						"output": "/actions/default/in/buttonpowerclick"
+					}
+				}
+			},
+            {
+               "path" : "/user/hand/right/input/power",
+               "mode" : "button",
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/default/in/buttonpowerclick"
+                  }
+               }
+            }
+         ]
+      }
+   },
+   "controller_type" : "vive_tracker_handed",
+   "description" : "Default OpenVR2WS input configuration for Vive Tracker in Hand",
+   "name" : "Tracker in Hand"
+}

@@ -73,6 +73,7 @@ namespace OpenVR2WS
             GetInputHandle(InputSource.Waist);
 
             GetInputHandle(InputSource.Gamepad);
+            GetInputHandle(InputSource.Camera);
 
             void GetInputHandle(InputSource source)
             {

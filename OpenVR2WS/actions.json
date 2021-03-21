@@ -17,16 +17,56 @@
 			"binding_url": "bindings_vive_controller.json"
 		},
 		{
+			"controller_type": "vive_tracker_head",
+			"binding_url": "bindings_vive_tracker_head.json"
+		},
+		{
+			"controller_type": "vive_tracker_chest",
+			"binding_url": "bindings_vive_tracker_chest.json"
+		},
+		{
+			"controller_type": "vive_tracker_left_shoulder",
+			"binding_url": "bindings_vive_tracker_left_shoulder.json"
+		},
+		{
+			"controller_type": "vive_tracker_right_shoulder",
+			"binding_url": "bindings_vive_tracker_right_shoulder.json"
+		},
+		{
+			"controller_type": "vive_tracker_left_elbow",
+			"binding_url": "bindings_vive_tracker_left_elbow.json"
+		},
+		{
+			"controller_type": "vive_tracker_right_elbow",
+			"binding_url": "bindings_vive_tracker_right_elbow.json"
+		},
+		{
+			"controller_type": "vive_tracker_handed",
+			"binding_url": "bindings_vive_tracker_handed.json"
+		},
+		{
+			"controller_type": "vive_tracker_waist",
+			"binding_url": "bindings_vive_tracker_waist.json"
+		},
+		{
+			"controller_type": "vive_tracker_left_knee",
+			"binding_url": "bindings_vive_tracker_left_knee.json"
+		},
+		{
+			"controller_type": "vive_tracker_right_knee",
+			"binding_url": "bindings_vive_tracker_right_knee.json"
+		},
+		{
 			"controller_type": "vive_tracker_left_foot",
 			"binding_url": "bindings_vive_tracker_left_foot.json"
 		},
 		{
-		  "controller_type": "vive_tracker_right_foot",
-		  "binding_url": "bindings_vive_tracker_right_foot.json"
+			"controller_type": "vive_tracker_right_foot",
+			"binding_url": "bindings_vive_tracker_right_foot.json"
 		},
 		{
-		  "controller_type": "vive_tracker_waist",
-		  "binding_url": "bindings_vive_tracker_waist.json"
+			"controller_type": "vive_tracker_camera",
+			"binding_url": "bindings_vive_tracker_camera.json"
 		}
 	],
 	"actions": [

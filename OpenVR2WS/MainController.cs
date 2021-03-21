@@ -211,13 +211,21 @@ namespace OpenVR2WS
                         _vr.UpdateEvents(false);
                         _vr.UpdateActionStates(new[] {
                             // TODO: Just look for everything here?!
-                            Data.sourceToHandle[InputSource.LeftHand], 
-                            Data.sourceToHandle[InputSource.RightHand], 
                             Data.sourceToHandle[InputSource.Head],
-                            Data.sourceToHandle[InputSource.Gamepad],
+                            Data.sourceToHandle[InputSource.Chest],
+                            Data.sourceToHandle[InputSource.LeftShoulder],
+                            Data.sourceToHandle[InputSource.RightShoulder],
+                            Data.sourceToHandle[InputSource.LeftElbow],
+                            Data.sourceToHandle[InputSource.RightElbow],
+                            Data.sourceToHandle[InputSource.LeftHand], 
+                            Data.sourceToHandle[InputSource.RightHand],
+                            Data.sourceToHandle[InputSource.Waist],
+                            Data.sourceToHandle[InputSource.LeftKnee],
+                            Data.sourceToHandle[InputSource.RightKnee],
                             Data.sourceToHandle[InputSource.LeftFoot],
                             Data.sourceToHandle[InputSource.RightFoot],
-                            Data.sourceToHandle[InputSource.Waist]
+                            Data.sourceToHandle[InputSource.Camera],
+                            Data.sourceToHandle[InputSource.Gamepad]
                         });
                         if (!headsetHzUpdated && Data.sourceToIndex.ContainsKey(InputSource.Head)) {
                             int id = Data.sourceToIndex[InputSource.Head];

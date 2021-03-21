@@ -1,0 +1,29 @@
+{
+   "bindings" : {
+      "/actions/default" : {
+         "chords" : [],
+         "haptics" : [],
+         "poses" : [
+            {
+               "output" : "/actions/default/in/pose",
+               "path" : "/user/chest/pose/raw"
+            }
+         ],
+         "skeleton" : [],
+         "sources" : [
+         	{
+				"path": "/user/chest/input/power",
+				"mode": "button",
+				"inputs": {
+					"click": {
+						"output": "/actions/default/in/buttonpowerclick"
+					}
+				}
+			}
+         ]
+      }
+   },
+   "controller_type" : "vive_tracker_chest",
+   "description" : "Default OpenVR2WS input configuration for Vive Tracker Chest",
+   "name" : "Chest Tracker"
+}
