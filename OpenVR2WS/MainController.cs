@@ -30,7 +30,7 @@ namespace OpenVR2WS
         public MainController(Action<SuperServer.ServerStatus, int> serverStatus, Action<bool> openvrStatus)
         {
             _openvrStatusAction = openvrStatus;
-            Data.reset();
+            Data.Reset();
             InitServer(serverStatus);
 
             _vr.SetDebugLogAction((message) => {
@@ -68,6 +68,11 @@ namespace OpenVR2WS
         public void RestartServer(int port)
         {
             _server.Start(port);
+        }
+
+        public void ReregisterActions()
+        {
+            RegisterActions();
         }
 
         // If session is null, it will send to all registered sessions
@@ -210,7 +215,6 @@ namespace OpenVR2WS
                         // Happens every loop
                         _vr.UpdateEvents(false);
                         _vr.UpdateActionStates(new[] {
-                            // TODO: Just look for everything here?!
                             Data.sourceToHandle[InputSource.Head],
                             Data.sourceToHandle[InputSource.Chest],
                             Data.sourceToHandle[InputSource.LeftShoulder],
@@ -227,6 +231,13 @@ namespace OpenVR2WS
                             Data.sourceToHandle[InputSource.Camera],
                             Data.sourceToHandle[InputSource.Gamepad]
                         });
+                        if (_settings.UseDevicePoses) {
+                            var poses = _vr.GetDeviceToAbsoluteTrackingPose();
+                            for(var i=0; i<poses.Length; i++)
+                            {
+                                Data.UpdateOrAddPoseData(poses[i], i);
+                            }
+                        }
                         if (!headsetHzUpdated && Data.sourceToIndex.ContainsKey(InputSource.Head)) {
                             int id = Data.sourceToIndex[InputSource.Head];
                             float hz = _vr.GetFloatTrackedDeviceProperty((uint) id, ETrackedDeviceProperty.Prop_DisplayFrequency_Float);
@@ -250,7 +261,7 @@ namespace OpenVR2WS
                     initComplete = false;
                     _vr.AcknowledgeShutdown();
                     _vr.Shutdown();
-                    Data.reset();
+                    Data.Reset();
                     Debug.WriteLine("Shutting down!");
                     _openvrStatusAction.Invoke(false);
                 }
@@ -272,6 +283,7 @@ namespace OpenVR2WS
                 Data.UpdateOrAddPoseInputActionData(data, info);
             };
 
+            _vr.ClearInputActions();
             _vr.RegisterActionSet(GetAction());
             _vr.RegisterDigitalAction(GetAction("Proximity"), SendDigitalInput);
             
@@ -330,10 +342,13 @@ namespace OpenVR2WS
             _vr.RegisterDigitalAction(GetAction("GripClick"), SendDigitalInput);
             _vr.RegisterDigitalAction(GetAction("GripTouch"), SendDigitalInput);
             _vr.RegisterAnalogAction(GetAction("GripForce"), StoreAnalogInput);
-
-            _vr.RegisterPoseAction(GetAction("Pose"), StorePoseInput);
-            _vr.RegisterPoseAction(GetAction("Pose2"), StorePoseInput);
-            _vr.RegisterPoseAction(GetAction("Pose3"), StorePoseInput);
+            
+            if(!_settings.UseDevicePoses)
+            {
+                _vr.RegisterPoseAction(GetAction("Pose"), StorePoseInput);
+                _vr.RegisterPoseAction(GetAction("Pose2"), StorePoseInput);
+                _vr.RegisterPoseAction(GetAction("Pose3"), StorePoseInput);
+            }
         }
 
         private string GetAction(string action="")
@@ -485,8 +500,8 @@ namespace OpenVR2WS
         public void Shutdown() {
             _openvrStatusAction = (status) => { };
             _server.ResetActions();
-            _shouldShutDown = true;
             _server.Stop();
+            _shouldShutDown = true;
         }
     }
 }

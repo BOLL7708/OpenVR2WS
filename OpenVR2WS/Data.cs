@@ -19,6 +19,7 @@ namespace OpenVR2WS
         public static ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData = new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>>();
         public static ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>> poseInputActionData = new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>>();
         public static ConcurrentDictionary<InputSource, int> sourceToIndex = new ConcurrentDictionary<InputSource, int>();
+        public static ConcurrentDictionary<int, InputSource> indexToSource = new ConcurrentDictionary<int, InputSource>();
 
         /*
          * This will update the device class for an index what was just connected.
@@ -83,7 +84,11 @@ namespace OpenVR2WS
                 var info = Instance.GetOriginTrackedDeviceInfo(handle);
                 if (info.trackedDeviceIndex != uint.MaxValue)
                 {
-                    sourceToIndex[source] = (int)info.trackedDeviceIndex;
+                    var index = (int)info.trackedDeviceIndex;
+                    // Only a headset gets index 0, but it's also the default N/A when loading info.
+                    if (source != InputSource.Head && index == 0) index = -1;
+                    sourceToIndex[source] = index;
+                    indexToSource[index] = source;
                 }
             }
         }
@@ -101,8 +106,16 @@ namespace OpenVR2WS
             if (!poseInputActionData.ContainsKey(source)) poseInputActionData[source] = new ConcurrentDictionary<string, Pose>();
             poseInputActionData[source][info.pathEnd] = new Pose(data.pose);
         }
+        public static void UpdateOrAddPoseData(TrackedDevicePose_t pose, int deviceIndex)
+        {
+            if(indexToSource.TryGetValue(deviceIndex, out var source))
+            {
+                if (!poseInputActionData.ContainsKey(source)) poseInputActionData[source] = new ConcurrentDictionary<string, Pose>();
+                poseInputActionData[source]["Pose"] = new Pose(pose);
+            }
+        }
 
-        public static void reset()
+        public static void Reset()
         {
             deviceToIndex[ETrackedDeviceClass.HMD] = new HashSet<uint>();
             deviceToIndex[ETrackedDeviceClass.Controller] = new HashSet<uint>();
@@ -114,6 +127,7 @@ namespace OpenVR2WS
             analogInputActionData.Clear();
             poseInputActionData.Clear();
             sourceToIndex.Clear();
+            indexToSource.Clear();
         }
     }
 }

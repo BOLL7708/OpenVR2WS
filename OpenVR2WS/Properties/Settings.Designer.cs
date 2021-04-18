@@ -70,5 +70,17 @@ namespace OpenVR2WS.Properties {
                 this["ExitWithSteam"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool UseDevicePoses {
+            get {
+                return ((bool)(this["UseDevicePoses"]));
+            }
+            set {
+                this["UseDevicePoses"] = value;
+            }
+        }
     }
 }

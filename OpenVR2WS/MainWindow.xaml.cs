@@ -66,61 +66,78 @@ namespace OpenVR2WS
             CheckBox_LaunchMinimized.IsChecked = _settings.LaunchMinimized;
             CheckBox_Tray.IsChecked = _settings.Tray;
             CheckBox_ExitWithSteamVR.IsChecked = _settings.ExitWithSteam;
+            CheckBox_UseDevicePoses.IsChecked = _settings.UseDevicePoses;
 
             // Controller
-            _controller = new MainController((status, value) => {
-                Dispatcher.Invoke(() =>
-                {
-                    var now = DateTime.Now;
-                    switch (status) {
-                        case SuperServer.ServerStatus.Connected:
-                            Label_ServerStatus.Background = Brushes.OliveDrab;
-                            Label_ServerStatus.Content = "Connected";
-                            break;
-                        case SuperServer.ServerStatus.Disconnected:
-                            Label_ServerStatus.Background = Brushes.Tomato;
-                            Label_ServerStatus.Content = "Disconnected";
-                            break;
-                        case SuperServer.ServerStatus.Error:
-                            Label_ServerStatus.Background = Brushes.Gray;
-                            Label_ServerStatus.Content = "Error";
-                            break;
-                        case SuperServer.ServerStatus.DeliveredCount:
-                            if (now.Second != _currentDeliveredSecond) {
-                                _currentDeliveredSecond = now.Second;
-                                Label_MessagesDelivered.Content = value.ToString();
+            _controller = new MainController(
+                (status, value) => {
+                    try
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            var now = DateTime.Now;
+                            switch (status)
+                            {
+                                case SuperServer.ServerStatus.Connected:
+                                    Label_ServerStatus.Background = Brushes.OliveDrab;
+                                    Label_ServerStatus.Content = "Connected";
+                                    break;
+                                case SuperServer.ServerStatus.Disconnected:
+                                    Label_ServerStatus.Background = Brushes.Tomato;
+                                    Label_ServerStatus.Content = "Disconnected";
+                                    break;
+                                case SuperServer.ServerStatus.Error:
+                                    Label_ServerStatus.Background = Brushes.Gray;
+                                    Label_ServerStatus.Content = "Error";
+                                    break;
+                                case SuperServer.ServerStatus.DeliveredCount:
+                                    if (now.Second != _currentDeliveredSecond)
+                                    {
+                                        _currentDeliveredSecond = now.Second;
+                                        Label_MessagesDelivered.Content = value.ToString();
+                                    }
+                                    break;
+                                case SuperServer.ServerStatus.ReceivedCount:
+                                    if (now.Second != _currentReceivedSecond)
+                                    {
+                                        _currentReceivedSecond = now.Second;
+                                        Label_MessagesReceived.Content = value.ToString();
+                                    }
+                                    break;
+                                case SuperServer.ServerStatus.SessionCount:
+                                    Label_ConnectedClients.Content = value.ToString();
+                                    break;
                             }
-                            break;
-                        case SuperServer.ServerStatus.ReceivedCount:
-                            if (now.Second != _currentReceivedSecond) {
-                                _currentReceivedSecond = now.Second;
-                                Label_MessagesReceived.Content = value.ToString();
-                            }
-                            break;
-                        case SuperServer.ServerStatus.SessionCount:
-                            Label_ConnectedClients.Content = value.ToString();
-                            break;
-                    } 
-                });
+                        });
+                    } catch (TaskCanceledException e) {
+                        Debug.WriteLine($"Caught exception: {e.Message}");
+                    }
                 }, 
                 (status) => {
-                    Dispatcher.Invoke(() => {
-                        if (status)
-                        {
-                            Label_OpenVRStatus.Background = Brushes.OliveDrab;
-                            Label_OpenVRStatus.Content = "Connected";
-                        }
-                        else 
-                        {
-                            Label_OpenVRStatus.Background = Brushes.Tomato;
-                            Label_OpenVRStatus.Content = "Disconnected";
-                            if (_settings.ExitWithSteam) {
-                                _controller.Shutdown();
-                                if (_notifyIcon != null) _notifyIcon.Dispose();
-                                System.Windows.Application.Current.Shutdown();
+                    try
+                    {
+                        Dispatcher.Invoke(() => {
+                            if (status)
+                            {
+                                Label_OpenVRStatus.Background = Brushes.OliveDrab;
+                                Label_OpenVRStatus.Content = "Connected";
                             }
-                        }
-                    });
+                            else
+                            {
+                                Label_OpenVRStatus.Background = Brushes.Tomato;
+                                Label_OpenVRStatus.Content = "Disconnected";
+                                if (_settings.ExitWithSteam)
+                                {
+                                    _controller.Shutdown();
+                                    if (_notifyIcon != null) _notifyIcon.Dispose();
+                                    System.Windows.Application.Current.Shutdown();
+                                }
+                            }
+                        });
+                    } catch (TaskCanceledException e)
+                    {
+                        Debug.WriteLine($"Caught exception: {e.Message}");
+                    }
                 }
             );
             if (_settings.LaunchMinimized)
@@ -197,6 +214,13 @@ namespace OpenVR2WS
         {
             _settings.ExitWithSteam = e.RoutedEvent.Name == "Checked";
             _settings.Save();
+        }
+
+        private void CheckBox_UseDevicePoses_Checked(object sender, RoutedEventArgs e)
+        {
+            _settings.UseDevicePoses = e.RoutedEvent.Name == "Checked";
+            _settings.Save();
+            if(_controller != null) _controller.ReregisterActions();
         }
     }
 }
