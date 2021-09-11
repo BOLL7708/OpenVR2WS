@@ -82,5 +82,29 @@ namespace OpenVR2WS.Properties {
                 this["UseDevicePoses"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool RemoteSettings {
+            get {
+                return ((bool)(this["RemoteSettings"]));
+            }
+            set {
+                this["RemoteSettings"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string RemoteSettingsPasswordHash {
+            get {
+                return ((string)(this["RemoteSettingsPasswordHash"]));
+            }
+            set {
+                this["RemoteSettingsPasswordHash"] = value;
+            }
+        }
     }
 }

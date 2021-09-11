@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Forms;
+using System.Security.Cryptography;
 
 namespace OpenVR2WS
 {
@@ -67,6 +68,7 @@ namespace OpenVR2WS
             CheckBox_Tray.IsChecked = _settings.Tray;
             CheckBox_ExitWithSteamVR.IsChecked = _settings.ExitWithSteam;
             CheckBox_UseDevicePoses.IsChecked = _settings.UseDevicePoses;
+            CheckBox_RemoteSettings.IsChecked = _settings.RemoteSettings;
 
             // Controller
             _controller = new MainController(
@@ -161,14 +163,16 @@ namespace OpenVR2WS
 
         private void Button_ServerPort_Click(object sender, RoutedEventArgs e)
         {
-            InputDialog dlg = new InputDialog(_settings.Port, "Port");
+            InputDialog dlg = new InputDialog(_settings.Port.ToString(), "Port");
             dlg.Owner = this;
             dlg.ShowDialog();
-            var result = dlg.DialogResult == true ? dlg.value : 0;
-            if (result != 0)
+            var result = dlg.DialogResult == true ? dlg.value : "";
+            var value = 0;
+            var parsedResult = Int32.TryParse(result, out value);
+            if (value != 0)
             {
-                _controller.RestartServer(result);
-                _settings.Port = result;
+                _controller.RestartServer(value);
+                _settings.Port = value;
                 TextBox_ServerPort.Text = result.ToString();
             }
         }
@@ -221,6 +225,27 @@ namespace OpenVR2WS
             _settings.UseDevicePoses = e.RoutedEvent.Name == "Checked";
             _settings.Save();
             if(_controller != null) _controller.ReregisterActions();
+        }
+        private void CheckBox_RemoteSettings_Checked(object sender, RoutedEventArgs e)
+        {
+            _settings.RemoteSettings = e.RoutedEvent.Name == "Checked";
+            _settings.Save();
+        }
+
+        private void Button_RemoteSettingsPassword_Click(object sender, RoutedEventArgs e) {
+            InputDialog dlg = new InputDialog("", "Password");
+            dlg.Owner = this;
+            dlg.ShowDialog();
+            var value = dlg.DialogResult == true ? dlg.value : "";
+                        
+            using (SHA256 sha = SHA256.Create())
+            {
+                Encoding enc = Encoding.UTF8;
+                byte[] hash = sha.ComputeHash(enc.GetBytes(value));
+                var hashb64 = Convert.ToBase64String(hash);
+                _settings.RemoteSettingsPasswordHash = hashb64;
+                _settings.Save();
+            }
         }
     }
 }

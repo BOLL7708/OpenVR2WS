@@ -94,6 +94,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Security" />
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -120,6 +121,7 @@
     </Compile>
     <Compile Include="MainController.cs" />
     <Compile Include="Output\CumulativeStats.cs" />
+    <Compile Include="Output\GenericResponse.cs" />
     <Compile Include="Output\PlayArea.cs" />
     <Compile Include="Output\Pose.cs" />
     <Compile Include="Output\Vectors.cs" />

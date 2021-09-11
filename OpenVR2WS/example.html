@@ -38,7 +38,7 @@
 var params = getParams(window.location.href);
 var port  = (typeof params.port == "undefined") ? 7708 : params.port;
 var wsUri = "ws://localhost:"+port;
-var output, deviceId, input, inputAnalog, inputPose, requests, applicationInfo, playArea, properties;
+var output, deviceId, input, inputAnalog, inputPose, requests, applicationInfo, playArea, properties, remoteSettingOutput;
 var websocket;
 var active = false, stop = false;
 var inputStates = {};
@@ -60,16 +60,17 @@ function getParams(url) {
 
 function init()
 {
-	output = document.getElementById("output");
-	requests = document.getElementById("requests");
-	ids = document.getElementById("deviceIds");
-	input = document.getElementById("input");
-	inputAnalog = document.getElementById("inputAnalog");
-	inputPose = document.getElementById("inputPose");
-	applicationInfo = document.getElementById("applicationInfo");
-	playArea = document.getElementById("playArea");
-	properties = document.getElementById("properties");
-	
+	output = document.querySelector("#output");
+	requests = document.querySelector("#requests");
+	ids = document.querySelector("#deviceIds");
+	input = document.querySelector("#input");
+	inputAnalog = document.querySelector("#inputAnalog");
+	inputPose = document.querySelector("#inputPose");
+	applicationInfo = document.querySelector("#applicationInfo");
+	playArea = document.querySelector("#playArea");
+	properties = document.querySelector("#properties");
+	remoteSettingOutput = document.querySelector('#remoteSettingOutput');
+
 	connectLoop();
 }
 
@@ -131,6 +132,7 @@ function onMessage(evt)
 				deviceProperties[data.data.device][data.data.name] = data.data.value;
 				properties.innerHTML = JSON.stringify(deviceProperties, null, 2);
 				break;
+			case "RemoteSetting": remoteSettingOutput.innerHTML = title(data.key)+text; break;
 			default: writeToScreen(title("Response") + text);
 		}
 	}
@@ -186,6 +188,32 @@ function requestPlayArea() {
 	doSend({"key": "PlayArea"});
 }
 
+async function sha256(message) {
+	const textBuffer = new TextEncoder().encode(message); // encode as UTF-8
+	const hashBuffer = await crypto.subtle.digest('SHA-256', textBuffer); // hash the message
+	const byteArray = Array.from(new Uint8Array(hashBuffer)); // convert ArrayBuffer to Array
+	let base64String = btoa(String.fromCharCode(...byteArray)); // b64 encode byte array
+	return base64String;
+}
+
+function sendRemoteSetting() {
+	const password = document.querySelector('#password').value;
+	const section = document.querySelector('#section').value;
+	const setting = document.querySelector('#setting').value;
+	const value = document.querySelector('#value').value;
+	const type = document.querySelector('#type').value;
+	sha256(password).then(passwordHash => {
+		doSend({
+			key: 'RemoteSetting',
+			value: passwordHash,
+			value2: section,
+			value3: setting,
+			value4: value,
+			value5: type
+		});
+	});
+}
+
 function startLoop() {
 	requestLoop();
 }
@@ -207,7 +235,22 @@ window.addEventListener("load", init, false);
 			<button onclick="stop = false; requestLoop();">Start Loop</button>
 			<button onclick="stop = true;">Stop Loop</button>
 		</div>
-		-->
+		<div id="remoteSettings" style="float:left;">
+			<h3>Remote Settings</h3>			
+			<li><label for="password">Password: </label></label><input id="password" type="password" value="test"/></li>
+			<li><label for="section">Section: </label></label><input id="section" type="text" value="steamvr"/></li>
+			<li><label for="setting">Setting: </label></label><input id="setting" type="text" value="hmdDisplayColorGainR"/></li>
+			<li><label for="value">Value: </label></label><input id="value" type="text" value="4.0"/></li>
+			<li><label for="type">Type: </label></label><input id="type" type="text" list="remoteSettingTypes" value="Float"/></li>
+			<datalist id="remoteSettingTypes">
+				<option value="Bool">
+				<option value="Int32">
+				<option value="Float">
+				<option value="String">
+			</datalist>			
+			<li><button onclick="sendRemoteSetting();">Send</button></li>
+			<div class="pre" id="remoteSettingOutput"></div>
+		</div>
 		<div class="pre" id="output"></div>
 		<div class="pre" id="applicationInfo"></div>
 		<div class="pre" id="properties"></div>

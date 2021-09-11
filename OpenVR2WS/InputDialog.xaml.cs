@@ -17,22 +17,23 @@ namespace OpenVR2WS
     public partial class InputDialog : Window
     {
         public string labelText;
-        public int value;
-        public InputDialog(int value, string labelText)
+        public string value;
+        public InputDialog(string value, string labelText)
         {
             this.value = value;
             this.labelText = $"{labelText}:";
             InitializeComponent();
             Title = $"Set {labelText}";
             labelValue.Content = this.labelText;
-            textBoxValue.Text = value.ToString();
+            textBoxValue.Text = value;
             textBoxValue.Focus();
             textBoxValue.SelectAll();
         }
 
         private void okButton_Click(object sender, RoutedEventArgs e)
         {
-            DialogResult = Int32.TryParse(textBoxValue.Text, out value);
+            value = textBoxValue.Text;
+            DialogResult = value.Length > 0;
         }
     }
 }

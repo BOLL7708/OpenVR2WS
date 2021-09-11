@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:OpenVR2WS"
         mc:Ignorable="d"
-        Title="MainWindow" Height="380" Width="360" Closing="Window_Closing" Icon="resources/logo.ico" StateChanged="Window_StateChanged">
+        Title="MainWindow" Height="415" Width="360" Closing="Window_Closing" Icon="resources/logo.ico" StateChanged="Window_StateChanged">
     <DockPanel LastChildFill="True" Margin="10">
         <GroupBox Header="Status &amp; Help" DockPanel.Dock="Top" Background="WhiteSmoke">
             <StackPanel Orientation="Vertical">
@@ -48,6 +48,10 @@
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
                     <CheckBox x:Name="CheckBox_UseDevicePoses" Content="Use device pose instead of input pose" ToolTip="Devic poses are still retrieved when the SteamVR dashboard is up, input poses can be rebound." Checked="CheckBox_UseDevicePoses_Checked" Unchecked="CheckBox_UseDevicePoses_Checked"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
+                    <CheckBox x:Name="CheckBox_RemoteSettings" VerticalAlignment="Center" Content="Enable remote setting updates" ToolTip="Enables updating of SteamVR settings by sending specific messages upstream." Checked="CheckBox_RemoteSettings_Checked" Unchecked="CheckBox_RemoteSettings_Checked"/>
+                    <Button x:Name="Button_RemoteSettingsPassword" Content="Set password" Margin="5 0 0 0" Padding="10 5 10 5" Click="Button_RemoteSettingsPassword_Click"/>
                 </StackPanel>
             </StackPanel>
         </GroupBox>

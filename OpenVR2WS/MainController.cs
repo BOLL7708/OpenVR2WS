@@ -52,7 +52,7 @@ namespace OpenVR2WS
                 catch (Exception e) { Debug.WriteLine($"JSON Parsing Exception: {e.Message}"); }
 
                 if (command.key != CommandEnum.None) HandleCommand(session, command);
-                else _server.SendMessage(session, $"Invalid command: {message}");
+                else SendResult("InvalidCommand", new GenericResponse() { message=message, success=false }, session);
             };
             _server.StatusMessageAction = (session, connected, status) =>
             {
@@ -113,6 +113,10 @@ namespace OpenVR2WS
             public CommandEnum key = CommandEnum.None;
             public string value = "";
             public string value2 = "";
+            public string value3 = "";
+            public string value4 = "";
+            public string value5 = "";
+            public string value6 = "";
             public int device = -1;
         }
 
@@ -126,7 +130,8 @@ namespace OpenVR2WS
             DeviceProperty,
             InputAnalog,
             InputPose,
-            Setting
+            Setting,
+            RemoteSetting
         }
 
         private void HandleCommand(WebSocketSession session, Command command)
@@ -169,6 +174,10 @@ namespace OpenVR2WS
                     break;
                 case CommandEnum.Setting:
                     SendSetting(command.key, command.value, command.value2, session);
+                    break;
+                case CommandEnum.RemoteSetting:
+                    var response = ApplyRemoteSetting(command);
+                    SendResult(command.key, response, session);
                     break;
             }
         }
@@ -496,6 +505,62 @@ namespace OpenVR2WS
             SendResult(key, data, session);
         }
         #endregion
+
+        private GenericResponse ApplyRemoteSetting(Command command) {
+            var response = new GenericResponse();
+            if (!_settings.RemoteSettings)
+            {
+                response.message = "Remote Settings is disabled. Enable it in the application interface.";
+                return response;
+            }
+
+            if (!command.value.Equals(_settings.RemoteSettingsPasswordHash)) {
+                response.message = "Password string did not match, b64-encode a binary SHA256 hash.";
+                return response;
+            }
+
+            var settingSuccess = ApplySetting(command.value2, command.value3, command.value4, command.value5);
+
+            if (!settingSuccess)
+            {
+                response.message = $"Failed to set {command.value2}/{command.value3} to {command.value4}.";
+                return response;
+            }
+
+            response.message = $"Succeeded setting {command.value2}/{command.value3} to {command.value4}.";
+            response.success = true;
+            return response;
+        }
+
+        private bool ApplySetting(string section, string setting, string value, string type) {
+            bool boolValue;
+            var boolSuccess = bool.TryParse(value, out boolValue);
+            int intValue;
+            var intSuccess = int.TryParse(value, out intValue);
+            float floatValue;
+            var floatSuccess = float.TryParse(value, out floatValue);
+
+            if (type.Length > 0) {
+                switch (type)
+                {
+                    case "String":
+                        return _vr.SetStringSetting(section, setting, value);
+                    case "Bool":
+                        return _vr.SetBoolSetting(section, setting, boolValue);
+                    case "Float":
+                        return _vr.SetFloatSetting(section, setting, floatValue);
+                    case "Int32":
+                        return _vr.SetIntSetting(section, setting, intValue);
+                    default:
+                        return false;
+                }
+            } else {
+                if (boolSuccess) return _vr.SetBoolSetting(section, setting, boolValue);
+                else if (intSuccess) return _vr.SetIntSetting(section, setting, intValue);
+                else if (floatSuccess) return _vr.SetFloatSetting(section, setting, floatValue);
+                else return _vr.SetStringSetting(section, setting, value);
+            }
+        }
 
         public void Shutdown() {
             _openvrStatusAction = (status) => { };
