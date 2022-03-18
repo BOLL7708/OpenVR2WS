@@ -420,6 +420,18 @@ namespace OpenVR2WS
             {
                 // _server.SendMessageToAll("Left standby.");
             });
+            _vr.RegisterEvents(new[] {
+                EVREventType.VREvent_Compositor_ChaperoneBoundsShown,
+                EVREventType.VREvent_Compositor_ChaperoneBoundsHidden,
+                EVREventType.VREvent_RoomViewShown,
+                EVREventType.VREvent_RoomViewHidden,
+                EVREventType.VREvent_TrackedCamera_StartVideoStream,
+                EVREventType.VREvent_TrackedCamera_PauseVideoStream,
+                EVREventType.VREvent_TrackedCamera_ResumeVideoStream,
+                EVREventType.VREvent_TrackedCamera_StopVideoStream
+            }, (data) => {
+                SendEvent((EVREventType) data.eventType);
+            });
         }
         #endregion
 
@@ -495,7 +507,7 @@ namespace OpenVR2WS
             SendResult(key, data, session);
         }
 
-        private void SendSetting(CommandEnum key, string section, string setting, WebSocketSession session= null) {
+        private void SendSetting(CommandEnum key, string section, string setting, WebSocketSession session = null) {
             // TODO: Add switch on type
             var value =_vr.GetFloatSetting(section, setting);
             var data = new Dictionary<string, dynamic>();
@@ -503,6 +515,13 @@ namespace OpenVR2WS
             data["setting"] = setting;
             data["value"] = value;
             SendResult(key, data, session);
+        }
+
+        private void SendEvent(EVREventType eventType, WebSocketSession session = null)
+        {
+            var data = new Dictionary<string, dynamic>();
+            data["type"] = Enum.GetName(typeof(EVREventType), eventType).Replace("VREvent_", "");
+            SendResult("event", data, session);
         }
         #endregion
 

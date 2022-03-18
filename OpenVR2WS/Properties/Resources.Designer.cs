@@ -80,7 +80,7 @@ namespace OpenVR2WS.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to v0.39.
+        ///   Looks up a localized string similar to v0.40.
         /// </summary>
         public static string Version {
             get {
