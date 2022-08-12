@@ -131,7 +131,9 @@ namespace OpenVR2WS
             InputAnalog,
             InputPose,
             Setting,
-            RemoteSetting
+            RemoteSetting,
+            FindOverlay,
+            Relay
         }
 
         private void HandleCommand(WebSocketSession session, Command command)
@@ -178,6 +180,24 @@ namespace OpenVR2WS
                 case CommandEnum.RemoteSetting:
                     var response = ApplyRemoteSetting(command);
                     SendResult(command.key, response, session);
+                    break;
+                case CommandEnum.FindOverlay:
+                    var overlayHandle = _vr.FindOverlay(command.value);
+                    var overlayResult = new Dictionary<string, dynamic>
+                    {
+                        { "handle", overlayHandle },
+                        { "key", command.value }
+                    };
+                    SendResult(command.key, overlayResult, session);
+                    break;
+                case CommandEnum.Relay:
+                    var relayRelay = new Dictionary<string, dynamic>
+                    {
+                        { "auth", command.value },
+                        { "user", command.value2 },
+                        { "data", command.value3 }
+                    };
+                    SendResult(command.key, relayRelay);
                     break;
             }
         }
@@ -520,8 +540,14 @@ namespace OpenVR2WS
         private void SendEvent(EVREventType eventType, WebSocketSession session = null)
         {
             var data = new Dictionary<string, dynamic>();
-            data["type"] = Enum.GetName(typeof(EVREventType), eventType).Replace("VREvent_", "");
-            SendResult("event", data, session);
+            try
+            {
+                data["type"] = Enum.GetName(typeof(EVREventType), eventType).Replace("VREvent_", "");
+                SendResult("event", data, session);
+            }
+            catch (Exception e) {
+                Debug.WriteLine($"Could not get name for enum coming in from SteamVR: {eventType}, {e.Message}");
+            }
         }
         #endregion
 
