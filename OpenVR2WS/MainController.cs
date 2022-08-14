@@ -133,7 +133,8 @@ namespace OpenVR2WS
             Setting,
             RemoteSetting,
             FindOverlay,
-            Relay
+            Relay,
+            MoveSpace
         }
 
         private void HandleCommand(WebSocketSession session, Command command)
@@ -178,8 +179,8 @@ namespace OpenVR2WS
                     SendSetting(command.key, command.value, command.value2, session);
                     break;
                 case CommandEnum.RemoteSetting:
-                    var response = ApplyRemoteSetting(command);
-                    SendResult(command.key, response, session);
+                    var remoteSettingResponse = ApplyRemoteSetting(command);
+                    SendResult(command.key, remoteSettingResponse, session);
                     break;
                 case CommandEnum.FindOverlay:
                     var overlayHandle = _vr.FindOverlay(command.value);
@@ -193,11 +194,16 @@ namespace OpenVR2WS
                 case CommandEnum.Relay:
                     var relayRelay = new Dictionary<string, dynamic>
                     {
-                        { "auth", command.value },
+                        { "password", command.value },
                         { "user", command.value2 },
-                        { "data", command.value3 }
+                        { "key", command.value3 },
+                        { "data", command.value4 }
                     };
                     SendResult(command.key, relayRelay);
+                    break;
+                case CommandEnum.MoveSpace:
+                    var moveSpaceResponse = ApplyMoveSpace(command);
+                    SendResult(command.key, moveSpaceResponse, session);
                     break;
             }
         }
@@ -553,16 +559,8 @@ namespace OpenVR2WS
 
         private GenericResponse ApplyRemoteSetting(Command command) {
             var response = new GenericResponse();
-            if (!_settings.RemoteSettings)
-            {
-                response.message = "Remote Settings is disabled. Enable it in the application interface.";
-                return response;
-            }
-
-            if (!command.value.Equals(_settings.RemoteSettingsPasswordHash)) {
-                response.message = "Password string did not match, b64-encode a binary SHA256 hash.";
-                return response;
-            }
+            var canSet = CheckRemoteSetting(command, ref response);
+            if (!canSet) return response;
 
             var settingSuccess = ApplySetting(command.value2, command.value3, command.value4, command.value5);
 
@@ -575,6 +573,52 @@ namespace OpenVR2WS
             response.message = $"Succeeded setting {command.value2}/{command.value3} to {command.value4}.";
             response.success = true;
             return response;
+        }
+
+        private GenericResponse ApplyMoveSpace(Command command) {
+            var response = new GenericResponse();
+            var canSet = CheckRemoteSetting(command, ref response);
+            if (!canSet) return response;
+
+            var newPos = new HmdVector3_t();
+            float x, y, z;
+            bool moveChaperone;
+            try
+            {
+                x = float.Parse(command.value2);
+                y = float.Parse(command.value3);
+                z = float.Parse(command.value4);
+                moveChaperone = bool.Parse(command.value5);
+            } catch (Exception e) {
+                response.message = $"Could not parse values for move (floats: value2, value3, value4, boolean: value5): {e.Message}";
+                return response;
+            }
+            newPos.v0 = x;
+            newPos.v1 = y;
+            newPos.v2 = z;
+            var success = _vr.MoveUniverse(newPos, moveChaperone, true);
+            if (success) {
+                response.success = true;
+                response.message = "Moved space successfully.";
+            } else
+            {
+                response.message = "Failed to move space.";
+            }
+            return response;
+        }
+
+        private bool CheckRemoteSetting(Command command, ref GenericResponse response) {
+            if (!_settings.RemoteSettings)
+            {
+                response.message = $"The command '{command.key}' relies on Remote Settings which is disabled. Enable it in the application interface.";
+                return false;
+            }
+            if (!command.value.Equals(_settings.RemoteSettingsPasswordHash))
+            {
+                response.message = "Password string did not match, b64-encode a binary SHA256 hash.";
+                return false;
+            }
+            return true;
         }
 
         private bool ApplySetting(string section, string setting, string value, string type) {
