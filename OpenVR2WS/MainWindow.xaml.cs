@@ -16,8 +16,6 @@ namespace OpenVR2WS
     {
         private MainController _controller;
         private Properties.Settings _settings = Properties.Settings.Default;
-        private System.Windows.Forms.NotifyIcon _notifyIcon;
-        private static Mutex _mutex = null;
         private int _currentDeliveredSecond = 0;
         private int _currentReceivedSecond = 0;
 
@@ -26,27 +24,11 @@ namespace OpenVR2WS
             InitializeComponent();
 
             // Prevent multiple instances
-            _mutex = new Mutex(true, Properties.Resources.AppName, out bool createdNew);
-            if (!createdNew)
-            {
-                System.Windows.MessageBox.Show(
-                System.Windows.Application.Current.MainWindow,
-                "This application is already running!",
-                Properties.Resources.AppName,
-                MessageBoxButton.OK,
-                MessageBoxImage.Information
-                );
-                System.Windows.Application.Current.Shutdown();
-            }
+            WindowUtils.CheckIfAlreadyRunning(Properties.Resources.AppName);
 
             // Tray icon
             var icon = Properties.Resources.Logo.Clone() as System.Drawing.Icon;
-            _notifyIcon = new System.Windows.Forms.NotifyIcon();
-            _notifyIcon.Click += NotifyIcon_Click;
-            _notifyIcon.Text = $"Click to show the {Properties.Resources.AppName} window";
-            _notifyIcon.Icon = icon;
-            _notifyIcon.Visible = true;
-
+            WindowUtils.CreateTrayIcon(this, icon, Properties.Resources.AppName);
 
             // Window setup
             Title = Properties.Resources.AppName;
@@ -123,8 +105,8 @@ namespace OpenVR2WS
                                 if (_settings.ExitWithSteam)
                                 {
                                     _controller.Shutdown();
-                                    if (_notifyIcon != null) _notifyIcon.Dispose();
-                                    System.Windows.Application.Current.Shutdown();
+                                    WindowUtils.DestroyTrayIcon();
+                                    Application.Current.Shutdown();
                                 }
                             }
                         });
@@ -180,19 +162,10 @@ namespace OpenVR2WS
             ShowInTaskbar = !_settings.Tray;
         }
 
-        // Restore window
-        private void NotifyIcon_Click(object sender, EventArgs e)
-        {
-            WindowState = WindowState.Normal;
-            ShowInTaskbar = true;
-            Show();
-            Activate();
-        }
-
         // Not doing this will leave the icon after app closure
         protected override void OnClosing(CancelEventArgs e)
         {
-            if(_notifyIcon != null) _notifyIcon.Dispose();
+            WindowUtils.DestroyTrayIcon();
         }
 
         private void Window_StateChanged(object sender, EventArgs e)
