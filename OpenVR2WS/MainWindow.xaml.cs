@@ -118,9 +118,7 @@ namespace OpenVR2WS
             );
             if (_settings.LaunchMinimized)
             {
-                Hide();
-                WindowState = WindowState.Minimized;
-                ShowInTaskbar = !_settings.Tray;
+                WindowUtils.Minimize(this, !_settings.Tray);
             }
         }
 
@@ -170,11 +168,7 @@ namespace OpenVR2WS
 
         private void Window_StateChanged(object sender, EventArgs e)
         {
-            switch (WindowState)
-            {
-                case WindowState.Minimized: ShowInTaskbar = !_settings.Tray; break; // Setting here for tray icon only
-                default: ShowInTaskbar = true; Show(); break;
-            }
+            WindowUtils.OnStateChange(this, !_settings.Tray);
         }
 
         private void CheckBox_ExitWithSteamVR_Checked(object sender, RoutedEventArgs e)
