@@ -1,3 +1,6 @@
 [submodule "OpenVR2WS/EasyOpenVR"]
 	path = OpenVR2WS/EasyOpenVR
 	url = https://github.com/BOLL7708/EasyOpenVR.git
+[submodule "OpenVR2WS/EasyFramework"]
+	path = OpenVR2WS/EasyFramework
+	url = https://github.com/BOLL7708/EasyFramework.git

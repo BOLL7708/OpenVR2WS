@@ -1,22 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Forms;
 using System.Security.Cryptography;
+using BOLL7708;
 
 namespace OpenVR2WS
 {
@@ -167,9 +159,8 @@ namespace OpenVR2WS
             dlg.Owner = this;
             dlg.ShowDialog();
             var result = dlg.DialogResult == true ? dlg.value : "";
-            var value = 0;
-            var parsedResult = Int32.TryParse(result, out value);
-            if (value != 0)
+            var parsedResult = Int32.TryParse(result, out int value);
+            if (parsedResult && value != 0)
             {
                 _controller.RestartServer(value);
                 _settings.Port = value;

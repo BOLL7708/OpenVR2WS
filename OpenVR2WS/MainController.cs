@@ -13,15 +13,16 @@ using Newtonsoft.Json.Converters;
 using SuperSocket.WebSocket;
 using OpenVR2WS.Output;
 using static BOLL7708.EasyOpenVRSingleton;
+using SuperSocket.WebSocket.Server;
 
 namespace OpenVR2WS
 {
     class MainController
     {
-        private SuperServer _server = new SuperServer();
-        private Properties.Settings _settings = Properties.Settings.Default;
-        private EasyOpenVRSingleton _vr = EasyOpenVRSingleton.Instance;
-        private StringEnumConverter _converter = new StringEnumConverter();
+        readonly private SuperServer _server = new();
+        readonly private Properties.Settings _settings = Properties.Settings.Default;
+        readonly private EasyOpenVRSingleton _vr = EasyOpenVRSingleton.Instance;
+        readonly private StringEnumConverter _converter = new();
         private Action<bool> _openvrStatusAction;
 
         // Data storage
@@ -29,7 +30,7 @@ namespace OpenVR2WS
 
         public MainController(Action<SuperServer.ServerStatus, int> serverStatus, Action<bool> openvrStatus)
         {
-            _openvrStatusAction = openvrStatus;
+            _openvrStatusAction += openvrStatus;
             Data.Reset();
             InitServer(serverStatus);
 
@@ -44,8 +45,8 @@ namespace OpenVR2WS
         #region WebSocketServer
         private void InitServer(Action<SuperServer.ServerStatus, int> serverStatus)
         {
-            _server.StatusAction = serverStatus;
-            _server.MessageReceievedAction = (session, message) =>
+            _server.StatusAction += serverStatus;
+            _server.MessageReceivedAction += (session, message) =>
             {
                 var command = new Command();
                 try { command = JsonConvert.DeserializeObject<Command>(message); }
@@ -54,7 +55,7 @@ namespace OpenVR2WS
                 if (command.key != CommandEnum.None) HandleCommand(session, command);
                 else SendResult("InvalidCommand", new GenericResponse() { message=message, success=false }, session);
             };
-            _server.StatusMessageAction = (session, connected, status) =>
+            _server.StatusMessageAction += (session, connected, status) =>
             {
                 Debug.WriteLine($"Status received: {status}");
                 if(connected && _vr.IsInitialized())
@@ -65,7 +66,7 @@ namespace OpenVR2WS
             RestartServer(_settings.Port);
         }
 
-        public void RestartServer(int port)
+        public async void RestartServer(int port)
         {
             _server.Start(port);
         }
@@ -83,9 +84,11 @@ namespace OpenVR2WS
         }
         private void SendResult(string key, Object data=null, WebSocketSession session = null)
         {
-            var result = new Dictionary<string, dynamic>();
-            result["key"] = key;
-            result["data"] = data;
+            var result = new Dictionary<string, dynamic>
+            {
+                ["key"] = key,
+                ["data"] = data
+            };
             var jsonString = "";
             try
             {
@@ -305,18 +308,18 @@ namespace OpenVR2WS
 
         private void RegisterActions()
         {
-            Action<InputDigitalActionData_t, InputActionInfo> SendDigitalInput = (data, info) =>
+            void SendDigitalInput(InputDigitalActionData_t data, InputActionInfo info)
             {
                 SendInput(data, info);
-            };
-            Action<InputAnalogActionData_t, InputActionInfo> StoreAnalogInput = (data, info) =>
+            }
+            void StoreAnalogInput(InputAnalogActionData_t data, InputActionInfo info)
             {
                 Data.UpdateOrAddAnalogInputActionData(data, info);
-            };
-            Action<InputPoseActionData_t, InputActionInfo> StorePoseInput = (data, info) =>
+            }
+            void StorePoseInput(InputPoseActionData_t data, InputActionInfo info)
             {
                 Data.UpdateOrAddPoseInputActionData(data, info);
-            };
+            }
 
             _vr.ClearInputActions();
             _vr.RegisterActionSet(GetAction());
@@ -480,9 +483,11 @@ namespace OpenVR2WS
                 _currentAppId = appId;
                 _currentAppSessionTime = Utils.NowUnixUTC();
             }
-            var data = new Dictionary<string, dynamic>();
-            data["id"] = appId;
-            data["sessionStart"] = _currentAppSessionTime;
+            var data = new Dictionary<string, dynamic>
+            {
+                ["id"] = appId,
+                ["sessionStart"] = _currentAppSessionTime
+            };
             SendResult(CommandEnum.ApplicationInfo, data, session);
         }
 
@@ -496,9 +501,11 @@ namespace OpenVR2WS
 
         private void SendDeviceIds(WebSocketSession session=null)
         {
-            var data = new Dictionary<string, dynamic>();
-            data["deviceToIndex"] = Data.deviceToIndex;
-            data["sourceToIndex"] = Data.sourceToIndex;
+            var data = new Dictionary<string, dynamic>
+            {
+                ["deviceToIndex"] = Data.deviceToIndex,
+                ["sourceToIndex"] = Data.sourceToIndex
+            };
             SendResult(CommandEnum.DeviceIds, data);
         }
 
@@ -536,10 +543,12 @@ namespace OpenVR2WS
         private void SendSetting(CommandEnum key, string section, string setting, WebSocketSession session = null) {
             // TODO: Add switch on type
             var value =_vr.GetFloatSetting(section, setting);
-            var data = new Dictionary<string, dynamic>();
-            data["section"] = section;
-            data["setting"] = setting;
-            data["value"] = value;
+            var data = new Dictionary<string, dynamic>
+            {
+                ["section"] = section,
+                ["setting"] = setting,
+                ["value"] = value
+            };
             SendResult(key, data, session);
         }
 
@@ -651,10 +660,9 @@ namespace OpenVR2WS
             }
         }
 
-        public void Shutdown() {
-            _openvrStatusAction = (status) => { };
-            _server.ResetActions();
-            _server.Stop();
+        public async void Shutdown() {
+            _openvrStatusAction += (status) => { };
+            await _server.Stop();
             _shouldShutDown = true;
         }
     }
