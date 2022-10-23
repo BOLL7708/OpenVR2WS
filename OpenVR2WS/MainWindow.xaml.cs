@@ -155,11 +155,10 @@ namespace OpenVR2WS
 
         private void Button_ServerPort_Click(object sender, RoutedEventArgs e)
         {
-            InputDialog dlg = new InputDialog(_settings.Port.ToString(), "Port");
-            dlg.Owner = this;
+            SingleInputDialog dlg = new(this, _settings.Port.ToString(), "Port");
             dlg.ShowDialog();
             var result = dlg.DialogResult == true ? dlg.value : "";
-            var parsedResult = Int32.TryParse(result, out int value);
+            var parsedResult = int.TryParse(result, out int value);
             if (parsedResult && value != 0)
             {
                 _controller.RestartServer(value);
@@ -224,8 +223,7 @@ namespace OpenVR2WS
         }
 
         private void Button_RemoteSettingsPassword_Click(object sender, RoutedEventArgs e) {
-            InputDialog dlg = new InputDialog("", "Password");
-            dlg.Owner = this;
+            SingleInputDialog dlg = new(this, "", "Password");
             dlg.ShowDialog();
             var value = dlg.DialogResult == true ? dlg.value : "";
                         
