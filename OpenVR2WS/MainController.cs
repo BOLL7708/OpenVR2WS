@@ -14,6 +14,7 @@ using SuperSocket.WebSocket;
 using OpenVR2WS.Output;
 using static BOLL7708.EasyOpenVRSingleton;
 using SuperSocket.WebSocket.Server;
+using OpenVR2WS.Data;
 
 namespace OpenVR2WS
 {
@@ -31,7 +32,7 @@ namespace OpenVR2WS
         public MainController(Action<SuperServer.ServerStatus, int> serverStatus, Action<bool> openvrStatus)
         {
             _openvrStatusAction += openvrStatus;
-            Data.Reset();
+            DataStore.Reset();
             InitServer(serverStatus);
 
             _vr.SetDebugLogAction((message) => {
@@ -53,7 +54,7 @@ namespace OpenVR2WS
                 catch (Exception e) { Debug.WriteLine($"JSON Parsing Exception: {e.Message}"); }
 
                 if (command.key != CommandEnum.None) HandleCommand(session, command);
-                else SendResult("InvalidCommand", new GenericResponse() { message=message, success=false }, session);
+                else SendResult("InvalidCommand", new GenericResponse() { message=message, success=false }, command.nonce, session);
             };
             _server.StatusMessageAction += (session, connected, status) =>
             {
@@ -68,7 +69,7 @@ namespace OpenVR2WS
 
         public async void RestartServer(int port)
         {
-            _server.Start(port);
+            await _server.Start(port);
         }
 
         public void ReregisterActions()
@@ -77,17 +78,18 @@ namespace OpenVR2WS
         }
 
         // If session is null, it will send to all registered sessions
-        private void SendResult(CommandEnum command, Object data=null, WebSocketSession session = null)
+        private void SendResult(CommandEnum command, Object data=null, string nonce = "", WebSocketSession session = null)
         {
             var key = Enum.GetName(typeof(CommandEnum), command);
-            SendResult(key, data, session);
+            SendResult(key, data, nonce, session);
         }
-        private void SendResult(string key, Object data=null, WebSocketSession session = null)
+        private void SendResult(string key, Object data=null, string nonce = "", WebSocketSession session = null)
         {
             var result = new Dictionary<string, dynamic>
             {
                 ["key"] = key,
-                ["data"] = data
+                ["data"] = data,
+                ["nonce"] = nonce
             };
             var jsonString = "";
             try
@@ -100,14 +102,14 @@ namespace OpenVR2WS
             if(jsonString != "") _server.SendMessage(session, jsonString);
         }
 
-        private void SendInput(InputDigitalActionData_t data, InputActionInfo info) {
-            var source = Data.handleToSource[info.sourceHandle];
+        private void SendInput(InputDigitalActionData_t data, InputActionInfo info, string nonce = "") {
+            var source = DataStore.handleToSource[info.sourceHandle];
             var output = new Dictionary<string, dynamic>() {
                 { "source", source },
                 { "input", info.pathEnd },
                 { "value", data.bState }
             };
-            SendResult("Input", output);
+            SendResult("Input", output, nonce);
         }
 
         private class Command
@@ -121,6 +123,7 @@ namespace OpenVR2WS
             public string value5 = "";
             public string value6 = "";
             public int device = -1;
+            public string nonce = "";
         }
 
         enum CommandEnum
@@ -149,18 +152,18 @@ namespace OpenVR2WS
                 case CommandEnum.None: break;
                 case CommandEnum.CumulativeStats:
                     var stats = _vr.GetCumulativeStats();
-                    SendResult(command.key, new CumulativeStats(stats), session);
+                    SendResult(command.key, new CumulativeStats(stats), command.nonce, session);
                     break;
                 case CommandEnum.PlayArea: 
-                    SendPlayArea(session);
+                    SendPlayArea(command.nonce, session);
                     break;
                 case CommandEnum.ApplicationInfo:
-                    SendApplicationInfo(session);
+                    SendApplicationInfo(command.nonce, session);
                     break;
                 case CommandEnum.DeviceIds:
-                    Data.UpdateInputDeviceHandles();
-                    Data.UpdateDeviceIndices();
-                    SendDeviceIds(session);
+                    DataStore.UpdateInputDeviceHandles();
+                    DataStore.UpdateDeviceIndices();
+                    SendDeviceIds(command.nonce, session);
                     break;
                 case CommandEnum.DeviceProperty:
                     var property = ETrackedDeviceProperty.Prop_Invalid;
@@ -168,22 +171,22 @@ namespace OpenVR2WS
                     catch(Exception e) { Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}"); }
                     if (property != ETrackedDeviceProperty.Prop_Invalid)
                     {
-                        SendDeviceProperty(command.key, command.device, property, session);
+                        SendDeviceProperty(command.key, command.device, property, command.nonce, session);
                     }
-                    else SendResult("Error", $"Faulty property: {command.value}", session); // TODO: Convert to error func
+                    else SendResult("Error", $"Faulty property: {command.value}", command.nonce, session); // TODO: Convert to error func
                     break;
                 case CommandEnum.InputAnalog:
-                    SendResult(command.key, Data.analogInputActionData, session);
+                    SendResult(command.key, DataStore.analogInputActionData, command.nonce, session);
                     break;
                 case CommandEnum.InputPose:
-                    SendResult(command.key, Data.poseInputActionData, session);
+                    SendResult(command.key, DataStore.poseInputActionData, command.nonce, session);
                     break;
                 case CommandEnum.Setting:
-                    SendSetting(command.key, command.value, command.value2, session);
+                    SendSetting(command.key, command.value, command.value2, command.nonce, session);
                     break;
                 case CommandEnum.RemoteSetting:
                     var remoteSettingResponse = ApplyRemoteSetting(command);
-                    SendResult(command.key, remoteSettingResponse, session);
+                    SendResult(command.key, remoteSettingResponse, command.nonce, session);
                     break;
                 case CommandEnum.FindOverlay:
                     var overlayHandle = _vr.FindOverlay(command.value);
@@ -192,7 +195,7 @@ namespace OpenVR2WS
                         { "handle", overlayHandle },
                         { "key", command.value }
                     };
-                    SendResult(command.key, overlayResult, session);
+                    SendResult(command.key, overlayResult, command.nonce, session);
                     break;
                 case CommandEnum.Relay:
                     var relayRelay = new Dictionary<string, dynamic>
@@ -206,7 +209,7 @@ namespace OpenVR2WS
                     break;
                 case CommandEnum.MoveSpace:
                     var moveSpaceResponse = ApplyMoveSpace(command);
-                    SendResult(command.key, moveSpaceResponse, session);
+                    SendResult(command.key, moveSpaceResponse, command.nonce, session);
                     break;
             }
         }
@@ -241,8 +244,8 @@ namespace OpenVR2WS
                         _stopRunning = false;
                         _vr.AddApplicationManifest("./app.vrmanifest", "boll7708.openvr2ws", true);
                         _vr.LoadActionManifest("./actions.json");
-                        Data.UpdateDeviceIndices();
-                        Data.UpdateInputDeviceHandles();
+                        DataStore.UpdateDeviceIndices();
+                        DataStore.UpdateInputDeviceHandles();
                         RegisterActions();
                         RegisterEvents();
                         SendDefaults();
@@ -253,31 +256,31 @@ namespace OpenVR2WS
                         // Happens every loop
                         _vr.UpdateEvents(false);
                         _vr.UpdateActionStates(new[] {
-                            Data.sourceToHandle[InputSource.Head],
-                            Data.sourceToHandle[InputSource.Chest],
-                            Data.sourceToHandle[InputSource.LeftShoulder],
-                            Data.sourceToHandle[InputSource.RightShoulder],
-                            Data.sourceToHandle[InputSource.LeftElbow],
-                            Data.sourceToHandle[InputSource.RightElbow],
-                            Data.sourceToHandle[InputSource.LeftHand], 
-                            Data.sourceToHandle[InputSource.RightHand],
-                            Data.sourceToHandle[InputSource.Waist],
-                            Data.sourceToHandle[InputSource.LeftKnee],
-                            Data.sourceToHandle[InputSource.RightKnee],
-                            Data.sourceToHandle[InputSource.LeftFoot],
-                            Data.sourceToHandle[InputSource.RightFoot],
-                            Data.sourceToHandle[InputSource.Camera],
-                            Data.sourceToHandle[InputSource.Gamepad]
+                            DataStore.sourceToHandle[InputSource.Head],
+                            DataStore.sourceToHandle[InputSource.Chest],
+                            DataStore.sourceToHandle[InputSource.LeftShoulder],
+                            DataStore.sourceToHandle[InputSource.RightShoulder],
+                            DataStore.sourceToHandle[InputSource.LeftElbow],
+                            DataStore.sourceToHandle[InputSource.RightElbow],
+                            DataStore.sourceToHandle[InputSource.LeftHand], 
+                            DataStore.sourceToHandle[InputSource.RightHand],
+                            DataStore.sourceToHandle[InputSource.Waist],
+                            DataStore.sourceToHandle[InputSource.LeftKnee],
+                            DataStore.sourceToHandle[InputSource.RightKnee],
+                            DataStore.sourceToHandle[InputSource.LeftFoot],
+                            DataStore.sourceToHandle[InputSource.RightFoot],
+                            DataStore.sourceToHandle[InputSource.Camera],
+                            DataStore.sourceToHandle[InputSource.Gamepad]
                         });
                         if (_settings.UseDevicePoses) {
                             var poses = _vr.GetDeviceToAbsoluteTrackingPose();
                             for(var i=0; i<poses.Length; i++)
                             {
-                                Data.UpdateOrAddPoseData(poses[i], i);
+                                DataStore.UpdateOrAddPoseData(poses[i], i);
                             }
                         }
-                        if (!headsetHzUpdated && Data.sourceToIndex.ContainsKey(InputSource.Head)) {
-                            int id = Data.sourceToIndex[InputSource.Head];
+                        if (!headsetHzUpdated && DataStore.sourceToIndex.ContainsKey(InputSource.Head)) {
+                            int id = DataStore.sourceToIndex[InputSource.Head];
                             float hz = _vr.GetFloatTrackedDeviceProperty((uint) id, ETrackedDeviceProperty.Prop_DisplayFrequency_Float);
                             if(hz != 0)
                             {
@@ -299,7 +302,7 @@ namespace OpenVR2WS
                     initComplete = false;
                     _vr.AcknowledgeShutdown();
                     _vr.Shutdown();
-                    Data.Reset();
+                    DataStore.Reset();
                     Debug.WriteLine("Shutting down!");
                     _openvrStatusAction.Invoke(false);
                 }
@@ -314,11 +317,11 @@ namespace OpenVR2WS
             }
             void StoreAnalogInput(InputAnalogActionData_t data, InputActionInfo info)
             {
-                Data.UpdateOrAddAnalogInputActionData(data, info);
+                DataStore.UpdateOrAddAnalogInputActionData(data, info);
             }
             void StorePoseInput(InputPoseActionData_t data, InputActionInfo info)
             {
-                Data.UpdateOrAddPoseInputActionData(data, info);
+                DataStore.UpdateOrAddPoseInputActionData(data, info);
             }
 
             _vr.ClearInputActions();
@@ -404,8 +407,8 @@ namespace OpenVR2WS
             });
             _vr.RegisterEvent(EVREventType.VREvent_TrackedDeviceActivated, (data) =>
             {
-                Data.UpdateInputDeviceHandles();
-                Data.UpdateDeviceIndices(data.trackedDeviceIndex);
+                DataStore.UpdateInputDeviceHandles();
+                DataStore.UpdateDeviceIndices(data.trackedDeviceIndex);
                 SendDeviceIds();
             });
             _vr.RegisterEvents(new[] { 
@@ -413,7 +416,7 @@ namespace OpenVR2WS
                 EVREventType.VREvent_TrackedDeviceRoleChanged,
                 EVREventType.VREvent_TrackedDeviceUpdated
             }, (data) => {
-                Data.UpdateInputDeviceHandles();
+                DataStore.UpdateInputDeviceHandles();
                 SendDeviceIds();
             });
             _vr.RegisterEvents(new[] { 
@@ -470,12 +473,12 @@ namespace OpenVR2WS
 
         private void SendDefaults(WebSocketSession session=null)
         {
-            SendApplicationInfo(session);
-            SendPlayArea(session);
-            SendDeviceIds(session);
+            SendApplicationInfo("", session);
+            SendPlayArea("", session);
+            SendDeviceIds("", session);
         }
 
-        private void SendApplicationInfo(WebSocketSession session=null)
+        private void SendApplicationInfo(string nonce = "", WebSocketSession session=null)
         {
             var appId = _vr.GetRunningApplicationId();
             if(appId != _currentAppId)
@@ -488,28 +491,28 @@ namespace OpenVR2WS
                 ["id"] = appId,
                 ["sessionStart"] = _currentAppSessionTime
             };
-            SendResult(CommandEnum.ApplicationInfo, data, session);
+            SendResult(CommandEnum.ApplicationInfo, data, nonce, session);
         }
 
-        private void SendPlayArea(WebSocketSession session=null)
+        private void SendPlayArea(string nonce = "", WebSocketSession session=null)
         {
             var rect = _vr.GetPlayAreaRect();
             var size = _vr.GetPlayAreaSize();
             var height = _vr.GetFloatSetting(OpenVR.k_pch_CollisionBounds_Section, OpenVR.k_pch_CollisionBounds_WallHeight_Float);
-            SendResult(CommandEnum.PlayArea, new PlayArea(rect, size, height));
+            SendResult(CommandEnum.PlayArea, new PlayArea(rect, size, height), nonce);
         }
 
-        private void SendDeviceIds(WebSocketSession session=null)
+        private void SendDeviceIds(string nonce = "", WebSocketSession session=null)
         {
             var data = new Dictionary<string, dynamic>
             {
-                ["deviceToIndex"] = Data.deviceToIndex,
-                ["sourceToIndex"] = Data.sourceToIndex
+                ["deviceToIndex"] = DataStore.deviceToIndex,
+                ["sourceToIndex"] = DataStore.sourceToIndex
             };
-            SendResult(CommandEnum.DeviceIds, data);
+            SendResult(CommandEnum.DeviceIds, data, nonce);
         }
 
-        private void SendDeviceProperty(CommandEnum key, int deviceIndex, ETrackedDeviceProperty property, WebSocketSession session=null)
+        private void SendDeviceProperty(CommandEnum key, int deviceIndex, ETrackedDeviceProperty property, string nonce = "", WebSocketSession session=null)
         {
             if (deviceIndex == -1) return; // Should not really happen, but means the device does not exist
             var index = (uint)deviceIndex;
@@ -537,10 +540,10 @@ namespace OpenVR2WS
             data["name"] = propName;
             data["value"] = propertyValue;
             data["type"] = dataType;
-            SendResult(key, data, session);
+            SendResult(key, data, nonce, session);
         }
 
-        private void SendSetting(CommandEnum key, string section, string setting, WebSocketSession session = null) {
+        private void SendSetting(CommandEnum key, string section, string setting, string nonce, WebSocketSession session = null) {
             // TODO: Add switch on type
             var value =_vr.GetFloatSetting(section, setting);
             var data = new Dictionary<string, dynamic>
@@ -549,7 +552,7 @@ namespace OpenVR2WS
                 ["setting"] = setting,
                 ["value"] = value
             };
-            SendResult(key, data, session);
+            SendResult(key, data, nonce, session);
         }
 
         private void SendEvent(EVREventType eventType, WebSocketSession session = null)
@@ -558,7 +561,7 @@ namespace OpenVR2WS
             try
             {
                 data["type"] = Enum.GetName(typeof(EVREventType), eventType).Replace("VREvent_", "");
-                SendResult("event", data, session);
+                SendResult("event", data, "", session);
             }
             catch (Exception e) {
                 Debug.WriteLine($"Could not get name for enum coming in from SteamVR: {eventType}, {e.Message}");

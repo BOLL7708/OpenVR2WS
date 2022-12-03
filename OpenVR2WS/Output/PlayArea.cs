@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using OpenVR2WS.Data;
 using Valve.VR;
 
 namespace OpenVR2WS.Output
 {
-    class PlayArea
+    class PlayArea : BaseResponse
     {
         public Vec3[] corners = new Vec3[8];
         public Vec3 size = new Vec3();

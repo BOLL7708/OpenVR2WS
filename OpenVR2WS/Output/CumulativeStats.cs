@@ -7,7 +7,7 @@ using Valve.VR;
 
 namespace OpenVR2WS.Output
 {
-    class CumulativeStats 
+    class CumulativeStats : BaseResponse
     {
         public double systemTimeMs;     // Time when we fetched the statistics
         public long

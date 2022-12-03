@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 using Valve.VR;
 using static BOLL7708.EasyOpenVRSingleton;
 
-namespace OpenVR2WS
+namespace OpenVR2WS.Data
 {
-    static class Data
+    static class DataStore
     {
         public static ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>> deviceToIndex = new ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>>();
         public static ConcurrentDictionary<ulong, InputSource> handleToSource = new ConcurrentDictionary<ulong, InputSource>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
@@ -108,7 +108,7 @@ namespace OpenVR2WS
         }
         public static void UpdateOrAddPoseData(TrackedDevicePose_t pose, int deviceIndex)
         {
-            if(indexToSource.TryGetValue(deviceIndex, out var source))
+            if (indexToSource.TryGetValue(deviceIndex, out var source))
             {
                 if (!poseInputActionData.ContainsKey(source)) poseInputActionData[source] = new ConcurrentDictionary<string, Pose>();
                 poseInputActionData[source]["Pose"] = new Pose(pose);

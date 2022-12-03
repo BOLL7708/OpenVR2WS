@@ -1,4 +1,5 @@
 ﻿using BOLL7708;
+using OpenVR2WS.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using Valve.VR;
 
 namespace OpenVR2WS.Output
 {
-    class Pose
+    class Pose : BaseResponse
     {
         // public HmdMatrix34_t matrix = new HmdMatrix34_t(); // TODO: Figure out what to do with this...
         public float[] rotationMatrix = new float[9];

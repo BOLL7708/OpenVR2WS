@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Shell;
 
 namespace OpenVR2WS.Output
 {
-    class GenericResponse : BaseResponse
+    internal class BaseResponse
     {
-        public string message;
-        public bool success;
+        public string nonce = "";
     }
 }

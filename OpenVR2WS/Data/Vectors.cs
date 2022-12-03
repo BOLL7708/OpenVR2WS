@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Valve.VR;
 
-namespace OpenVR2WS.Output
+namespace OpenVR2WS.Data
 {
     class Vec2
     {
@@ -15,7 +15,8 @@ namespace OpenVR2WS.Output
 
     class Vec3
     {
-        public Vec3(HmdVector3_t point = new HmdVector3_t()) {
+        public Vec3(HmdVector3_t point = new HmdVector3_t())
+        {
             x = point.v0;
             y = point.v1;
             z = point.v2;
