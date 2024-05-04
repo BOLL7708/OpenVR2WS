@@ -70,14 +70,11 @@
     <None Update="bindings_vive_tracker_waist.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="FodyWeavers.xsd">
-      <SubType>Designer</SubType>
+    <None Update="openvr_api.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="FodyWeavers.xml" />
-    <EmbeddedResource Include="costura32\openvr_api.dll" />
-    <EmbeddedResource Include="costura64\openvr_api.dll" />
     <Content Include="example.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -90,18 +87,14 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Costura.Fody" Version="5.7.0" />
-    <PackageReference Include="Fody" Version="6.2.0" />
     <PackageReference Include="log4net" Version="2.0.15" />
     <PackageReference Include="Microsoft.AspNetCore.SystemWebAdapters" Version="1.3.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SuperSocket" Version="2.0.0-beta.20.448" />
+    <PackageReference Include="SuperSocket.Channel" Version="2.0.0-beta.18" />
+    <PackageReference Include="SuperSocket.WebSocket" Version="2.0.0-beta.20.448" />
+    <PackageReference Include="SuperSocket.WebSocket.Server" Version="2.0.0-beta.20.448" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.0" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="EasyFramework\SingleInputDialog.xaml.cs" />
-    <Compile Remove="EasyFramework\SuperServer.cs" />
-    <Compile Remove="EasyFramework\WindowUtils.cs" />
-    <Page Remove="EasyFramework\SingleInputDialog.xaml" />
   </ItemGroup>
 </Project>
