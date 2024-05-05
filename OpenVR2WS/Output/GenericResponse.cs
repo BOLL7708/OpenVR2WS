@@ -1,8 +1,7 @@
-﻿namespace OpenVR2WS.Output
+﻿namespace OpenVR2WS.Output;
+
+class GenericResponse
 {
-    class GenericResponse
-    {
-        public string message;
-        public bool success;
-    }
+    public string message;
+    public bool success;
 }
