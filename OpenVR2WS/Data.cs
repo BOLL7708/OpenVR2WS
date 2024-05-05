@@ -1,14 +1,9 @@
-﻿using BOLL7708;
-using OpenVR2WS.Output;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using OpenVR2WS.Output;
 using Valve.VR;
-using static BOLL7708.EasyOpenVRSingleton;
-using Microsoft.AspNetCore.Mvc;
+using static EasyOpenVR.EasyOpenVRSingleton;
 
 namespace OpenVR2WS
 {

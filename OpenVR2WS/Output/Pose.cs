@@ -1,9 +1,4 @@
-﻿using BOLL7708;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using EasyOpenVR;
 using Valve.VR;
 
 namespace OpenVR2WS.Output

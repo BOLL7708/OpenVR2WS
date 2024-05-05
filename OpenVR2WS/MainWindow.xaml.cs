@@ -1,21 +1,22 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
+using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
-using System.Windows.Media;
-using System.Security.Cryptography;
-using BOLL7708;
+using EasyFramework;
+using OpenVR2WS.Properties;
+using Brushes = System.Windows.Media.Brushes;
 
 namespace OpenVR2WS
 {
     public partial class MainWindow : Window
     {
         private MainController _controller;
-        private Properties.Settings _settings = Properties.Settings.Default;
+        private Settings _settings = Settings.Default;
         private int _currentDeliveredSecond = 0;
         private int _currentReceivedSecond = 0;
 
@@ -27,7 +28,7 @@ namespace OpenVR2WS
             WindowUtils.CheckIfAlreadyRunning(Properties.Resources.AppName);
 
             // Tray icon
-            var icon = Properties.Resources.Logo.Clone() as System.Drawing.Icon;
+            var icon = Properties.Resources.Logo.Clone() as Icon;
             WindowUtils.CreateTrayIcon(this, icon, Properties.Resources.AppName);
 
             // Window setup
@@ -128,7 +129,7 @@ namespace OpenVR2WS
             Process.Start(link.NavigateUri.ToString());
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private void Window_Closing(object sender, CancelEventArgs e)
         {
             _controller.Shutdown();
         }
@@ -137,7 +138,7 @@ namespace OpenVR2WS
         {
             SingleInputDialog dlg = new(this, _settings.Port.ToString(), "Port");
             dlg.ShowDialog();
-            var result = dlg.DialogResult == true ? dlg.value : "";
+            var result = dlg.DialogResult == true ? dlg.Value : "";
             var parsedResult = int.TryParse(result, out int value);
             if (parsedResult && value != 0)
             {
@@ -192,7 +193,7 @@ namespace OpenVR2WS
         private void Button_RemoteSettingsPassword_Click(object sender, RoutedEventArgs e) {
             SingleInputDialog dlg = new(this, "", "Password");
             dlg.ShowDialog();
-            var value = dlg.DialogResult == true ? dlg.value : "";
+            var value = dlg.DialogResult == true ? dlg.Value : "";
                         
             using (SHA256 sha = SHA256.Create())
             {

@@ -3,14 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using BOLL7708;
+using EasyFramework;
+using EasyOpenVR;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using OpenVR2WS.Output;
 using OpenVR2WS.Properties;
 using SuperSocket.WebSocket.Server;
 using Valve.VR;
-using static BOLL7708.EasyOpenVRSingleton;
+using static EasyOpenVR.EasyOpenVRSingleton;
 
 namespace OpenVR2WS
 {
