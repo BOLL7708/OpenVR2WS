@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using EasyFramework;
 using EasyOpenVR;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using OpenVR2WS.Output;
 using OpenVR2WS.Properties;
 using SuperSocket.WebSocket.Server;
@@ -20,14 +20,13 @@ namespace OpenVR2WS
         private readonly SuperServer _server = new();
         private readonly Settings _settings = Settings.Default;
         private readonly EasyOpenVRSingleton _vr = Instance;
-        private readonly StringEnumConverter _converter = new();
         private Action<bool> _openvrStatusAction;
-
-        // Data storage
-
+        private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { IncludeFields = true };
 
         public MainController(Action<SuperServer.ServerStatus, int> serverStatus, Action<bool> openvrStatus)
         {
+            _jsonOptions.Converters.Add(new JsonStringEnumConverter());
+            
             _openvrStatusAction += openvrStatus;
             Data.Reset();
             InitServer(serverStatus);
@@ -47,7 +46,7 @@ namespace OpenVR2WS
             _server.MessageReceivedAction += (session, message) =>
             {
                 var command = new Command();
-                try { command = JsonConvert.DeserializeObject<Command>(message); }
+                try { command = JsonSerializer.Deserialize<Command>(message, _jsonOptions); }
                 catch (Exception e) { Debug.WriteLine($"JSON Parsing Exception: {e.Message}"); }
 
                 if (command.key != CommandEnum.None) HandleCommand(session, command);
@@ -90,7 +89,7 @@ namespace OpenVR2WS
             var jsonString = "";
             try
             {
-                jsonString = JsonConvert.SerializeObject(result, _converter);
+                jsonString = JsonSerializer.Serialize(result, _jsonOptions);
             }
             catch (Exception e) {
                 Debug.WriteLine($"Could not serialize output for {key}: {e.Message}");
@@ -110,7 +109,6 @@ namespace OpenVR2WS
 
         private class Command
         {
-            [JsonConverter(typeof(StringEnumConverter))]
             public CommandEnum key = CommandEnum.None;
             public string value = "";
             public string value2 = "";
