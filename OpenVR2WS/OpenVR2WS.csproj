@@ -7,6 +7,8 @@
         <UseWPF>true</UseWPF>
         <Nullable>enable</Nullable>
         <LangVersion>12.0</LangVersion>
+        <IsPackable>false</IsPackable>
+        <NeutralLanguage>en</NeutralLanguage>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <PlatformTarget>x64</PlatformTarget>
     </PropertyGroup>
