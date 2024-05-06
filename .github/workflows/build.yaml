@@ -31,10 +31,10 @@ jobs:
           run: dotnet restore
               
         - name: Build
-          run: dotnet build OpenVR2WS.sln --configuration Release
+          run: dotnet build OpenVR2WS.sln --configuration Release --runtime win-x64
               
         - name: Publish
-          run: dotnet publish OpenVR2WS/OpenVR2WS.csproj --no-build --configuration Release -o release --runtime win-x64
+          run: dotnet publish OpenVR2WS/OpenVR2WS.csproj --no-build --configuration Release -o release
 
         - name: Zip release build
           shell: bash
