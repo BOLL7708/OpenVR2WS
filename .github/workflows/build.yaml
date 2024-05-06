@@ -35,4 +35,13 @@ jobs:
               run: dotnet restore
               
             - name: Build
-              run: dotnet build --configuration Release
+              run: dotnet build --configuration Release OpenVR2WS
+              
+            - name: Publish
+              run: dotnet publish --no-build --configuration Release OpenVR2WS/OpenVR2WS.csproj -o release
+
+            - name: Upload release artifact
+              uses: actions/upload-artifact@v4
+              with:
+                name: release
+                path: release
