@@ -31,7 +31,7 @@ jobs:
           run: dotnet restore
               
         - name: Build
-          run: dotnet build --configuration Release OpenVR2WS --runtime="win-x64" -p:PublishSingleFile=true
+          run: dotnet build --configuration Release OpenVR2WS/OpenVR2WS.csproj --runtime="win-x64" -p:PublishSingleFile=true
               
         - name: Publish
           run: dotnet publish --no-build --configuration Release OpenVR2WS/OpenVR2WS.csproj -o release --runtime="win-x64" -p:PublishSingleFile=true
