@@ -1,47 +1,58 @@
 name: Build & Release
 
 on:
-    workflow_dispatch:
-        inputs:
-            draftRelease:
-                description: Creates a new release draft based on the build.
-                required: false
-                type: boolean
+    release:
+      types: [created]
 
 jobs:
     build:
-        name: Build
-        runs-on: windows-latest
+      name: Build
+      runs-on: windows-latest
         
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-              with:
-                submodules: 'recursive'
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            submodules: 'recursive'
             
-            - name: Setup dotnet
-              uses: actions/setup-dotnet@v3
-              with:
-                dotnet-version: 8.x
-                dotnet-quality: ga
+        - name: Setup dotnet
+          uses: actions/setup-dotnet@v3
+          with:
+            dotnet-version: 8.x
+            dotnet-quality: ga
 
-            - name: Install OpenVR Dependencies
-              shell: cmd
-              run: |
-                call cd EasyOpenVR
-                call download_openvr_api_dependencies.cmd
+        - name: Install OpenVR Dependencies
+          shell: cmd
+          run: |
+            call cd EasyOpenVR
+            call download_openvr_api_dependencies.cmd
 
-            - name: Install dependencies
-              run: dotnet restore
+        - name: Install dependencies
+          run: dotnet restore
               
-            - name: Build
-              run: dotnet build --configuration Release OpenVR2WS
+        - name: Build
+          run: dotnet build --configuration Release OpenVR2WS
               
-            - name: Publish
-              run: dotnet publish --no-build --configuration Release OpenVR2WS/OpenVR2WS.csproj -o release
+        - name: Publish
+          run: dotnet publish --no-build --configuration Release OpenVR2WS/OpenVR2WS.csproj -o release
 
-            - name: Upload release artifact
-              uses: actions/upload-artifact@v4
-              with:
-                name: release
-                path: release
+        - name: Upload release artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: OpenVR2WS_v${{github.event.release.tag_name}} 
+            path: release
+
+
+    release:
+      name: Upload Release
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Download artifact
+          uses: actions/download-artifact@v4
+
+        - name: Upload file to release
+          uses: softprops/action-gh-release@v2
+          with:
+            files: |
+              *.zip
