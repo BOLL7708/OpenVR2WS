@@ -20,6 +20,8 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <PublishSingleFile>true</PublishSingleFile>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <DebugType>embedded</DebugType>
     </PropertyGroup>
     <PropertyGroup>
         <ApplicationIcon>resources\Logo.ico</ApplicationIcon>
