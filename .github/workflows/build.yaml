@@ -46,6 +46,7 @@ jobs:
     release:
       name: Upload Release
       runs-on: ubuntu-latest
+      needs: build
 
       steps:
         - name: Download artifact
