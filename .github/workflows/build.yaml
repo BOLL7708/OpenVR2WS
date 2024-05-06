@@ -36,11 +36,16 @@ jobs:
         - name: Publish
           run: dotnet publish --no-build --configuration Release OpenVR2WS/OpenVR2WS.csproj -o release
 
+        - name: Zip release build
+          shell: bash
+          run: |
+            7z a -tzip "OpenVR2WS_${{github.event.release.tag_name}}.zip" "./release/*"
+
         - name: Upload release artifact
           uses: actions/upload-artifact@v4
           with:
-            name: OpenVR2WS_v${{github.event.release.tag_name}} 
-            path: release
+            name: release
+            path: OpenVR2WS_${{github.event.release.tag_name}}.zip
 
 
     release:
