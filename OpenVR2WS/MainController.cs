@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -15,6 +16,7 @@ using static EasyOpenVR.EasyOpenVRSingleton;
 
 namespace OpenVR2WS;
 
+[SupportedOSPlatform("windows7.0")]
 internal class MainController
 {
     private readonly SuperServer _server = new();
@@ -54,7 +56,7 @@ internal class MainController
                 Debug.WriteLine($"JSON Parsing Exception: {e.Message}");
             }
 
-            if (command.key != CommandEnum.None) HandleCommand(session, command);
+            if (command != null && command.key != CommandEnum.None) HandleCommand(session, command);
             else SendResult("InvalidCommand", new GenericResponse() { message = message, success = false }, session);
         };
         _server.StatusMessageAction += (session, connected, status) =>
@@ -79,18 +81,19 @@ internal class MainController
     }
 
     // If session is null, it will send to all registered sessions
-    private void SendResult(CommandEnum command, Object data = null, WebSocketSession session = null)
+    private void SendResult(CommandEnum command, Object? data = null, WebSocketSession? session = null)
     {
         var key = Enum.GetName(typeof(CommandEnum), command);
+        if (key == null) return;
         SendResult(key, data, session);
     }
 
-    private void SendResult(string key, Object data = null, WebSocketSession session = null)
+    private void SendResult(string key, Object? data = null, WebSocketSession? session = null)
     {
         var result = new Dictionary<string, dynamic>
         {
             ["key"] = key,
-            ["data"] = data
+            ["data"] = data ?? ""
         };
         var jsonString = "";
         try
@@ -117,6 +120,7 @@ internal class MainController
         SendResult("Input", output);
     }
 
+    // ReSharper disable InconsistentNaming
     private class Command
     {
         public CommandEnum key = CommandEnum.None;
@@ -129,7 +133,7 @@ internal class MainController
         public int device = -1;
     }
 
-    enum CommandEnum
+    private enum CommandEnum
     {
         None,
         CumulativeStats,
@@ -146,7 +150,7 @@ internal class MainController
         MoveSpace
     }
 
-    private void HandleCommand(WebSocketSession session, Command command)
+    private void HandleCommand(WebSocketSession? session, Command command)
     {
         // Debug.WriteLine($"Command receieved: {Enum.GetName(typeof(CommandEnum), command.key)}");
         if (_stopRunning || !_vr.IsInitialized()) return;
@@ -229,7 +233,7 @@ internal class MainController
 
     #region VRWorkerThread
 
-    private Thread _workerThread = null;
+    private Thread? _workerThread;
 
     private void InitWorkerThread()
     {
@@ -237,8 +241,8 @@ internal class MainController
         if (!_workerThread.IsAlive) _workerThread.Start();
     }
 
-    private volatile bool _shouldShutDown = false;
-    private volatile bool _stopRunning = false;
+    private volatile bool _shouldShutDown;
+    private volatile bool _stopRunning;
 
     private void Worker()
     {
@@ -270,9 +274,8 @@ internal class MainController
                 else
                 {
                     // Happens every loop
-                    _vr.UpdateEvents(false);
-                    _vr.UpdateActionStates(new[]
-                    {
+                    _vr.UpdateEvents();
+                    _vr.UpdateActionStates([
                         Data.sourceToHandle[InputSource.Head],
                         Data.sourceToHandle[InputSource.Chest],
                         Data.sourceToHandle[InputSource.LeftShoulder],
@@ -288,7 +291,7 @@ internal class MainController
                         Data.sourceToHandle[InputSource.RightFoot],
                         Data.sourceToHandle[InputSource.Camera],
                         Data.sourceToHandle[InputSource.Gamepad]
-                    });
+                    ]);
                     if (_settings.UseDevicePoses)
                     {
                         var poses = _vr.GetDeviceToAbsoluteTrackingPose();
@@ -298,10 +301,9 @@ internal class MainController
                         }
                     }
 
-                    if (!headsetHzUpdated && Data.sourceToIndex.ContainsKey(InputSource.Head))
+                    if (!headsetHzUpdated && Data.sourceToIndex.TryGetValue(InputSource.Head, out var id))
                     {
-                        int id = Data.sourceToIndex[InputSource.Head];
-                        float hz = _vr.GetFloatTrackedDeviceProperty((uint)id,
+                        var hz = _vr.GetFloatTrackedDeviceProperty((uint)id,
                             ETrackedDeviceProperty.Prop_DisplayFrequency_Float);
                         if (hz != 0)
                         {
@@ -318,37 +320,21 @@ internal class MainController
                 _vr.Init();
             }
 
-            if (_shouldShutDown)
-            {
-                // Shutting down
-                _shouldShutDown = false;
-                initComplete = false;
-                _vr.AcknowledgeShutdown();
-                _vr.Shutdown();
-                Data.Reset();
-                Debug.WriteLine("Shutting down!");
-                _openvrStatusAction.Invoke(false);
-            }
+            if (!_shouldShutDown) continue;
+            // Shutting down
+            _shouldShutDown = false;
+            initComplete = false;
+            _vr.AcknowledgeShutdown();
+            _vr.Shutdown();
+            Data.Reset();
+            Debug.WriteLine("Shutting down!");
+            _openvrStatusAction.Invoke(false);
         }
+        // ReSharper disable once FunctionNeverReturns
     }
 
     private void RegisterActions()
     {
-        void SendDigitalInput(InputDigitalActionData_t data, InputActionInfo info)
-        {
-            SendInput(data, info);
-        }
-
-        void StoreAnalogInput(InputAnalogActionData_t data, InputActionInfo info)
-        {
-            Data.UpdateOrAddAnalogInputActionData(data, info);
-        }
-
-        void StorePoseInput(InputPoseActionData_t data, InputActionInfo info)
-        {
-            Data.UpdateOrAddPoseInputActionData(data, info);
-        }
-
         _vr.ClearInputActions();
         _vr.RegisterActionSet(GetAction());
         _vr.RegisterDigitalAction(GetAction("Proximity"), SendDigitalInput);
@@ -409,24 +395,38 @@ internal class MainController
         _vr.RegisterDigitalAction(GetAction("GripTouch"), SendDigitalInput);
         _vr.RegisterAnalogAction(GetAction("GripForce"), StoreAnalogInput);
 
-        if (!_settings.UseDevicePoses)
+        if (_settings.UseDevicePoses) return;
+        _vr.RegisterPoseAction(GetAction("Pose"), StorePoseInput);
+        _vr.RegisterPoseAction(GetAction("Pose2"), StorePoseInput);
+        _vr.RegisterPoseAction(GetAction("Pose3"), StorePoseInput);
+
+        return;
+
+        void StorePoseInput(InputPoseActionData_t data, InputActionInfo info)
         {
-            _vr.RegisterPoseAction(GetAction("Pose"), StorePoseInput);
-            _vr.RegisterPoseAction(GetAction("Pose2"), StorePoseInput);
-            _vr.RegisterPoseAction(GetAction("Pose3"), StorePoseInput);
+            Data.UpdateOrAddPoseInputActionData(data, info);
+        }
+
+        void StoreAnalogInput(InputAnalogActionData_t data, InputActionInfo info)
+        {
+            Data.UpdateOrAddAnalogInputActionData(data, info);
+        }
+
+        void SendDigitalInput(InputDigitalActionData_t data, InputActionInfo info)
+        {
+            SendInput(data, info);
         }
     }
 
-    private string GetAction(string action = "")
+    private static string GetAction(string action = "")
     {
-        var actionSet = "/actions/default";
-        if (action.Length > 0) return $"{actionSet}/in/{action}";
-        else return actionSet;
+        const string actionSet = "/actions/default";
+        return action.Length > 0 ? $"{actionSet}/in/{action}" : actionSet;
     }
 
     private void RegisterEvents()
     {
-        _vr.RegisterEvent(EVREventType.VREvent_Quit, (data) =>
+        _vr.RegisterEvent(EVREventType.VREvent_Quit, (_) =>
         {
             _shouldShutDown = true;
             _stopRunning = true;
@@ -437,49 +437,44 @@ internal class MainController
             Data.UpdateDeviceIndices(data.trackedDeviceIndex);
             SendDeviceIds();
         });
-        _vr.RegisterEvents(new[]
-        {
+        _vr.RegisterEvents([
             EVREventType.VREvent_TrackedDeviceDeactivated,
             EVREventType.VREvent_TrackedDeviceRoleChanged,
             EVREventType.VREvent_TrackedDeviceUpdated
-        }, (data) =>
+        ], (_) =>
         {
             Data.UpdateInputDeviceHandles();
             SendDeviceIds();
         });
-        _vr.RegisterEvents(new[]
-        {
+        _vr.RegisterEvents([
             EVREventType.VREvent_ChaperoneDataHasChanged,
             EVREventType.VREvent_ChaperoneUniverseHasChanged
-        }, (data) => { SendPlayArea(); });
+        ], (_) => { SendPlayArea(); });
         _vr.RegisterEvent(EVREventType.VREvent_PropertyChanged, (data) =>
         {
             // Look for things here that is useful, like battery states
             // Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop)); 
             SendDeviceProperty(CommandEnum.DeviceProperty, (int)data.trackedDeviceIndex, data.data.property.prop);
         });
-        _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (data) =>
+        _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (_) =>
         {
             // SendResult("Debug", data);
-            var fakeData = new Dictionary<string, dynamic>();
-            fakeData.Add("Issue", "https://github.com/ValveSoftware/openvr/issues/1335");
+            var fakeData = new Dictionary<string, dynamic> { { "Issue", "https://github.com/ValveSoftware/openvr/issues/1335" } };
             SendResult(CommandEnum.Setting, fakeData);
         });
-        _vr.RegisterEvents(new[]
-        {
+        _vr.RegisterEvents([
             EVREventType.VREvent_SceneApplicationChanged,
             EVREventType.VREvent_SceneApplicationStateChanged
-        }, (data) => { SendApplicationInfo(); });
-        _vr.RegisterEvent(EVREventType.VREvent_EnterStandbyMode, (data) =>
+        ], (_) => { SendApplicationInfo(); });
+        _vr.RegisterEvent(EVREventType.VREvent_EnterStandbyMode, (_) =>
         {
             // _server.SendMessageToAll("Entered standby.");
         });
-        _vr.RegisterEvent(EVREventType.VREvent_LeaveStandbyMode, (data) =>
+        _vr.RegisterEvent(EVREventType.VREvent_LeaveStandbyMode, (_) =>
         {
             // _server.SendMessageToAll("Left standby.");
         });
-        _vr.RegisterEvents(new[]
-        {
+        _vr.RegisterEvents([
             EVREventType.VREvent_Compositor_ChaperoneBoundsShown,
             EVREventType.VREvent_Compositor_ChaperoneBoundsHidden,
             EVREventType.VREvent_RoomViewShown,
@@ -488,7 +483,7 @@ internal class MainController
             EVREventType.VREvent_TrackedCamera_PauseVideoStream,
             EVREventType.VREvent_TrackedCamera_ResumeVideoStream,
             EVREventType.VREvent_TrackedCamera_StopVideoStream
-        }, (data) => { SendEvent((EVREventType)data.eventType); });
+        ], (data) => { SendEvent((EVREventType)data.eventType); });
     }
 
     #endregion
@@ -496,16 +491,16 @@ internal class MainController
     #region Send Data
 
     private volatile string _currentAppId = "";
-    private double _currentAppSessionTime = 0.0;
+    private double _currentAppSessionTime;
 
-    private void SendDefaults(WebSocketSession session = null)
+    private void SendDefaults(WebSocketSession? session = null)
     {
         SendApplicationInfo(session);
         SendPlayArea(session);
         SendDeviceIds(session);
     }
 
-    private void SendApplicationInfo(WebSocketSession session = null)
+    private void SendApplicationInfo(WebSocketSession? session = null)
     {
         var appId = _vr.GetRunningApplicationId();
         if (appId != _currentAppId)
@@ -522,27 +517,27 @@ internal class MainController
         SendResult(CommandEnum.ApplicationInfo, data, session);
     }
 
-    private void SendPlayArea(WebSocketSession session = null)
+    private void SendPlayArea(WebSocketSession? session = null)
     {
         var rect = _vr.GetPlayAreaRect();
         var size = _vr.GetPlayAreaSize();
         var height = _vr.GetFloatSetting(OpenVR.k_pch_CollisionBounds_Section,
             OpenVR.k_pch_CollisionBounds_WallHeight_Float);
-        SendResult(CommandEnum.PlayArea, new PlayArea(rect, size, height));
+        SendResult(CommandEnum.PlayArea, new PlayArea(rect, size, height), session);
     }
 
-    private void SendDeviceIds(WebSocketSession session = null)
+    private void SendDeviceIds(WebSocketSession? session = null)
     {
         var data = new Dictionary<string, dynamic>
         {
             ["deviceToIndex"] = Data.deviceToIndex,
             ["sourceToIndex"] = Data.sourceToIndex
         };
-        SendResult(CommandEnum.DeviceIds, data);
+        SendResult(CommandEnum.DeviceIds, data, session);
     }
 
     private void SendDeviceProperty(CommandEnum key, int deviceIndex, ETrackedDeviceProperty property,
-        WebSocketSession session = null)
+        WebSocketSession? session = null)
     {
         if (deviceIndex == -1) return; // Should not really happen, but means the device does not exist
         var index = (uint)deviceIndex;
@@ -551,8 +546,8 @@ internal class MainController
         var data = new Dictionary<string, dynamic>();
         var propArray = propName.Split('_');
         var dataType = propArray.Last();
-        var arrayType = dataType == "Array" ? propArray[propArray.Length - 2] : ""; // Matrix34, Int32, Float, Vector4, 
-        object propertyValue = null;
+        var arrayType = dataType == "Array" ? propArray[^2] : ""; // Matrix34, Int32, Float, Vector4, 
+        object? propertyValue = null;
         switch (dataType)
         {
             case "String":
@@ -589,12 +584,12 @@ internal class MainController
 
         data["device"] = deviceIndex;
         data["name"] = propName;
-        data["value"] = propertyValue;
+        data["value"] = propertyValue ?? "";
         data["type"] = dataType;
         SendResult(key, data, session);
     }
 
-    private void SendSetting(CommandEnum key, string section, string setting, WebSocketSession session = null)
+    private void SendSetting(CommandEnum key, string section, string setting, WebSocketSession? session = null)
     {
         // TODO: Add switch on type
         var value = _vr.GetFloatSetting(section, setting);
@@ -607,12 +602,13 @@ internal class MainController
         SendResult(key, data, session);
     }
 
-    private void SendEvent(EVREventType eventType, WebSocketSession session = null)
+    private void SendEvent(EVREventType eventType, WebSocketSession? session = null)
     {
         var data = new Dictionary<string, dynamic>();
         try
         {
-            data["type"] = Enum.GetName(typeof(EVREventType), eventType).Replace("VREvent_", "");
+            var enumName = Enum.GetName(typeof(EVREventType), eventType);
+            data["type"] = (enumName ?? "").Replace("VREvent_", "");
             SendResult("event", data, session);
         }
         catch (Exception e)
@@ -668,7 +664,7 @@ internal class MainController
         newPos.v0 = x;
         newPos.v1 = y;
         newPos.v2 = z;
-        var success = _vr.MoveUniverse(newPos, moveChaperone, true);
+        var success = _vr.MoveUniverse(newPos, moveChaperone);
         if (success)
         {
             response.success = true;
@@ -733,7 +729,7 @@ internal class MainController
 
     public async void Shutdown()
     {
-        _openvrStatusAction += (status) => { };
+        _openvrStatusAction += (_) => { };
         await _server.Stop();
         _shouldShutDown = true;
     }

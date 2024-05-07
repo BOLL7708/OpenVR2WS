@@ -2,13 +2,14 @@
 
 namespace OpenVR2WS.Output;
 
-class Vec2
+// ReSharper disable InconsistentNaming
+internal class Vec2
 {
     public double x = 0;
     public double y = 0;
 }
 
-class Vec3
+internal class Vec3
 {
     public Vec3(HmdVector3_t point = new HmdVector3_t())
     {

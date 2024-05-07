@@ -7,25 +7,26 @@ using static EasyOpenVR.EasyOpenVRSingleton;
 
 namespace OpenVR2WS;
 
-static class Data
+// ReSharper disable InconsistentNaming
+internal static class Data
 {
-    public static ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>> deviceToIndex =
+    public static readonly ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>> deviceToIndex =
         new ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>>();
 
-    public static ConcurrentDictionary<ulong, InputSource> handleToSource =
+    public static readonly ConcurrentDictionary<ulong, InputSource> handleToSource =
         new ConcurrentDictionary<ulong, InputSource>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
 
-    public static ConcurrentDictionary<InputSource, ulong> sourceToHandle =
+    public static readonly ConcurrentDictionary<InputSource, ulong> sourceToHandle =
         new ConcurrentDictionary<InputSource, ulong>();
 
-    public static ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData =
+    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData =
         new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>>();
 
-    public static ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>> poseInputActionData =
+    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>> poseInputActionData =
         new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>>();
 
-    public static ConcurrentDictionary<InputSource, int> sourceToIndex = new ConcurrentDictionary<InputSource, int>();
-    public static ConcurrentDictionary<int, InputSource> indexToSource = new ConcurrentDictionary<int, InputSource>();
+    public static readonly ConcurrentDictionary<InputSource, int> sourceToIndex = new ConcurrentDictionary<InputSource, int>();
+    public static readonly ConcurrentDictionary<int, InputSource> indexToSource = new ConcurrentDictionary<int, InputSource>();
 
     /*
      * This will update the device class for an index what was just connected.
@@ -81,6 +82,7 @@ static class Data
 
         GetInputHandle(InputSource.Gamepad);
         GetInputHandle(InputSource.Camera);
+        return;
 
         void GetInputHandle(InputSource source)
         {
@@ -88,14 +90,12 @@ static class Data
             handleToSource[handle] = source;
             sourceToHandle[source] = handle;
             var info = Instance.GetOriginTrackedDeviceInfo(handle);
-            if (info.trackedDeviceIndex != uint.MaxValue)
-            {
-                var index = (int)info.trackedDeviceIndex;
-                // Only a headset gets index 0, but it's also the default N/A when loading info.
-                if (source != InputSource.Head && index == 0) index = -1;
-                sourceToIndex[source] = index;
-                indexToSource[index] = source;
-            }
+            if (info.trackedDeviceIndex == uint.MaxValue) return;
+            var index = (int)info.trackedDeviceIndex;
+            // Only a headset gets index 0, but it's also the default N/A when loading info.
+            if (source != InputSource.Head && index == 0) index = -1;
+            sourceToIndex[source] = index;
+            indexToSource[index] = source;
         }
     }
 
