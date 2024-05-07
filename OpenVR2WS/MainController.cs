@@ -6,6 +6,7 @@ using System.Runtime.Versioning;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using System.Threading.Tasks;
 using EasyFramework;
 using EasyOpenVR;
 using OpenVR2WS.Output;
@@ -31,11 +32,12 @@ internal class MainController
 
         _openvrStatusAction += openvrStatus;
         Data.Reset();
-        InitServer(serverStatus);
 
         _vr.SetDebugLogAction((message) => { Debug.WriteLine($"Debug log: {message}"); });
         _vr.Init();
 
+        
+        InitServer(serverStatus);
         InitWorkerThread();
     }
 
@@ -43,6 +45,7 @@ internal class MainController
 
     private void InitServer(Action<SuperServer.ServerStatus, int> serverStatus)
     {
+        Task.Delay(500).Wait();
         _server.StatusAction += serverStatus;
         _server.MessageReceivedAction += (session, message) =>
         {
@@ -237,6 +240,7 @@ internal class MainController
 
     private void InitWorkerThread()
     {
+        Task.Delay(1000).Wait();
         _workerThread = new Thread(Worker);
         if (!_workerThread.IsAlive) _workerThread.Start();
     }
