@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EasyFramework;
 using EasyOpenVR;
+using OpenVR2WS.Input;
 using OpenVR2WS.Output;
 using OpenVR2WS.Properties;
 using SuperSocket.WebSocket.Server;
@@ -24,7 +25,7 @@ internal class MainController
     private readonly Settings _settings = Settings.Default;
     private readonly EasyOpenVRSingleton _vr = Instance;
     private Action<bool> _openvrStatusAction;
-    private readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { IncludeFields = true };
+    private readonly JsonSerializerOptions _jsonOptions = new() { IncludeFields = true };
 
     public MainController(Action<SuperServer.ServerStatus, int> serverStatus, Action<bool> openvrStatus)
     {
@@ -36,7 +37,7 @@ internal class MainController
         _vr.SetDebugLogAction((message) => { Debug.WriteLine($"Debug log: {message}"); });
         _vr.Init();
 
-        
+
         InitServer(serverStatus);
         InitWorkerThread();
     }
@@ -59,7 +60,7 @@ internal class MainController
                 Debug.WriteLine($"JSON Parsing Exception: {e.Message}");
             }
 
-            if (command != null && command.key != CommandEnum.None) HandleCommand(session, command);
+            if (command != null && command.Key != CommandEnum.None) HandleCommand(session, command);
             else SendResult("InvalidCommand", new GenericResponse() { message = message, success = false }, session);
         };
         _server.StatusMessageAction += (session, connected, status) =>
@@ -84,19 +85,19 @@ internal class MainController
     }
 
     // If session is null, it will send to all registered sessions
-    private void SendResult(CommandEnum command, Object? data = null, WebSocketSession? session = null)
+    private void SendResult(CommandEnum command, dynamic? data = null, WebSocketSession? session = null)
     {
         var key = Enum.GetName(typeof(CommandEnum), command);
         if (key == null) return;
         SendResult(key, data, session);
     }
 
-    private void SendResult(string key, Object? data = null, WebSocketSession? session = null)
+    private void SendResult(string key, dynamic? data = null, WebSocketSession? session = null)
     {
         var result = new Dictionary<string, dynamic>
         {
-            ["key"] = key,
-            ["data"] = data ?? ""
+            ["Key"] = key,
+            ["Data"] = data ?? ""
         };
         var jsonString = "";
         try
@@ -123,47 +124,19 @@ internal class MainController
         SendResult("Input", output);
     }
 
-    // ReSharper disable InconsistentNaming
-    private class Command
-    {
-        public CommandEnum key = CommandEnum.None;
-        public string value = "";
-        public string value2 = "";
-        public string value3 = "";
-        public string value4 = "";
-        public string value5 = "";
-        public string value6 = "";
-        public int device = -1;
-    }
-
-    private enum CommandEnum
-    {
-        None,
-        CumulativeStats,
-        PlayArea,
-        ApplicationInfo,
-        DeviceIds,
-        DeviceProperty,
-        InputAnalog,
-        InputPose,
-        Setting,
-        RemoteSetting,
-        FindOverlay,
-        Relay,
-        MoveSpace
-    }
-
     private void HandleCommand(WebSocketSession? session, Command command)
     {
         // Debug.WriteLine($"Command receieved: {Enum.GetName(typeof(CommandEnum), command.key)}");
         if (_stopRunning || !_vr.IsInitialized()) return;
-        switch (command.key)
+        switch (command.Key)
         {
             case CommandEnum.None: break;
             case CommandEnum.CumulativeStats:
+            {
                 var stats = _vr.GetCumulativeStats();
-                SendResult(command.key, new CumulativeStats(stats), session);
+                SendResult(command.Key, new CumulativeStats(stats), session);
                 break;
+            }
             case CommandEnum.PlayArea:
                 SendPlayArea(session);
                 break;
@@ -176,59 +149,110 @@ internal class MainController
                 SendDeviceIds(session);
                 break;
             case CommandEnum.DeviceProperty:
-                var property = ETrackedDeviceProperty.Prop_Invalid;
+            {
+                DataDeviceProperty? data = null;
                 try
                 {
-                    property = (ETrackedDeviceProperty)Enum.Parse(typeof(ETrackedDeviceProperty), command.value);
+                    data = JsonSerializer.Deserialize<DataDeviceProperty>(command.Data?.GetRawText() ?? "", _jsonOptions);
                 }
                 catch (Exception e)
                 {
                     Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
                 }
 
-                if (property != ETrackedDeviceProperty.Prop_Invalid)
+                if (data != null && data.Property != ETrackedDeviceProperty.Prop_Invalid)
                 {
-                    SendDeviceProperty(command.key, command.device, property, session);
+                    SendDeviceProperty(command.Key, data.DeviceId, data.Property, session);
                 }
-                else SendResult("Error", $"Faulty property: {command.value}", session); // TODO: Convert to error func
+                else SendResult("Error", $"Faulty property: {data?.Property}", session); // TODO: Convert to error func
 
                 break;
+            }
             case CommandEnum.InputAnalog:
-                SendResult(command.key, Data.analogInputActionData, session);
+                SendResult(command.Key, Data.analogInputActionData, session);
                 break;
             case CommandEnum.InputPose:
-                SendResult(command.key, Data.poseInputActionData, session);
+                SendResult(command.Key, Data.poseInputActionData, session);
                 break;
             case CommandEnum.Setting:
-                SendSetting(command.key, command.value, command.value2, session);
+            {
+                DataSetting? data = null;
+                try
+                {
+                    data = JsonSerializer.Deserialize<DataSetting>(command.Data?.GetRawText() ?? "", _jsonOptions);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
+                }
+
+                if (data != null) SendSetting(command.Key, data.Section, data.Setting, session);
+                else SendResult("Error", "Input was invalid.", session); // TODO: Include response with shape of data?
                 break;
+            }
             case CommandEnum.RemoteSetting:
-                var remoteSettingResponse = ApplyRemoteSetting(command);
-                SendResult(command.key, remoteSettingResponse, session);
+            {
+                DataRemoteSetting? data = null;
+                try
+                {
+                    data = JsonSerializer.Deserialize<DataRemoteSetting>(command.Data?.GetRawText() ?? "", _jsonOptions);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
+                }
+
+                if (data != null)
+                {
+                    var remoteSettingResponse = ApplyRemoteSetting(data);
+                    SendResult(command.Key, remoteSettingResponse, session);
+                }
+                else SendResult("Error", "Input was invalid.", session); // TODO: Include response with shape of data?
+
                 break;
+            }
             case CommandEnum.FindOverlay:
-                var overlayHandle = _vr.FindOverlay(command.value);
-                var overlayResult = new Dictionary<string, dynamic>
+            {
+                DataFindOverlay? data = null;
+                try
                 {
-                    { "handle", overlayHandle },
-                    { "key", command.value }
-                };
-                SendResult(command.key, overlayResult, session);
-                break;
-            case CommandEnum.Relay:
-                var relayRelay = new Dictionary<string, dynamic>
+                    data = JsonSerializer.Deserialize<DataFindOverlay>(command.Data?.GetRawText() ?? "", _jsonOptions);
+                }
+                catch (Exception e)
                 {
-                    { "password", command.value },
-                    { "user", command.value2 },
-                    { "key", command.value3 },
-                    { "data", command.value4 }
-                };
-                SendResult(command.key, relayRelay);
+                    Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
+                }
+
+                if (data != null)
+                {
+                    var overlayResult = FindOverlay(data);
+                    SendResult(command.Key, overlayResult, session);
+                }
+                else SendResult("Error", "Input was invalid.", session); // TODO: Include response with shape of data?
+
                 break;
+            }
             case CommandEnum.MoveSpace:
-                var moveSpaceResponse = ApplyMoveSpace(command);
-                SendResult(command.key, moveSpaceResponse, session);
+            {
+                DataMoveSpace? data = null;
+                try
+                {
+                    data = JsonSerializer.Deserialize<DataMoveSpace>(command.Data?.GetRawText() ?? "", _jsonOptions);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
+                }
+
+                if (data != null)
+                {
+                    var moveSpaceResponse = ApplyMoveSpace(data);
+                    SendResult(command.Key, moveSpaceResponse, session);
+                }
+                else SendResult("Error", "Input was invalid."); // TODO: Include response with shape of data?
+
                 break;
+            }
         }
     }
 
@@ -623,52 +647,47 @@ internal class MainController
 
     #endregion
 
-    private GenericResponse ApplyRemoteSetting(Command command)
+    private Dictionary<string, dynamic> FindOverlay(DataFindOverlay data)
+    {
+        var handle = _vr.FindOverlay(data.OverlayKey);
+        var result = new Dictionary<string, dynamic>
+        {
+            { "handle", handle },
+            { "key", data.OverlayKey }
+        };
+        return result;
+    }
+
+    private GenericResponse ApplyRemoteSetting(DataRemoteSetting data)
     {
         var response = new GenericResponse();
-        var canSet = CheckRemoteSetting(command, ref response);
+        var canSet = CheckRemoteSetting(CommandEnum.RemoteSetting, data.Password, ref response);
         if (!canSet) return response;
 
-        var settingSuccess = ApplySetting(command.value2, command.value3, command.value4, command.value5);
+        var settingSuccess = ApplySetting(data.Section, data.Setting, data.Value, data.Type);
 
         if (!settingSuccess)
         {
-            response.message = $"Failed to set {command.value2}/{command.value3} to {command.value4}.";
+            response.message = $"Failed to set {data.Section}/{data.Setting} to {data.Value}.";
             return response;
         }
 
-        response.message = $"Succeeded setting {command.value2}/{command.value3} to {command.value4}.";
+        response.message = $"Succeeded setting {data.Section}/{data.Setting} to {data.Value}.";
         response.success = true;
         return response;
     }
 
-    private GenericResponse ApplyMoveSpace(Command command)
+    private GenericResponse ApplyMoveSpace(DataMoveSpace data)
     {
         var response = new GenericResponse();
-        var canSet = CheckRemoteSetting(command, ref response);
+        var canSet = CheckRemoteSetting(CommandEnum.MoveSpace, data.Password, ref response);
         if (!canSet) return response;
 
         var newPos = new HmdVector3_t();
-        float x, y, z;
-        bool moveChaperone;
-        try
-        {
-            x = float.Parse(command.value2);
-            y = float.Parse(command.value3);
-            z = float.Parse(command.value4);
-            moveChaperone = bool.Parse(command.value5);
-        }
-        catch (Exception e)
-        {
-            response.message =
-                $"Could not parse values for move (floats: value2, value3, value4, boolean: value5): {e.Message}";
-            return response;
-        }
-
-        newPos.v0 = x;
-        newPos.v1 = y;
-        newPos.v2 = z;
-        var success = _vr.MoveUniverse(newPos, moveChaperone);
+        newPos.v0 = data.OffsetX;
+        newPos.v1 = data.OffsetY;
+        newPos.v2 = data.OffsetZ;
+        var success = _vr.MoveUniverse(newPos, data.MoveChaperone);
         if (success)
         {
             response.success = true;
@@ -682,41 +701,35 @@ internal class MainController
         return response;
     }
 
-    private bool CheckRemoteSetting(Command command, ref GenericResponse response)
+    private bool CheckRemoteSetting(CommandEnum key, string password, ref GenericResponse response)
     {
         if (!_settings.RemoteSettings)
         {
-            response.message =
-                $"The command '{command.key}' relies on Remote Settings which is disabled. Enable it in the application interface.";
+            response.message = $"The command '{key}' relies on Remote Settings which is disabled. Enable it in the application interface.";
             return false;
         }
+        if (password.Equals(_settings.RemoteSettingsPasswordHash)) return true;
 
-        if (!command.value.Equals(_settings.RemoteSettingsPasswordHash))
-        {
-            response.message = "Password string did not match, b64-encode a binary SHA256 hash.";
-            return false;
-        }
-
-        return true;
+        response.message = "Password string did not match, b64-encode a binary SHA256 hash.";
+        return false;
     }
 
-    private bool ApplySetting(string section, string setting, string value, string type)
+    private bool ApplySetting(string section, string setting, string value, TypeEnum type)
     {
         var boolSuccess = bool.TryParse(value, out var boolValue);
         var intSuccess = int.TryParse(value, out var intValue);
         var floatSuccess = float.TryParse(value, out var floatValue);
-
-        if (type.Length > 0)
+        if (type != TypeEnum.None)
         {
             switch (type)
             {
-                case "String":
+                case TypeEnum.String:
                     return _vr.SetStringSetting(section, setting, value);
-                case "Bool":
+                case TypeEnum.Bool:
                     return _vr.SetBoolSetting(section, setting, boolValue);
-                case "Float":
+                case TypeEnum.Float:
                     return _vr.SetFloatSetting(section, setting, floatValue);
-                case "Int32":
+                case TypeEnum.Int32:
                     return _vr.SetIntSetting(section, setting, intValue);
                 default:
                     return false;
@@ -725,9 +738,9 @@ internal class MainController
         else
         {
             if (boolSuccess) return _vr.SetBoolSetting(section, setting, boolValue);
-            else if (intSuccess) return _vr.SetIntSetting(section, setting, intValue);
-            else if (floatSuccess) return _vr.SetFloatSetting(section, setting, floatValue);
-            else return _vr.SetStringSetting(section, setting, value);
+            if (intSuccess) return _vr.SetIntSetting(section, setting, intValue);
+            if (floatSuccess) return _vr.SetFloatSetting(section, setting, floatValue);
+            return _vr.SetStringSetting(section, setting, value);
         }
     }
 
