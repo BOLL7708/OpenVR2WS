@@ -4,6 +4,6 @@ namespace OpenVR2WS.Input;
 
 internal class DataDeviceProperty
 {
-    public ETrackedDeviceProperty Property = ETrackedDeviceProperty.Prop_Invalid;
     public int DeviceId = -1;
+    public ETrackedDeviceProperty Property = ETrackedDeviceProperty.Prop_Invalid;
 }

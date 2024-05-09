@@ -32,7 +32,7 @@ internal class MainController
         _jsonOptions.Converters.Add(new JsonStringEnumConverter());
 
         _openvrStatusAction += openvrStatus;
-        Data.Reset();
+        DataStore.Reset();
 
         _vr.SetDebugLogAction((message) => { Debug.WriteLine($"Debug log: {message}"); });
         _vr.Init();
@@ -114,7 +114,7 @@ internal class MainController
 
     private void SendInput(InputDigitalActionData_t data, InputActionInfo info)
     {
-        var source = Data.handleToSource[info.sourceHandle];
+        var source = DataStore.handleToSource[info.sourceHandle];
         var output = new Dictionary<string, dynamic>()
         {
             { "source", source },
@@ -144,8 +144,8 @@ internal class MainController
                 SendApplicationInfo(session);
                 break;
             case CommandEnum.DeviceIds:
-                Data.UpdateInputDeviceHandles();
-                Data.UpdateDeviceIndices();
+                DataStore.UpdateInputDeviceHandles();
+                DataStore.UpdateDeviceIndices();
                 SendDeviceIds(session);
                 break;
             case CommandEnum.DeviceProperty:
@@ -169,10 +169,10 @@ internal class MainController
                 break;
             }
             case CommandEnum.InputAnalog:
-                SendResult(command.Key, Data.analogInputActionData, session);
+                SendResult(command.Key, DataStore.analogInputActionData, session);
                 break;
             case CommandEnum.InputPose:
-                SendResult(command.Key, Data.poseInputActionData, session);
+                SendResult(command.Key, DataStore.poseInputActionData, session);
                 break;
             case CommandEnum.Setting:
             {
@@ -291,8 +291,8 @@ internal class MainController
                     _stopRunning = false;
                     _vr.AddApplicationManifest("./app.vrmanifest", "boll7708.openvr2ws", true);
                     _vr.LoadActionManifest("./actions.json");
-                    Data.UpdateDeviceIndices();
-                    Data.UpdateInputDeviceHandles();
+                    DataStore.UpdateDeviceIndices();
+                    DataStore.UpdateInputDeviceHandles();
                     RegisterActions();
                     RegisterEvents();
                     SendDefaults();
@@ -304,32 +304,32 @@ internal class MainController
                     // Happens every loop
                     _vr.UpdateEvents();
                     _vr.UpdateActionStates([
-                        Data.sourceToHandle[InputSource.Head],
-                        Data.sourceToHandle[InputSource.Chest],
-                        Data.sourceToHandle[InputSource.LeftShoulder],
-                        Data.sourceToHandle[InputSource.RightShoulder],
-                        Data.sourceToHandle[InputSource.LeftElbow],
-                        Data.sourceToHandle[InputSource.RightElbow],
-                        Data.sourceToHandle[InputSource.LeftHand],
-                        Data.sourceToHandle[InputSource.RightHand],
-                        Data.sourceToHandle[InputSource.Waist],
-                        Data.sourceToHandle[InputSource.LeftKnee],
-                        Data.sourceToHandle[InputSource.RightKnee],
-                        Data.sourceToHandle[InputSource.LeftFoot],
-                        Data.sourceToHandle[InputSource.RightFoot],
-                        Data.sourceToHandle[InputSource.Camera],
-                        Data.sourceToHandle[InputSource.Gamepad]
+                        DataStore.sourceToHandle[InputSource.Head],
+                        DataStore.sourceToHandle[InputSource.Chest],
+                        DataStore.sourceToHandle[InputSource.LeftShoulder],
+                        DataStore.sourceToHandle[InputSource.RightShoulder],
+                        DataStore.sourceToHandle[InputSource.LeftElbow],
+                        DataStore.sourceToHandle[InputSource.RightElbow],
+                        DataStore.sourceToHandle[InputSource.LeftHand],
+                        DataStore.sourceToHandle[InputSource.RightHand],
+                        DataStore.sourceToHandle[InputSource.Waist],
+                        DataStore.sourceToHandle[InputSource.LeftKnee],
+                        DataStore.sourceToHandle[InputSource.RightKnee],
+                        DataStore.sourceToHandle[InputSource.LeftFoot],
+                        DataStore.sourceToHandle[InputSource.RightFoot],
+                        DataStore.sourceToHandle[InputSource.Camera],
+                        DataStore.sourceToHandle[InputSource.Gamepad]
                     ]);
                     if (_settings.UseDevicePoses)
                     {
                         var poses = _vr.GetDeviceToAbsoluteTrackingPose();
                         for (var i = 0; i < poses.Length; i++)
                         {
-                            Data.UpdateOrAddPoseData(poses[i], i);
+                            DataStore.UpdateOrAddPoseData(poses[i], i);
                         }
                     }
 
-                    if (!headsetHzUpdated && Data.sourceToIndex.TryGetValue(InputSource.Head, out var id))
+                    if (!headsetHzUpdated && DataStore.sourceToIndex.TryGetValue(InputSource.Head, out var id))
                     {
                         var hz = _vr.GetFloatTrackedDeviceProperty((uint)id,
                             ETrackedDeviceProperty.Prop_DisplayFrequency_Float);
@@ -354,7 +354,7 @@ internal class MainController
             initComplete = false;
             _vr.AcknowledgeShutdown();
             _vr.Shutdown();
-            Data.Reset();
+            DataStore.Reset();
             Debug.WriteLine("Shutting down!");
             _openvrStatusAction.Invoke(false);
         }
@@ -432,12 +432,12 @@ internal class MainController
 
         void StorePoseInput(InputPoseActionData_t data, InputActionInfo info)
         {
-            Data.UpdateOrAddPoseInputActionData(data, info);
+            DataStore.UpdateOrAddPoseInputActionData(data, info);
         }
 
         void StoreAnalogInput(InputAnalogActionData_t data, InputActionInfo info)
         {
-            Data.UpdateOrAddAnalogInputActionData(data, info);
+            DataStore.UpdateOrAddAnalogInputActionData(data, info);
         }
 
         void SendDigitalInput(InputDigitalActionData_t data, InputActionInfo info)
@@ -461,8 +461,8 @@ internal class MainController
         });
         _vr.RegisterEvent(EVREventType.VREvent_TrackedDeviceActivated, (data) =>
         {
-            Data.UpdateInputDeviceHandles();
-            Data.UpdateDeviceIndices(data.trackedDeviceIndex);
+            DataStore.UpdateInputDeviceHandles();
+            DataStore.UpdateDeviceIndices(data.trackedDeviceIndex);
             SendDeviceIds();
         });
         _vr.RegisterEvents([
@@ -471,7 +471,7 @@ internal class MainController
             EVREventType.VREvent_TrackedDeviceUpdated
         ], (_) =>
         {
-            Data.UpdateInputDeviceHandles();
+            DataStore.UpdateInputDeviceHandles();
             SendDeviceIds();
         });
         _vr.RegisterEvents([
@@ -537,6 +537,7 @@ internal class MainController
             _currentAppSessionTime = Utils.NowUnixUTC();
         }
 
+        // TODO: Convert to class
         var data = new Dictionary<string, dynamic>
         {
             ["id"] = appId,
@@ -556,10 +557,11 @@ internal class MainController
 
     private void SendDeviceIds(WebSocketSession? session = null)
     {
+        // TODO: Convert to class
         var data = new Dictionary<string, dynamic>
         {
-            ["deviceToIndex"] = Data.deviceToIndex,
-            ["sourceToIndex"] = Data.sourceToIndex
+            ["deviceToIndex"] = DataStore.deviceToIndex,
+            ["sourceToIndex"] = DataStore.sourceToIndex
         };
         SendResult(CommandEnum.DeviceIds, data, session);
     }
@@ -609,7 +611,7 @@ internal class MainController
                 Debug.WriteLine($"{dataType} unhandled property: {propArray[1]}");
                 break;
         }
-
+        // TODO: Convert to class
         data["device"] = deviceIndex;
         data["name"] = propName;
         data["value"] = propertyValue ?? "";
@@ -621,6 +623,8 @@ internal class MainController
     {
         // TODO: Add switch on type
         var value = _vr.GetFloatSetting(section, setting);
+        
+        // TODO: Convert to class
         var data = new Dictionary<string, dynamic>
         {
             ["section"] = section,
@@ -637,7 +641,7 @@ internal class MainController
         {
             var enumName = Enum.GetName(typeof(EVREventType), eventType);
             data["type"] = (enumName ?? "").Replace("VREvent_", "");
-            SendResult("event", data, session);
+            SendResult("VREvent", data, session);
         }
         catch (Exception e)
         {
@@ -650,6 +654,7 @@ internal class MainController
     private Dictionary<string, dynamic> FindOverlay(DataFindOverlay data)
     {
         var handle = _vr.FindOverlay(data.OverlayKey);
+        // TODO: Convert to class
         var result = new Dictionary<string, dynamic>
         {
             { "handle", handle },

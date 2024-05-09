@@ -8,25 +8,16 @@ using static EasyOpenVR.EasyOpenVRSingleton;
 namespace OpenVR2WS;
 
 // ReSharper disable InconsistentNaming
-internal static class Data
+internal static class DataStore
 {
-    public static readonly ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>> deviceToIndex =
-        new ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>>();
-
+    public static readonly ConcurrentDictionary<ETrackedDeviceClass, HashSet<uint>> deviceToIndex = new();
     public static readonly ConcurrentDictionary<ulong, InputSource> handleToSource =
-        new ConcurrentDictionary<ulong, InputSource>(Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
-
-    public static readonly ConcurrentDictionary<InputSource, ulong> sourceToHandle =
-        new ConcurrentDictionary<InputSource, ulong>();
-
-    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData =
-        new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>>();
-
-    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>> poseInputActionData =
-        new ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>>();
-
-    public static readonly ConcurrentDictionary<InputSource, int> sourceToIndex = new ConcurrentDictionary<InputSource, int>();
-    public static readonly ConcurrentDictionary<int, InputSource> indexToSource = new ConcurrentDictionary<int, InputSource>();
+        new (Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
+    public static readonly ConcurrentDictionary<InputSource, ulong> sourceToHandle = new();
+    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData = new();
+    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>> poseInputActionData = new();
+    public static readonly ConcurrentDictionary<InputSource, int> sourceToIndex = new();
+    public static readonly ConcurrentDictionary<int, InputSource> indexToSource = new();
 
     /*
      * This will update the device class for an index what was just connected.
