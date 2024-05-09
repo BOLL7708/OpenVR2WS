@@ -94,6 +94,7 @@ internal class MainController
 
     private void SendResult(string key, dynamic? data = null, WebSocketSession? session = null)
     {
+        // TODO: Convert to class
         var result = new Dictionary<string, dynamic>
         {
             ["Key"] = key,
@@ -115,6 +116,7 @@ internal class MainController
     private void SendInput(InputDigitalActionData_t data, InputActionInfo info)
     {
         var source = DataStore.handleToSource[info.sourceHandle];
+        // TODO: Convert to class
         var output = new Dictionary<string, dynamic>()
         {
             { "source", source },
@@ -577,34 +579,35 @@ internal class MainController
         var propArray = propName.Split('_');
         var dataType = propArray.Last();
         var arrayType = dataType == "Array" ? propArray[^2] : ""; // Matrix34, Int32, Float, Vector4, 
+        Enum.TryParse(dataType, out Output.TypeEnum dataTypeEnum);
         object? propertyValue = null;
-        switch (dataType)
+        switch (dataTypeEnum)
         {
-            case "String":
+            case Output.TypeEnum.String:
                 propertyValue = _vr.GetStringTrackedDeviceProperty(index, property);
                 break;
-            case "Bool":
+            case Output.TypeEnum.Bool:
                 propertyValue = _vr.GetBooleanTrackedDeviceProperty(index, property);
                 break;
-            case "Float":
+            case Output.TypeEnum.Float:
                 propertyValue = _vr.GetFloatTrackedDeviceProperty(index, property);
                 break;
-            case "Matrix34":
+            case Output.TypeEnum.Matrix34:
                 Debug.WriteLine($"{dataType} property: {propArray[1]}");
                 break;
-            case "Uint64":
+            case Output.TypeEnum.Uint64:
                 propertyValue = _vr.GetLongTrackedDeviceProperty(index, property);
                 break;
-            case "Int32":
+            case Output.TypeEnum.Int32:
                 propertyValue = _vr.GetIntegerTrackedDeviceProperty(index, property);
                 break;
-            case "Binary":
+            case Output.TypeEnum.Binary:
                 Debug.WriteLine($"{dataType} property: {propArray[1]}");
                 break;
-            case "Array":
+            case Output.TypeEnum.Array:
                 Debug.WriteLine($"{dataType}<{arrayType}> property: {propArray[1]}");
                 break;
-            case "Vector3":
+            case Output.TypeEnum.Vector3:
                 Debug.WriteLine($"{dataType} property: {propArray[1]}");
                 break;
             default:
@@ -719,22 +722,22 @@ internal class MainController
         return false;
     }
 
-    private bool ApplySetting(string section, string setting, string value, TypeEnum type)
+    private bool ApplySetting(string section, string setting, string value, Input.TypeEnum type)
     {
         var boolSuccess = bool.TryParse(value, out var boolValue);
         var intSuccess = int.TryParse(value, out var intValue);
         var floatSuccess = float.TryParse(value, out var floatValue);
-        if (type != TypeEnum.None)
+        if (type != Input.TypeEnum.None)
         {
             switch (type)
             {
-                case TypeEnum.String:
+                case Input.TypeEnum.String:
                     return _vr.SetStringSetting(section, setting, value);
-                case TypeEnum.Bool:
+                case Input.TypeEnum.Bool:
                     return _vr.SetBoolSetting(section, setting, boolValue);
-                case TypeEnum.Float:
+                case Input.TypeEnum.Float:
                     return _vr.SetFloatSetting(section, setting, floatValue);
-                case TypeEnum.Int32:
+                case Input.TypeEnum.Int32:
                     return _vr.SetIntSetting(section, setting, intValue);
                 default:
                     return false;
