@@ -13,6 +13,5 @@ internal enum CommandEnum
     Setting,
     RemoteSetting,
     FindOverlay,
-    Relay,
     MoveSpace
 }
