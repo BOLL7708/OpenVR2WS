@@ -1,9 +1,9 @@
 namespace OpenVR2WS.Output;
 
-public class JsonDeviceProperty(int deviceIndex, string propName, dynamic? propertyValue, string dataType)
+public class JsonDeviceProperty(int deviceIndex, string propertyName, dynamic? propertyValue, string dataType)
 {
     public int DeviceIndex = deviceIndex;
-    public string PropName = propName;
+    public string PropertyName = propertyName;
     public dynamic? PropertyValue = propertyValue;
     public string DataType = dataType;
 }

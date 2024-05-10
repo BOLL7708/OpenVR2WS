@@ -134,22 +134,7 @@ internal class MainController
                 break;
             case RequestKeyEnum.DeviceProperty:
             {
-                DataDeviceProperty? data = null;
-                try
-                {
-                    data = JsonSerializer.Deserialize<DataDeviceProperty>(command.Data?.GetRawText() ?? "", JsonOptions.get());
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
-                }
-
-                if (data != null && data.Property != ETrackedDeviceProperty.Prop_Invalid)
-                {
-                    SendDeviceProperty(command.Key, data.DeviceId, data.Property, session);
-                }
-                else SendResult(Response.CreateError($"Faulty property: {data?.Property}"), session);
-
+                SendDeviceProperty(command, session);
                 break;
             }
             case RequestKeyEnum.InputAnalog:
@@ -160,66 +145,22 @@ internal class MainController
                 break;
             case RequestKeyEnum.Setting:
             {
-                DataSetting? data = null;
-                try
-                {
-                    data = JsonSerializer.Deserialize<DataSetting>(command.Data?.GetRawText() ?? "", JsonOptions.get());
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
-                }
-
-                if (data != null) SendSetting(command.Key, data.Section, data.Setting, data.Type, session);
-                else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
+                SendSetting(command, session);
                 break;
             }
             case RequestKeyEnum.RemoteSetting:
             {
-                DataRemoteSetting? data = null;
-                try
-                {
-                    data = JsonSerializer.Deserialize<DataRemoteSetting>(command.Data?.GetRawText() ?? "", JsonOptions.get());
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
-                }
-
-                if (data != null)
-                {
-                    var remoteSettingResponse = ApplyRemoteSetting(data);
-                    remoteSettingResponse.Key = command.Key;
-                    SendResult(remoteSettingResponse, session);
-                }
-                else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
-
+                SendRemoteSetting(command, session);
                 break;
             }
             case RequestKeyEnum.FindOverlay:
             {
-                SendFoundOverlay(command);
+                SendFoundOverlay(command, session);
                 break;
             }
             case RequestKeyEnum.MoveSpace:
             {
-                DataMoveSpace? data = null;
-                try
-                {
-                    data = JsonSerializer.Deserialize<DataMoveSpace>(command.Data?.GetRawText() ?? "", JsonOptions.get());
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
-                }
-
-                if (data != null)
-                {
-                    var moveSpaceResponse = ApplyMoveSpace(data);
-                    SendCommandResult(command.Key, moveSpaceResponse, session);
-                }
-                else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
-
+                SendMoveSpace(command, session);
                 break;
             }
         }
@@ -451,8 +392,9 @@ internal class MainController
         _vr.RegisterEvent(EVREventType.VREvent_PropertyChanged, (data) =>
         {
             // Look for things here that is useful, like battery states
-            // Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop)); 
-            SendDeviceProperty(RequestKeyEnum.DeviceProperty, (int)data.trackedDeviceIndex, data.data.property.prop);
+            // Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop));
+            var deviceProperty = DataDeviceProperty.CreateFromEvent(data);
+            SendDeviceProperty(RequestKeyEnum.DeviceProperty, deviceProperty, null);
         });
         _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (_) =>
         {
@@ -528,37 +470,58 @@ internal class MainController
         SendCommandResult(RequestKeyEnum.DeviceIds, data, session);
     }
 
-    private void SendDeviceProperty(RequestKeyEnum requestKey, int deviceIndex, ETrackedDeviceProperty property,
-        WebSocketSession? session = null)
+    private void SendDeviceProperty(Request command, WebSocketSession? session = null)
     {
-        if (deviceIndex == -1) return; // Should not really happen, but means the device does not exist
-        var index = (uint)deviceIndex;
-        var propName = Enum.GetName(typeof(ETrackedDeviceProperty), property);
+        DataDeviceProperty? data = null;
+        try
+        {
+            data = JsonSerializer.Deserialize<DataDeviceProperty>(command.Data?.GetRawText() ?? "", JsonOptions.get());
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
+        }
+
+        if (data == null || data.Property == ETrackedDeviceProperty.Prop_Invalid)
+        {
+            SendResult(Response.CreateError($"Faulty property: {data?.Property}"), session);
+            return;
+        }
+
+        SendDeviceProperty(command.Key, data, session);
+    }
+
+    private void SendDeviceProperty(RequestKeyEnum key, DataDeviceProperty? data, WebSocketSession? session)
+    {
+        if (data == null || data.DeviceId == -1) return; // Should not really happen, but means the device does not exist
+        var index = (uint)data.DeviceId;
+        var propName = Enum.GetName(typeof(ETrackedDeviceProperty), data.Property);
         if (propName == null) return; // This happens for vendor reserved properties (10000-10999)
         var propArray = propName.Split('_');
         var dataType = propArray.Last();
-        var arrayType = dataType == "Array" ? propArray[^2] : ""; // Matrix34, Int32, Float, Vector4, 
+        var dataName = propArray.Length >= 1 ? propArray[1] : propName;
+        var arrayType = dataType == "Array" ? propArray[^2] : string.Empty; // Matrix34, Int32, Float, Vector4, 
         Enum.TryParse(dataType, out Output.TypeEnum dataTypeEnum);
         dynamic? propertyValue = null;
         switch (dataTypeEnum)
         {
             case Output.TypeEnum.String:
-                propertyValue = _vr.GetStringTrackedDeviceProperty(index, property);
+                propertyValue = _vr.GetStringTrackedDeviceProperty(index, data.Property);
                 break;
             case Output.TypeEnum.Bool:
-                propertyValue = _vr.GetBooleanTrackedDeviceProperty(index, property);
+                propertyValue = _vr.GetBooleanTrackedDeviceProperty(index, data.Property);
                 break;
             case Output.TypeEnum.Float:
-                propertyValue = _vr.GetFloatTrackedDeviceProperty(index, property);
+                propertyValue = _vr.GetFloatTrackedDeviceProperty(index, data.Property);
                 break;
             case Output.TypeEnum.Matrix34:
                 Debug.WriteLine($"{dataType} property: {propArray[1]}");
                 break;
             case Output.TypeEnum.Uint64:
-                propertyValue = _vr.GetLongTrackedDeviceProperty(index, property);
+                propertyValue = _vr.GetLongTrackedDeviceProperty(index, data.Property);
                 break;
             case Output.TypeEnum.Int32:
-                propertyValue = _vr.GetIntegerTrackedDeviceProperty(index, property);
+                propertyValue = _vr.GetIntegerTrackedDeviceProperty(index, data.Property);
                 break;
             case Output.TypeEnum.Binary:
                 Debug.WriteLine($"{dataType} property: {propArray[1]}");
@@ -574,22 +537,79 @@ internal class MainController
                 break;
         }
 
-        var data = new JsonDeviceProperty(deviceIndex, propName, propertyValue, dataType);
-        SendCommandResult(requestKey, data, session);
+        var output = new JsonDeviceProperty(data.DeviceId, dataName, propertyValue, dataType);
+        SendCommandResult(key, output, session);
     }
 
-    private void SendSetting(RequestKeyEnum requestKey, string section, string setting, Output.TypeEnum type = Output.TypeEnum.Float, WebSocketSession? session = null)
+    private void SendSetting(Request command, WebSocketSession? session = null)
     {
-        dynamic? value = type switch
+        DataSetting? data = null;
+        try
         {
-            Output.TypeEnum.Float => _vr.GetFloatSetting(section, setting),
-            Output.TypeEnum.Int32 => _vr.GetIntSetting(section, setting),
-            Output.TypeEnum.Bool => _vr.GetBoolSetting(section, setting),
-            Output.TypeEnum.String => _vr.GetStringSetting(section, setting),
+            data = JsonSerializer.Deserialize<DataSetting>(command.Data?.GetRawText() ?? "", JsonOptions.get());
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
+        }
+
+        if (data == null)
+        {
+            SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
+            return;
+        }
+
+        dynamic? value = data.Type switch
+        {
+            Output.TypeEnum.Float => _vr.GetFloatSetting(data.Section, data.Setting),
+            Output.TypeEnum.Int32 => _vr.GetIntSetting(data.Section, data.Setting),
+            Output.TypeEnum.Bool => _vr.GetBoolSetting(data.Section, data.Setting),
+            Output.TypeEnum.String => _vr.GetStringSetting(data.Section, data.Setting),
             _ => null
         };
-        var data = new JsonSetting(section, setting, value);
-        SendCommandResult(requestKey, data, session);
+        var output = new JsonSetting(data.Section, data.Setting, value);
+        SendCommandResult(command.Key, output, session);
+    }
+
+    private void SendRemoteSetting(Request command, WebSocketSession? session)
+    {
+        DataRemoteSetting? data = null;
+        try
+        {
+            data = JsonSerializer.Deserialize<DataRemoteSetting>(command.Data?.GetRawText() ?? "", JsonOptions.get());
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
+        }
+
+        if (data != null)
+        {
+            var remoteSettingResponse = ApplyRemoteSetting(data);
+            remoteSettingResponse.Key = command.Key;
+            SendResult(remoteSettingResponse, session);
+        }
+        else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
+    }
+
+    private void SendMoveSpace(Request command, WebSocketSession? session)
+    {
+        DataMoveSpace? data = null;
+        try
+        {
+            data = JsonSerializer.Deserialize<DataMoveSpace>(command.Data?.GetRawText() ?? "", JsonOptions.get());
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
+        }
+
+        if (data != null)
+        {
+            var moveSpaceResponse = ApplyMoveSpace(data);
+            SendCommandResult(command.Key, moveSpaceResponse, session);
+        }
+        else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
     }
 
     private void SendEvent(EVREventType eventType, WebSocketSession? session = null)
