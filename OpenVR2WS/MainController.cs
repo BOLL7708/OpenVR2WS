@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using EasyFramework;
@@ -15,6 +14,7 @@ using OpenVR2WS.Properties;
 using SuperSocket.WebSocket.Server;
 using Valve.VR;
 using static EasyOpenVR.EasyOpenVRSingleton;
+using TypeEnum = OpenVR2WS.Input.TypeEnum;
 
 namespace OpenVR2WS;
 
@@ -25,18 +25,14 @@ internal class MainController
     private readonly Settings _settings = Settings.Default;
     private readonly EasyOpenVRSingleton _vr = Instance;
     private Action<bool> _openvrStatusAction;
-    private readonly JsonSerializerOptions _jsonOptions = new() { IncludeFields = true };
 
     public MainController(Action<SuperServer.ServerStatus, int> serverStatus, Action<bool> openvrStatus)
     {
-        _jsonOptions.Converters.Add(new JsonStringEnumConverter());
-
         _openvrStatusAction += openvrStatus;
         DataStore.Reset();
 
         _vr.SetDebugLogAction((message) => { Debug.WriteLine($"Debug log: {message}"); });
         _vr.Init();
-
 
         InitServer(serverStatus);
         InitWorkerThread();
@@ -53,14 +49,14 @@ internal class MainController
             var command = new Request();
             try
             {
-                command = JsonSerializer.Deserialize<Request>(message, _jsonOptions);
+                command = JsonSerializer.Deserialize<Request>(message, JsonOptions.get());
             }
             catch (Exception e)
             {
                 Debug.WriteLine($"JSON Parsing Exception: {e.Message}");
             }
 
-            if (command != null && command.Command != CommandEnum.None) HandleCommand(session, command);
+            if (command != null && command.Key != RequestKeyEnum.None) HandleCommand(session, command);
             else SendResult(Response.CreateError($"InvalidCommand: {message}"), session);
         };
         _server.StatusMessageAction += (session, connected, status) =>
@@ -85,70 +81,63 @@ internal class MainController
     }
 
     // If session is null, it will send to all registered sessions
-    private void SendCommandResult(CommandEnum command, dynamic? data = null, WebSocketSession? session = null)
+    private void SendCommandResult(RequestKeyEnum requestKey, dynamic? data = null, WebSocketSession? session = null)
     {
-        var key = Enum.GetName(typeof(CommandEnum), command);
-        if (key == null) return;
-        SendResult(Response.CreateCommand(command, data), session);
+        SendResult(Response.CreateCommand(requestKey, data), session);
     }
+
     private void SendResult(Response response, WebSocketSession? session = null)
     {
         var jsonString = "";
         try
         {
-            jsonString = JsonSerializer.Serialize(response, _jsonOptions);
+            jsonString = JsonSerializer.Serialize(response, JsonOptions.get());
         }
         catch (Exception e)
         {
-            Debug.WriteLine($"Could not serialize output for {response.Type}|{response.Command}: {e.Message}");
+            Debug.WriteLine($"Could not serialize output for {response.Type}|{response.Key}: {e.Message}");
         }
 
         if (jsonString != "") _server.SendMessage(session, jsonString);
     }
 
-    private void SendInput(InputDigitalActionData_t data, InputActionInfo info, WebSocketSession? session = null)
+    private void SendInput(ResponseTypeEnum type, InputDigitalActionData_t data, InputActionInfo info, WebSocketSession? session = null)
     {
         var source = DataStore.handleToSource[info.sourceHandle];
-        // TODO: Convert to class
-        var output = new Dictionary<string, dynamic>()
-        {
-            { "source", source },
-            { "input", info.pathEnd },
-            { "value", data.bState }
-        };
-        SendResult(Response.CreateInput(output), session);
+        var output = new JsonInputDigital(source, data, info);
+        SendResult(Response.Create(type, output), session);
     }
 
     private void HandleCommand(WebSocketSession? session, Request command)
     {
         // Debug.WriteLine($"Command receieved: {Enum.GetName(typeof(CommandEnum), command.key)}");
         if (_stopRunning || !_vr.IsInitialized()) return;
-        switch (command.Command)
+        switch (command.Key)
         {
-            case CommandEnum.None: break;
-            case CommandEnum.CumulativeStats:
+            case RequestKeyEnum.None: break;
+            case RequestKeyEnum.CumulativeStats:
             {
                 var stats = _vr.GetCumulativeStats();
-                SendCommandResult(command.Command, new CumulativeStats(stats), session);
+                SendCommandResult(command.Key, new JsonCumulativeStats(stats), session);
                 break;
             }
-            case CommandEnum.PlayArea:
+            case RequestKeyEnum.PlayArea:
                 SendPlayArea(session);
                 break;
-            case CommandEnum.ApplicationInfo:
+            case RequestKeyEnum.ApplicationInfo:
                 SendApplicationInfo(session);
                 break;
-            case CommandEnum.DeviceIds:
+            case RequestKeyEnum.DeviceIds:
                 DataStore.UpdateInputDeviceHandles();
                 DataStore.UpdateDeviceIndices();
                 SendDeviceIds(session);
                 break;
-            case CommandEnum.DeviceProperty:
+            case RequestKeyEnum.DeviceProperty:
             {
                 DataDeviceProperty? data = null;
                 try
                 {
-                    data = JsonSerializer.Deserialize<DataDeviceProperty>(command.Data?.GetRawText() ?? "", _jsonOptions);
+                    data = JsonSerializer.Deserialize<DataDeviceProperty>(command.Data?.GetRawText() ?? "", JsonOptions.get());
                 }
                 catch (Exception e)
                 {
@@ -157,40 +146,40 @@ internal class MainController
 
                 if (data != null && data.Property != ETrackedDeviceProperty.Prop_Invalid)
                 {
-                    SendDeviceProperty(command.Command, data.DeviceId, data.Property, session);
+                    SendDeviceProperty(command.Key, data.DeviceId, data.Property, session);
                 }
                 else SendResult(Response.CreateError($"Faulty property: {data?.Property}"), session);
 
                 break;
             }
-            case CommandEnum.InputAnalog:
-                SendCommandResult(command.Command, DataStore.analogInputActionData, session);
+            case RequestKeyEnum.InputAnalog:
+                SendCommandResult(command.Key, DataStore.analogInputActionData, session);
                 break;
-            case CommandEnum.InputPose:
-                SendCommandResult(command.Command, DataStore.poseInputActionData, session);
+            case RequestKeyEnum.InputPose:
+                SendCommandResult(command.Key, DataStore.poseInputActionData, session);
                 break;
-            case CommandEnum.Setting:
+            case RequestKeyEnum.Setting:
             {
                 DataSetting? data = null;
                 try
                 {
-                    data = JsonSerializer.Deserialize<DataSetting>(command.Data?.GetRawText() ?? "", _jsonOptions);
+                    data = JsonSerializer.Deserialize<DataSetting>(command.Data?.GetRawText() ?? "", JsonOptions.get());
                 }
                 catch (Exception e)
                 {
                     Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
                 }
 
-                if (data != null) SendSetting(command.Command, data.Section, data.Setting, session);
+                if (data != null) SendSetting(command.Key, data.Section, data.Setting, data.Type, session);
                 else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
                 break;
             }
-            case CommandEnum.RemoteSetting:
+            case RequestKeyEnum.RemoteSetting:
             {
                 DataRemoteSetting? data = null;
                 try
                 {
-                    data = JsonSerializer.Deserialize<DataRemoteSetting>(command.Data?.GetRawText() ?? "", _jsonOptions);
+                    data = JsonSerializer.Deserialize<DataRemoteSetting>(command.Data?.GetRawText() ?? "", JsonOptions.get());
                 }
                 catch (Exception e)
                 {
@@ -200,40 +189,24 @@ internal class MainController
                 if (data != null)
                 {
                     var remoteSettingResponse = ApplyRemoteSetting(data);
-                    remoteSettingResponse.Command = command.Command;
+                    remoteSettingResponse.Key = command.Key;
                     SendResult(remoteSettingResponse, session);
                 }
                 else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
 
                 break;
             }
-            case CommandEnum.FindOverlay:
+            case RequestKeyEnum.FindOverlay:
             {
-                DataFindOverlay? data = null;
-                try
-                {
-                    data = JsonSerializer.Deserialize<DataFindOverlay>(command.Data?.GetRawText() ?? "", _jsonOptions);
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
-                }
-
-                if (data != null)
-                {
-                    var overlayResult = FindOverlay(data);
-                    SendCommandResult(command.Command, overlayResult, session);
-                }
-                else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
-
+                SendFoundOverlay(command);
                 break;
             }
-            case CommandEnum.MoveSpace:
+            case RequestKeyEnum.MoveSpace:
             {
                 DataMoveSpace? data = null;
                 try
                 {
-                    data = JsonSerializer.Deserialize<DataMoveSpace>(command.Data?.GetRawText() ?? "", _jsonOptions);
+                    data = JsonSerializer.Deserialize<DataMoveSpace>(command.Data?.GetRawText() ?? "", JsonOptions.get());
                 }
                 catch (Exception e)
                 {
@@ -243,7 +216,7 @@ internal class MainController
                 if (data != null)
                 {
                     var moveSpaceResponse = ApplyMoveSpace(data);
-                    SendCommandResult(command.Command, moveSpaceResponse, session);
+                    SendCommandResult(command.Key, moveSpaceResponse, session);
                 }
                 else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
 
@@ -438,7 +411,7 @@ internal class MainController
 
         void SendDigitalInput(InputDigitalActionData_t data, InputActionInfo info)
         {
-            SendInput(data, info);
+            SendInput(ResponseTypeEnum.InputDigital, data, info);
         }
     }
 
@@ -478,13 +451,13 @@ internal class MainController
         {
             // Look for things here that is useful, like battery states
             // Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop)); 
-            SendDeviceProperty(CommandEnum.DeviceProperty, (int)data.trackedDeviceIndex, data.data.property.prop);
+            SendDeviceProperty(RequestKeyEnum.DeviceProperty, (int)data.trackedDeviceIndex, data.data.property.prop);
         });
         _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (_) =>
         {
             // SendResult("Debug", data);
             var fakeData = new Dictionary<string, dynamic> { { "Issue", "https://github.com/ValveSoftware/openvr/issues/1335" } };
-            SendCommandResult(CommandEnum.Setting, fakeData);
+            SendCommandResult(RequestKeyEnum.Setting, fakeData);
         });
         _vr.RegisterEvents([
             EVREventType.VREvent_SceneApplicationChanged,
@@ -533,13 +506,8 @@ internal class MainController
             _currentAppSessionTime = Utils.NowUnixUTC();
         }
 
-        // TODO: Convert to class
-        var data = new Dictionary<string, dynamic>
-        {
-            ["id"] = appId,
-            ["sessionStart"] = _currentAppSessionTime
-        };
-        SendCommandResult(CommandEnum.ApplicationInfo, data, session);
+        var data = new JsonApplicationInfo(_currentAppId, _currentAppSessionTime);
+        SendCommandResult(RequestKeyEnum.ApplicationInfo, data, session);
     }
 
     private void SendPlayArea(WebSocketSession? session = null)
@@ -548,33 +516,27 @@ internal class MainController
         var size = _vr.GetPlayAreaSize();
         var height = _vr.GetFloatSetting(OpenVR.k_pch_CollisionBounds_Section,
             OpenVR.k_pch_CollisionBounds_WallHeight_Float);
-        SendCommandResult(CommandEnum.PlayArea, new PlayArea(rect, size, height), session);
+        SendCommandResult(RequestKeyEnum.PlayArea, new JsonPlayArea(rect, size, height), session);
     }
 
     private void SendDeviceIds(WebSocketSession? session = null)
     {
-        // TODO: Convert to class
-        var data = new Dictionary<string, dynamic>
-        {
-            ["deviceToIndex"] = DataStore.deviceToIndex,
-            ["sourceToIndex"] = DataStore.sourceToIndex
-        };
-        SendCommandResult(CommandEnum.DeviceIds, data, session);
+        var data = new JsonDeviceIds(DataStore.deviceToIndex.ToDictionary(), DataStore.sourceToIndex.ToDictionary());
+        SendCommandResult(RequestKeyEnum.DeviceIds, data, session);
     }
 
-    private void SendDeviceProperty(CommandEnum command, int deviceIndex, ETrackedDeviceProperty property,
+    private void SendDeviceProperty(RequestKeyEnum requestKey, int deviceIndex, ETrackedDeviceProperty property,
         WebSocketSession? session = null)
     {
         if (deviceIndex == -1) return; // Should not really happen, but means the device does not exist
         var index = (uint)deviceIndex;
         var propName = Enum.GetName(typeof(ETrackedDeviceProperty), property);
         if (propName == null) return; // This happens for vendor reserved properties (10000-10999)
-        var data = new Dictionary<string, dynamic>();
         var propArray = propName.Split('_');
         var dataType = propArray.Last();
         var arrayType = dataType == "Array" ? propArray[^2] : ""; // Matrix34, Int32, Float, Vector4, 
         Enum.TryParse(dataType, out Output.TypeEnum dataTypeEnum);
-        object? propertyValue = null;
+        dynamic? propertyValue = null;
         switch (dataTypeEnum)
         {
             case Output.TypeEnum.String:
@@ -609,62 +571,56 @@ internal class MainController
                 break;
         }
 
-        // TODO: Convert to class
-        data["device"] = deviceIndex;
-        data["name"] = propName;
-        data["value"] = propertyValue ?? "";
-        data["type"] = dataType;
-        SendCommandResult(command, data, session);
+        var data = new JsonDeviceProperty(deviceIndex, propName, propertyValue, dataType);
+        SendCommandResult(requestKey, data, session);
     }
 
-    private void SendSetting(CommandEnum command, string section, string setting, WebSocketSession? session = null)
+    private void SendSetting(RequestKeyEnum requestKey, string section, string setting, Output.TypeEnum type = Output.TypeEnum.Float, WebSocketSession? session = null)
     {
-        // TODO: Add switch on type
-        var value = _vr.GetFloatSetting(section, setting);
-
-        // TODO: Convert to class
-        var data = new Dictionary<string, dynamic>
+        dynamic? value = type switch
         {
-            ["section"] = section,
-            ["setting"] = setting,
-            ["value"] = value
+            Output.TypeEnum.Float => _vr.GetFloatSetting(section, setting),
+            Output.TypeEnum.Int32 => _vr.GetIntSetting(section, setting),
+            Output.TypeEnum.Bool => _vr.GetBoolSetting(section, setting),
+            Output.TypeEnum.String => _vr.GetStringSetting(section, setting),
+            _ => null
         };
-        SendCommandResult(command, data, session);
+        var data = new JsonSetting(section, setting, value);
+        SendCommandResult(requestKey, data, session);
     }
 
     private void SendEvent(EVREventType eventType, WebSocketSession? session = null)
     {
-        var data = new Dictionary<string, dynamic>();
-        try
-        {
-            var enumName = Enum.GetName(typeof(EVREventType), eventType);
-            // TODO: Convert to class? O.o
-            data["type"] = (enumName ?? "").Replace("VREvent_", ""); 
-            SendResult(Response.CreateVREvent(data), session);
-        }
-        catch (Exception e)
-        {
-            Debug.WriteLine($"Could not get name for enum coming in from SteamVR: {eventType}, {e.Message}");
-        }
+        var data = new JsonVREvent(eventType);
+        SendResult(Response.CreateVREvent(data), session);
     }
 
     #endregion
 
-    private Dictionary<string, dynamic> FindOverlay(DataFindOverlay data)
+    private void SendFoundOverlay(Request request, WebSocketSession? session = null)
     {
-        var handle = _vr.FindOverlay(data.OverlayKey);
-        // TODO: Convert to class
-        var result = new Dictionary<string, dynamic>
+        DataFindOverlay? data = null;
+        try
         {
-            { "handle", handle },
-            { "key", data.OverlayKey }
-        };
-        return result;
+            data = JsonSerializer.Deserialize<DataFindOverlay>(request.Data?.GetRawText() ?? "", JsonOptions.get());
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Failed to parse incoming device property request: {e.Message}");
+        }
+
+        if (data != null)
+        {
+            var handle = _vr.FindOverlay(data.OverlayKey);
+            var overlayResult = new JsonFindOverlay(data, handle);
+            SendCommandResult(request.Key, overlayResult, session);
+        }
+        else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
     }
 
     private Response ApplyRemoteSetting(DataRemoteSetting data)
     {
-        var errorResponse = CheckRemoteSetting(CommandEnum.RemoteSetting, data.Password);
+        var errorResponse = CheckRemoteSetting(RequestKeyEnum.RemoteSetting, data.Password);
         if (errorResponse != null) return errorResponse;
 
         var settingSuccess = ApplySetting(data.Section, data.Setting, data.Value, data.Type);
@@ -676,7 +632,7 @@ internal class MainController
 
     private Response ApplyMoveSpace(DataMoveSpace data)
     {
-        var errorResponse = CheckRemoteSetting(CommandEnum.MoveSpace, data.Password);
+        var errorResponse = CheckRemoteSetting(RequestKeyEnum.MoveSpace, data.Password);
         if (errorResponse != null) return errorResponse;
 
         var newPos = new HmdVector3_t
@@ -691,7 +647,7 @@ internal class MainController
             : Response.CreateError("Failed to move space.");
     }
 
-    private Response? CheckRemoteSetting(CommandEnum key, string password)
+    private Response? CheckRemoteSetting(RequestKeyEnum key, string password)
     {
         if (!_settings.RemoteSettings)
         {
@@ -703,22 +659,22 @@ internal class MainController
             : Response.CreateError("Password string did not match, b64-encode a binary SHA256 hash.");
     }
 
-    private bool ApplySetting(string section, string setting, string value, Input.TypeEnum type)
+    private bool ApplySetting(string section, string setting, string value, TypeEnum type)
     {
         var boolSuccess = bool.TryParse(value, out var boolValue);
         var intSuccess = int.TryParse(value, out var intValue);
         var floatSuccess = float.TryParse(value, out var floatValue);
-        if (type != Input.TypeEnum.None)
+        if (type != TypeEnum.None)
         {
             switch (type)
             {
-                case Input.TypeEnum.String:
+                case TypeEnum.String:
                     return _vr.SetStringSetting(section, setting, value);
-                case Input.TypeEnum.Bool:
+                case TypeEnum.Bool:
                     return _vr.SetBoolSetting(section, setting, boolValue);
-                case Input.TypeEnum.Float:
+                case TypeEnum.Float:
                     return _vr.SetFloatSetting(section, setting, floatValue);
-                case Input.TypeEnum.Int32:
+                case TypeEnum.Int32:
                     return _vr.SetIntSetting(section, setting, intValue);
                 default:
                     return false;

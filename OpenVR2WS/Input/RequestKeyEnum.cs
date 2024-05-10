@@ -1,6 +1,6 @@
 namespace OpenVR2WS.Input;
 
-internal enum CommandEnum
+internal enum RequestKeyEnum
 {
     None,
     CumulativeStats,

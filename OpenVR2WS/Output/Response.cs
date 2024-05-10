@@ -5,17 +5,18 @@ namespace OpenVR2WS.Output;
 // ReSharper disable InconsistentNaming
 internal class Response
 {
-    public ResponseEnum Type = ResponseEnum.Undefined;
-    public CommandEnum Command = CommandEnum.None;
+    public ResponseTypeEnum Type = ResponseTypeEnum.Undefined;
+    public RequestKeyEnum Key = RequestKeyEnum.None;
     public string Message = "";
     public dynamic? Data = null;
 
-    public static Response CreateError(string message)
+    public static Response CreateError(string message, dynamic? shape = null)
     {
         return new Response
         {
-            Type = ResponseEnum.Error,
-            Message = message
+            Type = ResponseTypeEnum.Error,
+            Message = message,
+            Data = shape
         };
     }
 
@@ -23,17 +24,17 @@ internal class Response
     {
         return new Response
         {
-            Type = ResponseEnum.Message,
+            Type = ResponseTypeEnum.Message,
             Message = message
         };
     }
 
-    public static Response CreateCommand(CommandEnum command, dynamic data)
+    public static Response CreateCommand(RequestKeyEnum requestKey, dynamic data)
     {
         return new Response
         {
-            Type = ResponseEnum.Command,
-            Command = command,
+            Type = ResponseTypeEnum.Command,
+            Key = requestKey,
             Data = data
         };
     }
@@ -42,16 +43,16 @@ internal class Response
     {
         return new Response
         {
-            Type = ResponseEnum.VREvent,
+            Type = ResponseTypeEnum.VREvent,
             Data = data
         };
     }
 
-    public static Response CreateInput(dynamic data)
+    public static Response Create(ResponseTypeEnum type, dynamic data)
     {
         return new Response
         {
-            Type = ResponseEnum.Input,
+            Type = type,
             Data = data
         };
     }

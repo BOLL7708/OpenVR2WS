@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using OpenVR2WS.Output;
 using Valve.VR;
 using static EasyOpenVR.EasyOpenVRSingleton;
@@ -15,7 +16,7 @@ internal static class DataStore
         new (Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
     public static readonly ConcurrentDictionary<InputSource, ulong> sourceToHandle = new();
     public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData = new();
-    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Pose>> poseInputActionData = new();
+    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, JsonPose>> poseInputActionData = new();
     public static readonly ConcurrentDictionary<InputSource, int> sourceToIndex = new();
     public static readonly ConcurrentDictionary<int, InputSource> indexToSource = new();
 
@@ -95,15 +96,15 @@ internal static class DataStore
         var source = handleToSource[info.sourceHandle];
         if (!analogInputActionData.ContainsKey(source))
             analogInputActionData[source] = new ConcurrentDictionary<string, Vec3>();
-        analogInputActionData[source][info.pathEnd] = new Vec3() { x = data.x, y = data.y, z = data.z };
+        analogInputActionData[source][info.pathEnd] = new Vec3() { X = data.x, Y = data.y, Z = data.z };
     }
 
     public static void UpdateOrAddPoseInputActionData(InputPoseActionData_t data, InputActionInfo info)
     {
         var source = handleToSource[info.sourceHandle];
         if (!poseInputActionData.ContainsKey(source))
-            poseInputActionData[source] = new ConcurrentDictionary<string, Pose>();
-        poseInputActionData[source][info.pathEnd] = new Pose(data.pose);
+            poseInputActionData[source] = new ConcurrentDictionary<string, JsonPose>();
+        poseInputActionData[source][info.pathEnd] = new JsonPose(data.pose);
     }
 
     public static void UpdateOrAddPoseData(TrackedDevicePose_t pose, int deviceIndex)
@@ -111,8 +112,8 @@ internal static class DataStore
         if (indexToSource.TryGetValue(deviceIndex, out var source))
         {
             if (!poseInputActionData.ContainsKey(source))
-                poseInputActionData[source] = new ConcurrentDictionary<string, Pose>();
-            poseInputActionData[source]["Pose"] = new Pose(pose);
+                poseInputActionData[source] = new ConcurrentDictionary<string, JsonPose>();
+            poseInputActionData[source]["Pose"] = new JsonPose(pose);
         }
     }
 

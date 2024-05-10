@@ -5,7 +5,7 @@ namespace OpenVR2WS.Input;
 
 internal class Request
 {
-    public CommandEnum Command = CommandEnum.None;
+    public RequestKeyEnum Key = RequestKeyEnum.None;
     public JsonElement? Data;
     public string? Nonce = null;
 }
