@@ -441,6 +441,7 @@ internal class MainController
         ], (_) =>
         {
             DataStore.UpdateInputDeviceHandles();
+            DataStore.UpdateDeviceIndices();
             SendDeviceIds();
         });
         _vr.RegisterEvents([
@@ -494,6 +495,8 @@ internal class MainController
     {
         SendApplicationInfo(session);
         SendPlayArea(session);
+        DataStore.UpdateInputDeviceHandles();
+        DataStore.UpdateDeviceIndices();
         SendDeviceIds(session);
     }
 
