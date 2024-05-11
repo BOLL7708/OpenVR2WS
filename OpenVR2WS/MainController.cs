@@ -46,18 +46,20 @@ internal class MainController
         _server.StatusAction += serverStatus;
         _server.MessageReceivedAction += (session, message) =>
         {
-            var command = new Request();
+            var errorMessage = "Request was invalid";
+            var request = new Request();
             try
             {
-                command = JsonSerializer.Deserialize<Request>(message, JsonOptions.get());
+                request = JsonSerializer.Deserialize<Request>(message, JsonOptions.get());
             }
             catch (Exception e)
             {
+                errorMessage = e.Message;
                 Debug.WriteLine($"JSON Parsing Exception: {e.Message}");
             }
 
-            if (command != null && command.Key != RequestKeyEnum.None) HandleCommand(session, command);
-            else SendResult(Response.CreateError($"InvalidCommand: {message}"), session);
+            if (request == null) SendResult(Response.CreateError($"Invalid command: {errorMessage}"), session);
+            else HandleRequest(session, request); 
         };
         _server.StatusMessageAction += (session, connected, status) =>
         {
@@ -81,9 +83,9 @@ internal class MainController
     }
 
     // If session is null, it will send to all registered sessions
-    private void SendCommandResult(RequestKeyEnum requestKey, dynamic? data = null, WebSocketSession? session = null)
+    private void SendCommandResult(RequestKeyEnum requestKey, dynamic? data = null, string? nonce = null, WebSocketSession? session = null)
     {
-        SendResult(Response.CreateCommand(requestKey, data), session);
+        SendResult(Response.CreateCommand(requestKey, data, nonce), session);
     }
 
     private void SendResult(Response response, WebSocketSession? session = null)
@@ -104,63 +106,63 @@ internal class MainController
     private void SendInput(ResponseTypeEnum type, InputDigitalActionData_t data, InputActionInfo info, WebSocketSession? session = null)
     {
         var source = DataStore.handleToSource[info.sourceHandle];
-        var output = new JsonInputDigital(source, data, info);
-        SendResult(Response.Create(type, output), session);
+        var json = new JsonInputDigital(source, data, info);
+        SendResult(Response.Create(type, json), session);
     }
 
-    private void HandleCommand(WebSocketSession? session, Request command)
+    private void HandleRequest(WebSocketSession? session, Request request)
     {
         // Debug.WriteLine($"Command receieved: {Enum.GetName(typeof(CommandEnum), command.key)}");
         if (_stopRunning || !_vr.IsInitialized()) return;
-        switch (command.Key)
+        switch (request.Key)
         {
             case RequestKeyEnum.None: break;
             case RequestKeyEnum.CumulativeStats:
             {
                 var stats = _vr.GetCumulativeStats();
-                SendCommandResult(command.Key, new JsonCumulativeStats(stats), session);
+                SendCommandResult(request.Key, new JsonCumulativeStats(stats), request.Nonce, session);
                 break;
             }
             case RequestKeyEnum.PlayArea:
-                SendPlayArea(session);
+                SendPlayArea(request.Nonce, session);
                 break;
             case RequestKeyEnum.ApplicationInfo:
-                SendApplicationInfo(session);
+                SendApplicationInfo(request.Nonce, session);
                 break;
             case RequestKeyEnum.DeviceIds:
                 DataStore.UpdateInputDeviceHandles();
                 DataStore.UpdateDeviceIndices();
-                SendDeviceIds(session);
+                SendDeviceIds(request.Nonce, session);
                 break;
             case RequestKeyEnum.DeviceProperty:
             {
-                SendDeviceProperty(command, session);
+                SendDeviceProperty(request, session);
                 break;
             }
             case RequestKeyEnum.InputAnalog:
-                SendCommandResult(command.Key, DataStore.analogInputActionData, session);
+                SendCommandResult(request.Key, DataStore.analogInputActionData, request.Nonce, session);
                 break;
             case RequestKeyEnum.InputPose:
-                SendCommandResult(command.Key, DataStore.poseInputActionData, session);
+                SendCommandResult(request.Key, DataStore.poseInputActionData, request.Nonce, session);
                 break;
             case RequestKeyEnum.Setting:
             {
-                SendSetting(command, session);
+                SendSetting(request, session);
                 break;
             }
             case RequestKeyEnum.RemoteSetting:
             {
-                SendRemoteSetting(command, session);
+                SendRemoteSetting(request, session);
                 break;
             }
             case RequestKeyEnum.FindOverlay:
             {
-                SendFoundOverlay(command, session);
+                SendFoundOverlay(request, session);
                 break;
             }
             case RequestKeyEnum.MoveSpace:
             {
-                SendMoveSpace(command, session);
+                SendMoveSpace(request, session);
                 break;
             }
         }
@@ -394,7 +396,7 @@ internal class MainController
             // Look for things here that is useful, like battery states
             // Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop));
             var deviceProperty = DataDeviceProperty.CreateFromEvent(data);
-            SendDeviceProperty(RequestKeyEnum.DeviceProperty, deviceProperty, null);
+            SendDeviceProperty(RequestKeyEnum.DeviceProperty, deviceProperty);
         });
         _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (_) =>
         {
@@ -435,14 +437,14 @@ internal class MainController
 
     private void SendDefaults(WebSocketSession? session = null)
     {
-        SendApplicationInfo(session);
-        SendPlayArea(session);
+        SendApplicationInfo(null, session);
+        SendPlayArea(null, session);
         DataStore.UpdateInputDeviceHandles();
         DataStore.UpdateDeviceIndices();
-        SendDeviceIds(session);
+        SendDeviceIds(null, session);
     }
 
-    private void SendApplicationInfo(WebSocketSession? session = null)
+    private void SendApplicationInfo(string? nonce = null, WebSocketSession? session = null)
     {
         var appId = _vr.GetRunningApplicationId();
         if (appId != _currentAppId)
@@ -451,31 +453,31 @@ internal class MainController
             _currentAppSessionTime = Utils.NowUnixUTC();
         }
 
-        var data = new JsonApplicationInfo(_currentAppId, _currentAppSessionTime);
-        SendCommandResult(RequestKeyEnum.ApplicationInfo, data, session);
+        var json = new JsonApplicationInfo(_currentAppId, _currentAppSessionTime);
+        SendCommandResult(RequestKeyEnum.ApplicationInfo, json, nonce, session);
     }
 
-    private void SendPlayArea(WebSocketSession? session = null)
+    private void SendPlayArea(string? nonce = null, WebSocketSession? session = null)
     {
         var rect = _vr.GetPlayAreaRect();
         var size = _vr.GetPlayAreaSize();
         var height = _vr.GetFloatSetting(OpenVR.k_pch_CollisionBounds_Section,
             OpenVR.k_pch_CollisionBounds_WallHeight_Float);
-        SendCommandResult(RequestKeyEnum.PlayArea, new JsonPlayArea(rect, size, height), session);
+        SendCommandResult(RequestKeyEnum.PlayArea, new JsonPlayArea(rect, size, height), nonce, session);
     }
 
-    private void SendDeviceIds(WebSocketSession? session = null)
+    private void SendDeviceIds(string? nonce = null, WebSocketSession? session = null)
     {
-        var data = new JsonDeviceIds(DataStore.deviceToIndex.ToDictionary(), DataStore.sourceToIndex.ToDictionary());
-        SendCommandResult(RequestKeyEnum.DeviceIds, data, session);
+        var json = new JsonDeviceIds(DataStore.deviceToIndex.ToDictionary(), DataStore.sourceToIndex.ToDictionary());
+        SendCommandResult(RequestKeyEnum.DeviceIds, json, nonce, session);
     }
 
-    private void SendDeviceProperty(Request command, WebSocketSession? session = null)
+    private void SendDeviceProperty(Request request, WebSocketSession? session = null)
     {
         DataDeviceProperty? data = null;
         try
         {
-            data = JsonSerializer.Deserialize<DataDeviceProperty>(command.Data?.GetRawText() ?? "", JsonOptions.get());
+            data = JsonSerializer.Deserialize<DataDeviceProperty>(request.Data?.GetRawText() ?? "", JsonOptions.get());
         }
         catch (Exception e)
         {
@@ -484,14 +486,14 @@ internal class MainController
 
         if (data == null || data.Property == ETrackedDeviceProperty.Prop_Invalid)
         {
-            SendResult(Response.CreateError($"Faulty property: {data?.Property}"), session);
+            SendResult(Response.CreateError($"Faulty property: {data?.Property}", new DataDeviceProperty(), request.Nonce), session);
             return;
         }
 
-        SendDeviceProperty(command.Key, data, session);
+        SendDeviceProperty(request.Key, data, request.Nonce, session);
     }
 
-    private void SendDeviceProperty(RequestKeyEnum key, DataDeviceProperty? data, WebSocketSession? session)
+    private void SendDeviceProperty(RequestKeyEnum key, DataDeviceProperty? data, string? nonce = null, WebSocketSession? session = null)
     {
         if (data == null || data.DeviceId == -1) return; // Should not really happen, but means the device does not exist
         var index = (uint)data.DeviceId;
@@ -537,16 +539,16 @@ internal class MainController
                 break;
         }
 
-        var output = new JsonDeviceProperty(data.DeviceId, dataName, propertyValue, dataType);
-        SendCommandResult(key, output, session);
+        var json = new JsonDeviceProperty(data.DeviceId, dataName, propertyValue, dataType);
+        SendCommandResult(key, json, nonce, session);
     }
 
-    private void SendSetting(Request command, WebSocketSession? session = null)
+    private void SendSetting(Request request, WebSocketSession? session = null)
     {
         DataSetting? data = null;
         try
         {
-            data = JsonSerializer.Deserialize<DataSetting>(command.Data?.GetRawText() ?? "", JsonOptions.get());
+            data = JsonSerializer.Deserialize<DataSetting>(request.Data?.GetRawText() ?? "", JsonOptions.get());
         }
         catch (Exception e)
         {
@@ -555,7 +557,7 @@ internal class MainController
 
         if (data == null)
         {
-            SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
+            SendResult(Response.CreateError("Input was invalid.", new DataSetting(), request.Nonce), session);
             return;
         }
 
@@ -567,16 +569,16 @@ internal class MainController
             Output.TypeEnum.String => _vr.GetStringSetting(data.Section, data.Setting),
             _ => null
         };
-        var output = new JsonSetting(data.Section, data.Setting, value);
-        SendCommandResult(command.Key, output, session);
+        var json = new JsonSetting(data.Section, data.Setting, value);
+        SendCommandResult(request.Key, json, request.Nonce, session);
     }
 
-    private void SendRemoteSetting(Request command, WebSocketSession? session)
+    private void SendRemoteSetting(Request request, WebSocketSession? session)
     {
         DataRemoteSetting? data = null;
         try
         {
-            data = JsonSerializer.Deserialize<DataRemoteSetting>(command.Data?.GetRawText() ?? "", JsonOptions.get());
+            data = JsonSerializer.Deserialize<DataRemoteSetting>(request.Data?.GetRawText() ?? "", JsonOptions.get());
         }
         catch (Exception e)
         {
@@ -586,18 +588,19 @@ internal class MainController
         if (data != null)
         {
             var remoteSettingResponse = ApplyRemoteSetting(data);
-            remoteSettingResponse.Key = command.Key;
+            remoteSettingResponse.Key = request.Key;
+            remoteSettingResponse.Nonce = request.Nonce;
             SendResult(remoteSettingResponse, session);
         }
-        else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
+        else SendResult(Response.CreateError("Input was invalid.", new DataRemoteSetting(), request.Nonce), session);
     }
 
-    private void SendMoveSpace(Request command, WebSocketSession? session)
+    private void SendMoveSpace(Request request, WebSocketSession? session)
     {
         DataMoveSpace? data = null;
         try
         {
-            data = JsonSerializer.Deserialize<DataMoveSpace>(command.Data?.GetRawText() ?? "", JsonOptions.get());
+            data = JsonSerializer.Deserialize<DataMoveSpace>(request.Data?.GetRawText() ?? "", JsonOptions.get());
         }
         catch (Exception e)
         {
@@ -606,16 +609,16 @@ internal class MainController
 
         if (data != null)
         {
-            var moveSpaceResponse = ApplyMoveSpace(data);
-            SendCommandResult(command.Key, moveSpaceResponse, session);
+            var response = ApplyMoveSpace(data);
+            SendCommandResult(request.Key, response, request.Nonce, session);
         }
-        else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
+        else SendResult(Response.CreateError("Input was invalid.", new DataMoveSpace(), request.Nonce), session);
     }
 
     private void SendEvent(EVREventType eventType, WebSocketSession? session = null)
     {
-        var data = new JsonVREvent(eventType);
-        SendResult(Response.CreateVREvent(data), session);
+        var json = new JsonVREvent(eventType);
+        SendResult(Response.CreateVREvent(json), session);
     }
 
     #endregion
@@ -635,10 +638,10 @@ internal class MainController
         if (data != null)
         {
             var handle = _vr.FindOverlay(data.OverlayKey);
-            var overlayResult = new JsonFindOverlay(data, handle);
-            SendCommandResult(request.Key, overlayResult, session);
+            var json = new JsonFindOverlay(data, handle);
+            SendCommandResult(request.Key, json, request.Nonce, session);
         }
-        else SendResult(Response.CreateError("Input was invalid."), session); // TODO: Include response with shape of data?
+        else SendResult(Response.CreateError("Input was invalid.", new DataFindOverlay(), request.Nonce), session);
     }
 
     private Response ApplyRemoteSetting(DataRemoteSetting data)
@@ -689,19 +692,14 @@ internal class MainController
         var floatSuccess = float.TryParse(value, out var floatValue);
         if (type != TypeEnum.None)
         {
-            switch (type)
+            return type switch
             {
-                case TypeEnum.String:
-                    return _vr.SetStringSetting(section, setting, value);
-                case TypeEnum.Bool:
-                    return _vr.SetBoolSetting(section, setting, boolValue);
-                case TypeEnum.Float:
-                    return _vr.SetFloatSetting(section, setting, floatValue);
-                case TypeEnum.Int32:
-                    return _vr.SetIntSetting(section, setting, intValue);
-                default:
-                    return false;
-            }
+                TypeEnum.String => _vr.SetStringSetting(section, setting, value),
+                TypeEnum.Bool => _vr.SetBoolSetting(section, setting, boolValue),
+                TypeEnum.Float => _vr.SetFloatSetting(section, setting, floatValue),
+                TypeEnum.Int32 => _vr.SetIntSetting(section, setting, intValue),
+                _ => false
+            };
         }
         else
         {

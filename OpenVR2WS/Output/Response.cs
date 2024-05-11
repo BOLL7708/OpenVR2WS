@@ -9,33 +9,37 @@ internal class Response
     public RequestKeyEnum Key = RequestKeyEnum.None;
     public string Message = "";
     public dynamic? Data = null;
+    public string? Nonce = null;
 
-    public static Response CreateError(string message, dynamic? shape = null)
+    public static Response CreateError(string message, dynamic? shape = null, string? nonce = null)
     {
         return new Response
         {
             Type = ResponseTypeEnum.Error,
             Message = message,
-            Data = shape
+            Data = shape,
+            Nonce = nonce
         };
     }
 
-    public static Response CreateMessage(string message)
+    public static Response CreateMessage(string message, string? nonce = null)
     {
         return new Response
         {
             Type = ResponseTypeEnum.Message,
-            Message = message
+            Message = message,
+            Nonce = nonce
         };
     }
 
-    public static Response CreateCommand(RequestKeyEnum requestKey, dynamic data)
+    public static Response CreateCommand(RequestKeyEnum requestKey, dynamic data, string? nonce = null)
     {
         return new Response
         {
             Type = ResponseTypeEnum.Command,
             Key = requestKey,
-            Data = data
+            Data = data,
+            Nonce = nonce
         };
     }
 
@@ -48,12 +52,13 @@ internal class Response
         };
     }
 
-    public static Response Create(ResponseTypeEnum type, dynamic data)
+    public static Response Create(ResponseTypeEnum type, dynamic data, string? nonce = null)
     {
         return new Response
         {
             Type = type,
-            Data = data
+            Data = data,
+            Nonce = nonce
         };
     }
 }
