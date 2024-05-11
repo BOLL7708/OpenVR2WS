@@ -10,47 +10,47 @@
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Margin="5">
                     <Label Content="OpenVR status:"/>
-                    <Label x:Name="Label_OpenVRStatus" Content="openvr status" Background="Gray" Foreground="White"/>
+                    <Label x:Name="LabelOpenVrStatus" Content="openvr status" Background="Gray" Foreground="White"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
                     <Label Content="Server status:"/>
-                    <Label x:Name="Label_ServerStatus" Content="server status" Background="Gray" Foreground="White"/>
+                    <Label x:Name="LabelServerStatus" Content="server status" Background="Gray" Foreground="White"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
-                    <TextBlock x:Name="textBlock_Example" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="5 0 0 0">
-                        <Hyperlink NavigateUri="example.html" Click="ClickedURL">Example</Hyperlink>
+                    <TextBlock x:Name="TextBlockExample" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="5 0 0 0">
+                        <Hyperlink NavigateUri="example.html" Click="ClickedUrl">Example</Hyperlink>
                     </TextBlock>
-                    <TextBlock x:Name="textBlock_Help" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10 0 10 0">
-                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS" Click="ClickedURL">Help</Hyperlink>
+                    <TextBlock x:Name="TextBlockHelp" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10 0 10 0">
+                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS" Click="ClickedUrl">Help</Hyperlink>
                     </TextBlock>
-                    <TextBlock x:Name="textBlock_Issue" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
-                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS/issues" Click="ClickedURL">Report issue</Hyperlink>
+                    <TextBlock x:Name="TextBlockIssue" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
+                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS/issues" Click="ClickedUrl">Report issue</Hyperlink>
                     </TextBlock>
-                    <TextBlock x:Name="textBlock_Twitter" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
-                        <Hyperlink NavigateUri="https://twitter.com/BOLL7708" Click="ClickedURL">Contact</Hyperlink>
+                    <TextBlock x:Name="TextBlockTwitter" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
+                        <Hyperlink NavigateUri="https://twitter.com/BOLL7708" Click="ClickedUrl">Contact</Hyperlink>
                     </TextBlock>
-                    <Label x:Name="Label_Version" Content="version" Padding="0"/>
+                    <Label x:Name="LabelVersion" Content="version" Padding="0"/>
                 </StackPanel>
             </StackPanel>
         </GroupBox>
         <GroupBox Header="Settings" DockPanel.Dock="Top" Background="AliceBlue">
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Margin="5">
-                    <CheckBox x:Name="CheckBox_LaunchMinimized" Content="Launch minimized " Checked="CheckBox_LaunchMinimized_Checked" Unchecked="CheckBox_LaunchMinimized_Checked"/>
-                    <CheckBox x:Name="CheckBox_Tray" Content="to tray, " Checked="CheckBox_Tray_Checked" Unchecked="CheckBox_Tray_Checked"/>
-                    <CheckBox x:Name="CheckBox_ExitWithSteamVR" Content="exit with SteamVR" Margin="5 0 5 0" Checked="CheckBox_ExitWithSteamVR_Checked" Unchecked="CheckBox_ExitWithSteamVR_Checked"/>
+                    <CheckBox x:Name="CheckBoxLaunchMinimized" Content="Launch minimized " Checked="CheckBox_LaunchMinimized_Checked" Unchecked="CheckBox_LaunchMinimized_Checked"/>
+                    <CheckBox x:Name="CheckBoxTray" Content="to tray, " Checked="CheckBox_Tray_Checked" Unchecked="CheckBox_Tray_Checked"/>
+                    <CheckBox x:Name="CheckBoxExitWithSteamVr" Content="exit with SteamVR" Margin="5 0 5 0" Checked="CheckBox_ExitWithSteamVR_Checked" Unchecked="CheckBox_ExitWithSteamVR_Checked"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
-                    <Label x:Name="Label_ServerPort" Content="Server port:"/>
-                    <TextBox x:Name="TextBox_ServerPort" Text="port" IsEnabled="False" VerticalContentAlignment="Center"/>
-                    <Button x:Name="Button_ServerPort" Content="Set port" Margin="5 0 0 0" Padding="10 0 10 0" Click="Button_ServerPort_Click"/>
+                    <Label x:Name="LabelServerPort" Content="Server port:"/>
+                    <TextBox x:Name="TextBoxServerPort" Text="port" IsEnabled="False" VerticalContentAlignment="Center"/>
+                    <Button x:Name="ButtonServerPort" Content="Set port" Margin="5 0 0 0" Padding="10 0 10 0" Click="Button_ServerPort_Click"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
-                    <CheckBox x:Name="CheckBox_UseDevicePoses" Content="Use device pose instead of input pose" ToolTip="Devic poses are still retrieved when the SteamVR dashboard is up, input poses can be rebound." Checked="CheckBox_UseDevicePoses_Checked" Unchecked="CheckBox_UseDevicePoses_Checked"/>
+                    <CheckBox x:Name="CheckBoxUseDevicePoses" Content="Use device pose instead of input pose" ToolTip="Devic poses are still retrieved when the SteamVR dashboard is up, input poses can be rebound." Checked="CheckBox_UseDevicePoses_Checked" Unchecked="CheckBox_UseDevicePoses_Checked"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
-                    <CheckBox x:Name="CheckBox_RemoteSettings" VerticalAlignment="Center" Content="Enable remote setting updates" ToolTip="Enables updating of SteamVR settings by sending specific messages upstream." Checked="CheckBox_RemoteSettings_Checked" Unchecked="CheckBox_RemoteSettings_Checked"/>
-                    <Button x:Name="Button_RemoteSettingsPassword" Content="Set password" Margin="5 0 0 0" Padding="10 5 10 5" Click="Button_RemoteSettingsPassword_Click"/>
+                    <CheckBox x:Name="CheckBoxRemoteSettings" VerticalAlignment="Center" Content="Enable remote setting updates" ToolTip="Enables updating of SteamVR settings by sending specific messages upstream." Checked="CheckBox_RemoteSettings_Checked" Unchecked="CheckBox_RemoteSettings_Checked"/>
+                    <Button x:Name="ButtonRemoteSettingsPassword" Content="Set password" Margin="5 0 0 0" Padding="10 5 10 5" Click="Button_RemoteSettingsPassword_Click"/>
                 </StackPanel>
             </StackPanel>
         </GroupBox>
@@ -58,15 +58,15 @@
             <StackPanel Orientation="Vertical" Margin="5">
                 <StackPanel Orientation="Horizontal">
                     <Label Content="Connected clients:"/>
-                    <Label x:Name="Label_ConnectedClients" Content="0"/>
+                    <Label x:Name="LabelConnectedClients" Content="0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <Label Content="Messages received:"/>
-                    <Label x:Name="Label_MessagesReceived" Content="0"/>
+                    <Label x:Name="LabelMessagesReceived" Content="0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <Label Content="Messages delivered:"/>
-                    <Label x:Name="Label_MessagesDelivered" Content="0"/>
+                    <Label x:Name="LabelMessagesDelivered" Content="0"/>
                 </StackPanel>
             </StackPanel>
         </GroupBox>

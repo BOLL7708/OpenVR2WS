@@ -2,7 +2,8 @@
 
 namespace OpenVR2WS.Output;
 
-class CumulativeStats
+// ReSharper disable InconsistentNaming
+internal class CumulativeStats
 {
     public double systemTimeMs; // Time when we fetched the statistics
 

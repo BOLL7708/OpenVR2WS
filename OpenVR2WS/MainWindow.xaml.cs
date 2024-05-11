@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,12 +14,13 @@ using Brushes = System.Windows.Media.Brushes;
 
 namespace OpenVR2WS;
 
-public partial class MainWindow : Window
+[SupportedOSPlatform("windows7.0")]
+public partial class MainWindow
 {
-    private MainController _controller;
-    private Settings _settings = Settings.Default;
-    private int _currentDeliveredSecond = 0;
-    private int _currentReceivedSecond = 0;
+    private readonly MainController? _controller;
+    private readonly Settings _settings = Settings.Default;
+    private int _currentDeliveredSecond;
+    private int _currentReceivedSecond;
 
     public MainWindow()
     {
@@ -34,16 +36,16 @@ public partial class MainWindow : Window
         // Window setup
         Title = Properties.Resources.AppName;
 #if DEBUG
-        Label_Version.Content = $"{Properties.Resources.Version}d";
+        LabelVersion.Content = $"{Properties.Resources.Version}d";
 #else
-        Label_Version.Content = Properties.Resources.Version;
+        LabelVersion.Content = Properties.Resources.Version;
 #endif
-        TextBox_ServerPort.Text = _settings.Port.ToString();
-        CheckBox_LaunchMinimized.IsChecked = _settings.LaunchMinimized;
-        CheckBox_Tray.IsChecked = _settings.Tray;
-        CheckBox_ExitWithSteamVR.IsChecked = _settings.ExitWithSteam;
-        CheckBox_UseDevicePoses.IsChecked = _settings.UseDevicePoses;
-        CheckBox_RemoteSettings.IsChecked = _settings.RemoteSettings;
+        TextBoxServerPort.Text = _settings.Port.ToString();
+        CheckBoxLaunchMinimized.IsChecked = _settings.LaunchMinimized;
+        CheckBoxTray.IsChecked = _settings.Tray;
+        CheckBoxExitWithSteamVr.IsChecked = _settings.ExitWithSteam;
+        CheckBoxUseDevicePoses.IsChecked = _settings.UseDevicePoses;
+        CheckBoxRemoteSettings.IsChecked = _settings.RemoteSettings;
 
         // Controller
         _controller = new MainController(
@@ -57,22 +59,22 @@ public partial class MainWindow : Window
                         switch (status)
                         {
                             case SuperServer.ServerStatus.Connected:
-                                Label_ServerStatus.Background = Brushes.OliveDrab;
-                                Label_ServerStatus.Content = "Connected";
+                                LabelServerStatus.Background = Brushes.OliveDrab;
+                                LabelServerStatus.Content = "Connected";
                                 break;
                             case SuperServer.ServerStatus.Disconnected:
-                                Label_ServerStatus.Background = Brushes.Tomato;
-                                Label_ServerStatus.Content = "Disconnected";
+                                LabelServerStatus.Background = Brushes.Tomato;
+                                LabelServerStatus.Content = "Disconnected";
                                 break;
                             case SuperServer.ServerStatus.Error:
-                                Label_ServerStatus.Background = Brushes.Gray;
-                                Label_ServerStatus.Content = "Error";
+                                LabelServerStatus.Background = Brushes.Gray;
+                                LabelServerStatus.Content = "Error";
                                 break;
                             case SuperServer.ServerStatus.DeliveredCount:
                                 if (now.Second != _currentDeliveredSecond)
                                 {
                                     _currentDeliveredSecond = now.Second;
-                                    Label_MessagesDelivered.Content = value.ToString();
+                                    LabelMessagesDelivered.Content = value.ToString();
                                 }
 
                                 break;
@@ -80,12 +82,12 @@ public partial class MainWindow : Window
                                 if (now.Second != _currentReceivedSecond)
                                 {
                                     _currentReceivedSecond = now.Second;
-                                    Label_MessagesReceived.Content = value.ToString();
+                                    LabelMessagesReceived.Content = value.ToString();
                                 }
 
                                 break;
                             case SuperServer.ServerStatus.SessionCount:
-                                Label_ConnectedClients.Content = value.ToString();
+                                LabelConnectedClients.Content = value.ToString();
                                 break;
                         }
                     });
@@ -103,19 +105,17 @@ public partial class MainWindow : Window
                     {
                         if (status)
                         {
-                            Label_OpenVRStatus.Background = Brushes.OliveDrab;
-                            Label_OpenVRStatus.Content = "Connected";
+                            LabelOpenVrStatus.Background = Brushes.OliveDrab;
+                            LabelOpenVrStatus.Content = "Connected";
                         }
                         else
                         {
-                            Label_OpenVRStatus.Background = Brushes.Tomato;
-                            Label_OpenVRStatus.Content = "Disconnected";
-                            if (_settings.ExitWithSteam)
-                            {
-                                _controller.Shutdown();
-                                WindowUtils.DestroyTrayIcon();
-                                Application.Current.Shutdown();
-                            }
+                            LabelOpenVrStatus.Background = Brushes.Tomato;
+                            LabelOpenVrStatus.Content = "Disconnected";
+                            if (!_settings.ExitWithSteam) return;
+                            _controller?.Shutdown();
+                            WindowUtils.DestroyTrayIcon();
+                            Application.Current.Shutdown();
                         }
                     });
                 }
@@ -131,7 +131,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ClickedURL(object sender, RoutedEventArgs e)
+    private void ClickedUrl(object sender, RoutedEventArgs e)
     {
         var link = (Hyperlink)sender;
         Process.Start(link.NavigateUri.ToString());
@@ -139,7 +139,7 @@ public partial class MainWindow : Window
 
     private void Window_Closing(object sender, CancelEventArgs e)
     {
-        _controller.Shutdown();
+        _controller?.Shutdown();
     }
 
     private void Button_ServerPort_Click(object sender, RoutedEventArgs e)
@@ -147,13 +147,11 @@ public partial class MainWindow : Window
         SingleInputDialog dlg = new(this, _settings.Port.ToString(), "Port");
         dlg.ShowDialog();
         var result = dlg.DialogResult == true ? dlg.Value : "";
-        var parsedResult = int.TryParse(result, out int value);
-        if (parsedResult && value != 0)
-        {
-            _controller.RestartServer(value);
-            _settings.Port = value;
-            TextBox_ServerPort.Text = result.ToString();
-        }
+        var parsedResult = int.TryParse(result, out var value);
+        if (!parsedResult || value == 0) return;
+        _controller?.RestartServer(value);
+        _settings.Port = value;
+        TextBoxServerPort.Text = result;
     }
 
     private void CheckBox_LaunchMinimized_Checked(object sender, RoutedEventArgs e)
@@ -190,7 +188,7 @@ public partial class MainWindow : Window
     {
         _settings.UseDevicePoses = e.RoutedEvent.Name == "Checked";
         _settings.Save();
-        if (_controller != null) _controller.ReregisterActions();
+        _controller?.ReregisterActions();
     }
 
     private void CheckBox_RemoteSettings_Checked(object sender, RoutedEventArgs e)
@@ -204,14 +202,10 @@ public partial class MainWindow : Window
         SingleInputDialog dlg = new(this, "", "Password");
         dlg.ShowDialog();
         var value = dlg.DialogResult == true ? dlg.Value : "";
-
-        using (SHA256 sha = SHA256.Create())
-        {
-            Encoding enc = Encoding.UTF8;
-            byte[] hash = sha.ComputeHash(enc.GetBytes(value));
-            var hashb64 = Convert.ToBase64String(hash);
-            _settings.RemoteSettingsPasswordHash = hashb64;
-            _settings.Save();
-        }
+        var enc = Encoding.UTF8;
+        var hash = SHA256.HashData(enc.GetBytes(value));
+        var hashBase64String = Convert.ToBase64String(hash);
+        _settings.RemoteSettingsPasswordHash = hashBase64String;
+        _settings.Save();
     }
 }

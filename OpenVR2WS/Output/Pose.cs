@@ -3,7 +3,8 @@ using Valve.VR;
 
 namespace OpenVR2WS.Output;
 
-class Pose
+// ReSharper disable InconsistentNaming
+internal class Pose
 {
     // public HmdMatrix34_t matrix = new HmdMatrix34_t(); // TODO: Figure out what to do with this...
     public float[] rotationMatrix = new float[9];

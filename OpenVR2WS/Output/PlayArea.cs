@@ -2,7 +2,8 @@
 
 namespace OpenVR2WS.Output;
 
-class PlayArea
+// ReSharper disable InconsistentNaming
+internal class PlayArea
 {
     public Vec3[] corners = new Vec3[8];
     public Vec3 size = new Vec3();
@@ -12,7 +13,7 @@ class PlayArea
         Update(rect, size, height);
     }
 
-    public void Update(HmdQuad_t rect, HmdVector2_t size, float height)
+    public void Update(HmdQuad_t rect, HmdVector2_t newSize, float height)
     {
         corners[0] = new Vec3(rect.vCorners0);
         corners[1] = new Vec3(rect.vCorners1);
@@ -29,8 +30,8 @@ class PlayArea
         corners[6].y = height;
         corners[7].y = height;
 
-        this.size.x = size.v0;
+        this.size.x = newSize.v0;
         this.size.y = height;
-        this.size.z = size.v1;
+        this.size.z = newSize.v1;
     }
 }

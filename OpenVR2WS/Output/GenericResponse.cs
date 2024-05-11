@@ -1,7 +1,8 @@
 ﻿namespace OpenVR2WS.Output;
 
-class GenericResponse
+// ReSharper disable InconsistentNaming
+internal class GenericResponse
 {
-    public string message;
+    public string message = "";
     public bool success;
 }
