@@ -7,7 +7,7 @@ public enum ResponseTypeEnum
     Undefined,
     Error,
     Message,
-    Command,
+    Result,
     VREvent,
     InputDigital
 }

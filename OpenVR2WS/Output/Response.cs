@@ -36,7 +36,7 @@ internal class Response
     {
         return new Response
         {
-            Type = ResponseTypeEnum.Command,
+            Type = ResponseTypeEnum.Result,
             Key = requestKey,
             Data = data,
             Nonce = nonce
