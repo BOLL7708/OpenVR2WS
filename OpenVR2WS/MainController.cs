@@ -609,8 +609,9 @@ internal class MainController
 
         if (data != null)
         {
-            var response = ApplyMoveSpace(data);
-            SendCommandResult(request.Key, response, request.Nonce, session);
+            var response = ApplyMoveSpace(data, request.Nonce);
+            response.Key = request.Key;
+            SendResult(response, session);
         }
         else SendResult(Response.CreateError("Input was invalid.", new DataMoveSpace(), request.Nonce), session);
     }
@@ -656,7 +657,7 @@ internal class MainController
             : Response.CreateMessage($"Succeeded setting {data.Section}/{data.Setting} to {data.Value}.");
     }
 
-    private Response ApplyMoveSpace(DataMoveSpace data)
+    private Response ApplyMoveSpace(DataMoveSpace data, string? nonce = null)
     {
         var errorResponse = CheckRemoteSetting(RequestKeyEnum.MoveSpace, data.Password);
         if (errorResponse != null) return errorResponse;
@@ -669,8 +670,8 @@ internal class MainController
         };
         var success = _vr.MoveUniverse(newPos, data.MoveChaperone);
         return success
-            ? Response.CreateMessage("Moved space successfully.")
-            : Response.CreateError("Failed to move space.");
+            ? Response.CreateMessage("Moved space successfully.", nonce)
+            : Response.CreateError("Failed to move space.", null, nonce);
     }
 
     private Response? CheckRemoteSetting(RequestKeyEnum key, string password)
