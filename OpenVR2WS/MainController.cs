@@ -100,7 +100,7 @@ internal class MainController
             Debug.WriteLine($"Could not serialize output for {response.Type}|{response.Key}: {e.Message}");
         }
 
-        if (jsonString != "") _server.SendMessage(session, jsonString);
+        if (jsonString != string.Empty) _server.SendMessage(session, jsonString);
     }
 
     private void SendInput(ResponseTypeEnum type, InputDigitalActionData_t data, InputActionInfo info, WebSocketSession? session = null)
@@ -495,10 +495,17 @@ internal class MainController
 
     private void SendDeviceProperty(RequestKeyEnum key, DataDeviceProperty? data, string? nonce = null, WebSocketSession? session = null)
     {
-        if (data == null || data.DeviceIndex == -1) return; // Should not really happen, but means the device does not exist
+        if (data == null || data.DeviceIndex == -1) {
+            SendResult(Response.CreateError("The value of DeviceIndex was missing or -1 which means no valid device was specified.", nonce), session);
+            return; 
+        }
         var index = (uint)data.DeviceIndex;
         var propName = Enum.GetName(typeof(ETrackedDeviceProperty), data.Property);
-        if (propName == null) return; // This happens for vendor reserved properties (10000-10999)
+        if (propName == null || data.Property == ETrackedDeviceProperty.Prop_Invalid)
+        {
+            SendResult(Response.CreateError($"The provided Property was invalid: {data.Property}.", nonce), session);
+            return;
+        }
         var propArray = propName.Split('_');
         var dataType = propArray.Last();
         var dataName = propArray.Length >= 1 ? propArray[1] : propName;
@@ -702,13 +709,10 @@ internal class MainController
                 _ => false
             };
         }
-        else
-        {
-            if (boolSuccess) return _vr.SetBoolSetting(section, setting, boolValue);
-            if (intSuccess) return _vr.SetIntSetting(section, setting, intValue);
-            if (floatSuccess) return _vr.SetFloatSetting(section, setting, floatValue);
-            return _vr.SetStringSetting(section, setting, value);
-        }
+        if (boolSuccess) return _vr.SetBoolSetting(section, setting, boolValue);
+        if (intSuccess) return _vr.SetIntSetting(section, setting, intValue);
+        if (floatSuccess) return _vr.SetFloatSetting(section, setting, floatValue);
+        return _vr.SetStringSetting(section, setting, value);
     }
 
     public async void Shutdown()
