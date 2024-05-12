@@ -495,8 +495,8 @@ internal class MainController
 
     private void SendDeviceProperty(RequestKeyEnum key, DataDeviceProperty? data, string? nonce = null, WebSocketSession? session = null)
     {
-        if (data == null || data.DeviceId == -1) return; // Should not really happen, but means the device does not exist
-        var index = (uint)data.DeviceId;
+        if (data == null || data.DeviceIndex == -1) return; // Should not really happen, but means the device does not exist
+        var index = (uint)data.DeviceIndex;
         var propName = Enum.GetName(typeof(ETrackedDeviceProperty), data.Property);
         if (propName == null) return; // This happens for vendor reserved properties (10000-10999)
         var propArray = propName.Split('_');
@@ -539,7 +539,7 @@ internal class MainController
                 break;
         }
 
-        var json = new JsonDeviceProperty(data.DeviceId, dataName, propertyValue, dataType);
+        var json = new JsonDeviceProperty(data.DeviceIndex, dataName, propertyValue, dataType);
         SendCommandResult(key, json, nonce, session);
     }
 
