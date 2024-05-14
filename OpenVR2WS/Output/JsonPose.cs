@@ -1,4 +1,5 @@
 ﻿using EasyOpenVR;
+using EasyOpenVR.Utils;
 using Valve.VR;
 
 namespace OpenVR2WS.Output;
@@ -31,7 +32,7 @@ internal class JsonPose
         RotationMatrix[7] = poseData.mDeviceToAbsoluteTracking.m9;
         RotationMatrix[8] = poseData.mDeviceToAbsoluteTracking.m10;
 
-        var orientation = EasyOpenVRSingleton.Utils.RotationMatrixToYPR(poseData.mDeviceToAbsoluteTracking);
+        var orientation = GeneralUtils.RotationMatrixToYPR(poseData.mDeviceToAbsoluteTracking);
         Orientation.X = orientation.pitch;
         Orientation.Y = orientation.yaw;
         Orientation.Z = orientation.roll;
