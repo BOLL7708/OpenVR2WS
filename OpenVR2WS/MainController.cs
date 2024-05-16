@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using EasyFramework;
 using EasyOpenVR;
+using EasyOpenVR.Utils;
 using OpenVR2WS.Input;
 using OpenVR2WS.Output;
 using OpenVR2WS.Properties;
@@ -671,11 +672,11 @@ internal class MainController
 
         var newPos = new HmdVector3_t
         {
-            v0 = data.OffsetX,
-            v1 = data.OffsetY,
-            v2 = data.OffsetZ
+            v0 = data.Moves.First().OffsetX,
+            v1 = data.Moves.First().OffsetY,
+            v2 = data.Moves.First().OffsetZ
         };
-        var success = _vr.MoveUniverse(newPos, data.MoveChaperone);
+        var success = _vr.MoveUniverse(newPos);
         return success
             ? Response.CreateMessage("Moved space successfully.", nonce)
             : Response.CreateError("Failed to move space.", null, nonce);
