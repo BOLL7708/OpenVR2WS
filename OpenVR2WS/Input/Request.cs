@@ -7,5 +7,6 @@ internal class Request
 {
     public RequestKeyEnum Key = RequestKeyEnum.None;
     public JsonElement? Data;
+    public string? Password = null;
     public string? Nonce = null;
 }

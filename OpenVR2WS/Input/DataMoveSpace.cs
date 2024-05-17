@@ -5,7 +5,6 @@ namespace OpenVR2WS.Input;
 
 public class DataMoveSpace
 {
-    public string Password = "";
     public bool ResetBeforeRun = false;
     public bool ResetAfterRun = false;
     public DataMoveSpaceEntry[] Entries = [];

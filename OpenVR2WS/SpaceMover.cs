@@ -34,7 +34,7 @@ public static class SpaceMover
 
         // Generate data to loop over
         List<SpaceMoverEntry> entries = [];
-        var maxFrameCount = 1;
+        var maxFrameCount = 0;
         foreach (var entry in data.Entries)
         {
             var easeFunc = EasingUtils.Get(entry.EasingType, entry.EasingMode);

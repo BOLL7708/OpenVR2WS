@@ -594,7 +594,7 @@ internal class MainController
 
         if (data != null)
         {
-            var remoteSettingResponse = ApplyRemoteSetting(data);
+            var remoteSettingResponse = ApplyRemoteSetting(data, request);
             remoteSettingResponse.Key = request.Key;
             remoteSettingResponse.Nonce = request.Nonce;
             SendResult(remoteSettingResponse, session);
@@ -650,9 +650,9 @@ internal class MainController
         else SendResult(Response.CreateError("Input was invalid, see Data as a reference.", new DataFindOverlay(), request.Nonce), session);
     }
 
-    private Response ApplyRemoteSetting(DataRemoteSetting data)
+    private Response ApplyRemoteSetting(DataRemoteSetting data, Request request)
     {
-        var errorResponse = CheckRemoteSetting(RequestKeyEnum.RemoteSetting, data.Password);
+        var errorResponse = CheckRemoteSetting(RequestKeyEnum.RemoteSetting, request.Password ?? "");
         if (errorResponse != null) return errorResponse;
 
         var settingSuccess = ApplySetting(data.Section, data.Setting, data.Value, data.Type);
@@ -664,7 +664,7 @@ internal class MainController
 
     private void ApplyMoveSpace(DataMoveSpace data, Request request, WebSocketSession? session = null)
     {
-        var errorResponse = CheckRemoteSetting(RequestKeyEnum.MoveSpace, data.Password);
+        var errorResponse = CheckRemoteSetting(RequestKeyEnum.MoveSpace, request.Password ?? "");
         if (errorResponse != null)
         {
                 SendResult(errorResponse);
