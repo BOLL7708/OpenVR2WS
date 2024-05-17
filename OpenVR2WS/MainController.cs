@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using EasyFramework;
 using EasyOpenVR;
-using EasyOpenVR.Utils;
 using OpenVR2WS.Input;
 using OpenVR2WS.Output;
 using OpenVR2WS.Properties;
@@ -565,7 +564,7 @@ internal class MainController
 
         if (data == null)
         {
-            SendResult(Response.CreateError("Input was invalid.", new DataSetting(), request.Nonce), session);
+            SendResult(Response.CreateError("Input was invalid, see Data as a reference.", new DataSetting(), request.Nonce), session);
             return;
         }
 
@@ -600,7 +599,7 @@ internal class MainController
             remoteSettingResponse.Nonce = request.Nonce;
             SendResult(remoteSettingResponse, session);
         }
-        else SendResult(Response.CreateError("Input was invalid.", new DataRemoteSetting(), request.Nonce), session);
+        else SendResult(Response.CreateError("Input was invalid, see Data as a reference.", new DataRemoteSetting(), request.Nonce), session);
     }
 
     private void SendMoveSpace(Request request, WebSocketSession? session)
@@ -617,11 +616,9 @@ internal class MainController
 
         if (data != null)
         {
-            var response = ApplyMoveSpace(data, request.Nonce);
-            response.Key = request.Key;
-            SendResult(response, session);
+            ApplyMoveSpace(data, request, session);
         }
-        else SendResult(Response.CreateError("Input was invalid.", new DataMoveSpace(), request.Nonce), session);
+        else SendResult(Response.CreateError("Input was invalid, see Data as a reference.", DataMoveSpace.BuildEmpty(true), request.Nonce), session);
     }
 
     private void SendEvent(EVREventType eventType, WebSocketSession? session = null)
@@ -650,7 +647,7 @@ internal class MainController
             var json = new JsonFindOverlay(data, handle);
             SendCommandResult(request.Key, json, request.Nonce, session);
         }
-        else SendResult(Response.CreateError("Input was invalid.", new DataFindOverlay(), request.Nonce), session);
+        else SendResult(Response.CreateError("Input was invalid, see Data as a reference.", new DataFindOverlay(), request.Nonce), session);
     }
 
     private Response ApplyRemoteSetting(DataRemoteSetting data)
@@ -665,21 +662,20 @@ internal class MainController
             : Response.CreateMessage($"Succeeded setting {data.Section}/{data.Setting} to {data.Value}.");
     }
 
-    private Response ApplyMoveSpace(DataMoveSpace data, string? nonce = null)
+    private void ApplyMoveSpace(DataMoveSpace data, Request request, WebSocketSession? session = null)
     {
         var errorResponse = CheckRemoteSetting(RequestKeyEnum.MoveSpace, data.Password);
-        if (errorResponse != null) return errorResponse;
-
-        var newPos = new HmdVector3_t
+        if (errorResponse != null)
         {
-            v0 = data.Moves.First().OffsetX,
-            v1 = data.Moves.First().OffsetY,
-            v2 = data.Moves.First().OffsetZ
-        };
-        var success = _vr.MoveUniverse(newPos);
-        return success
-            ? Response.CreateMessage("Moved space successfully.", nonce)
-            : Response.CreateError("Failed to move space.", null, nonce);
+                SendResult(errorResponse);
+                return;
+        }
+        SpaceMover.MoveSpace(data, result =>
+        {
+            var response = Response.CreateMessage(result, request.Nonce);
+            response.Key = request.Key;
+            SendResult(response, session);
+        });
     }
 
     private Response? CheckRemoteSetting(RequestKeyEnum key, string password)

@@ -8,10 +8,17 @@ public class DataMoveSpace
     public string Password = "";
     public bool ResetBeforeRun = false;
     public bool ResetAfterRun = false;
-    public DataMoveSpaceAnimation[] Moves = [];
+    public DataMoveSpaceEntry[] Entries = [];
+
+    public static DataMoveSpace BuildEmpty(bool withChild = false)
+    {
+        return withChild
+            ? new DataMoveSpace { Entries = [new DataMoveSpaceEntry()] }
+            : new DataMoveSpace();
+    }
 }
 
-public class DataMoveSpaceAnimation
+public class DataMoveSpaceEntry
 {
     public EasingUtils.EasingType EasingType = EasingUtils.EasingType.Linear;
     public EasingUtils.EasingMode EasingMode = EasingUtils.EasingMode.In;
