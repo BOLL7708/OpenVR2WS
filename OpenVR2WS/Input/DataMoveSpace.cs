@@ -6,6 +6,12 @@ namespace OpenVR2WS.Input;
 public class DataMoveSpace
 {
     public int DurationMs = 0;
+    public EasingUtils.EasingType EaseInType = EasingUtils.EasingType.Linear;
+    public EasingUtils.EasingMode EaseInMode = EasingUtils.EasingMode.Out;
+    public int EaseInMs = 0;
+    public EasingUtils.EasingType EaseOutType = EasingUtils.EasingType.Linear;
+    public EasingUtils.EasingMode EaseOutMode = EasingUtils.EasingMode.Out;
+    public int EaseOutMs = 0;
     public bool ResetBeforeRun = false;
     public bool ResetAfterRun = false;
     public DataMoveSpaceEntry[] Entries = [];
