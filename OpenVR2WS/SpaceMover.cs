@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using EasyOpenVR;
 using EasyOpenVR.Extensions;
@@ -30,18 +28,18 @@ public static class SpaceMover
         }
         // Get animation rate
         var hz = vr.GetFloatTrackedDeviceProperty(0, ETrackedDeviceProperty.Prop_DisplayFrequency_Float);
+        if (data.DurationMs > 0 && hz <= 0) return;
         var msPerFrame = 1000 / hz;
 
         // Generate data to loop over
         List<SpaceMoverEntry> entries = [];
-        var maxFrameCount = 0;
+        var totalFrames = (int)Math.Round(data.DurationMs / msPerFrame);
         foreach (var entry in data.Entries)
         {
             var easeFunc = EasingUtils.Get(entry.EasingType, entry.EasingMode);
-            var delay = (int)Math.Round(entry.DelayMs / msPerFrame);
-            var duration = (int)Math.Round(entry.DurationMs / msPerFrame);
-            maxFrameCount = Math.Max(maxFrameCount, delay + duration);
-            entries.Add(new SpaceMoverEntry(entry.GetOffset(), easeFunc, entry, delay, duration));
+            var startOffsetFrames = (int)Math.Round(entry.StartOffsetMs / msPerFrame);
+            var endOffsetFrames = (int)Math.Round(entry.EndOffsetMs / msPerFrame);
+            entries.Add(new SpaceMoverEntry(entry.GetOffset(), easeFunc, entry, startOffsetFrames, endOffsetFrames));
         }
 
         // Fetch current setup
@@ -57,7 +55,7 @@ public static class SpaceMover
         var value = 0.0;
 
         // Animation loop
-        for (var currentFrame = 0; currentFrame < maxFrameCount; currentFrame++)
+        for (var currentFrame = 0; currentFrame < totalFrames; currentFrame++)
         {
             timeLoopStarted = DateTime.Now.Ticks;
             var offset = new HmdVector3_t();
@@ -65,7 +63,7 @@ public static class SpaceMover
             // Apply all offsets to the final offset and apply it to the play space
             foreach (var entry in entries)
             {
-                value = AnimationProgress(maxFrameCount, currentFrame, entry);
+                value = AnimationProgress(totalFrames, currentFrame, entry);
                 offset = offset.Add(
                     entry.Offset.Multiply(
                         (float)entry.EaseFunc(value)
@@ -80,18 +78,26 @@ public static class SpaceMover
         }
 
         if (data.ResetAfterRun) vr.ResetUniverse();
-        callback($"Moved play space over {maxFrameCount} frames.");
+        callback($"Moved play space over {totalFrames} frames.");
     }
 
+    /**
+     * Calculate the progress of the animation, that is, depending on settings it will affect the normalized value, so it can repeat, reverse or being offset.
+     *
+     * @param totalFrames Total frames in the animation
+     * @param currentFrame Current frame in the animation
+     * @param entry The entry to calculate the progress for
+     * @return The progress of the animation
+     */
     private static double AnimationProgress(int totalFrames, int currentFrame, SpaceMoverEntry entry)
     {
-        var totalAnimationFrames = entry.DelayFrames + entry.DurationFrames;
+        var totalAnimationFrames = totalFrames - entry.StartOffsetFrames - entry.EndOffsetFrames;
         var repeatCount = Math.Max(1, entry.Entry.Repeat);
-        if (currentFrame >= totalAnimationFrames) return entry.Entry.PingPong ? 0.0 : 1.0;
-        if (currentFrame < entry.DelayFrames) return 0.0;
+        if (currentFrame < entry.StartOffsetFrames) return 0.0;
+        if (currentFrame >= totalFrames - entry.EndOffsetFrames) return entry.Entry.PingPong ? 0.0 : 1.0;
 
-        var cycleFrameCount = Math.Round((double)entry.DurationFrames / repeatCount);
-        var currentCycleFrame = (currentFrame - entry.DelayFrames) % cycleFrameCount;
+        var cycleFrameCount = Math.Round((double)totalAnimationFrames / repeatCount);
+        var currentCycleFrame = (currentFrame - entry.StartOffsetFrames) % cycleFrameCount;
         var progress = currentCycleFrame / cycleFrameCount;
         if (entry.Entry.PingPong)
         {
@@ -106,13 +112,13 @@ public static class SpaceMover
         HmdVector3_t offset,
         Func<double, double> easeFunc,
         DataMoveSpaceEntry move,
-        int delayFrames,
-        int durationFrames)
+        int startOffsetFrames,
+        int endOffsetFrames)
     {
         public HmdVector3_t Offset = offset;
         public Func<double, double> EaseFunc = easeFunc;
         public DataMoveSpaceEntry Entry = move;
-        public int DelayFrames = delayFrames;
-        public int DurationFrames = durationFrames;
+        public int StartOffsetFrames = startOffsetFrames;
+        public int EndOffsetFrames = endOffsetFrames;
     }
 }
