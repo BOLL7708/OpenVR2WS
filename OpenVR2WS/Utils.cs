@@ -29,7 +29,7 @@ static class Utils
     {
         normalizedValue = Math.Max(0, Math.Min(1, normalizedValue));
         int symbolsToPrint = Math.Max(0, (int)(normalizedValue * totalSymbols));
-        string graph = new string('■', symbolsToPrint).PadRight(totalSymbols, ' ');
+        string graph = new string('■', symbolsToPrint).PadRight(totalSymbols, '□');
         Debug.WriteLine(graph);
     }
 }

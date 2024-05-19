@@ -52,7 +52,7 @@ public static class SpaceMover
         List<SpaceMoverEntry> entries = [];
         foreach (var entry in data.Entries)
         {
-            var easeFunc = EasingUtils.Get(entry.EasingType, entry.EasingMode);
+            var easeFunc = EasingUtils.Get(entry.EaseType, entry.EaseMode);
             var startOffsetFrames = (int)Math.Round(entry.StartOffsetMs / msPerFrame);
             var endOffsetFrames = (int)Math.Round(entry.EndOffsetMs / msPerFrame);
             entries.Add(new SpaceMoverEntry(entry.GetOffset(), easeFunc, entry, startOffsetFrames, endOffsetFrames));
@@ -64,7 +64,7 @@ public static class SpaceMover
         var sittingPose = new HmdMatrix34_t();
         OpenVR.ChaperoneSetup.GetWorkingSeatedZeroPoseToRawTrackingPose(ref sittingPose);
         OpenVR.ChaperoneSetup.GetWorkingCollisionBoundsInfo(out var physQuad);
-
+        
         // Loop the animation
         var timeLoopStarted = 0L;
         var timeSpent = 0.0;
@@ -76,7 +76,7 @@ public static class SpaceMover
         {
             var offset = new HmdVector3_t();
             foreach (var entry in entries) offset = offset.Add(entry.Offset);
-            vr.TranslateUniverse(offset, standingPose, sittingPose, physQuad);
+            vr.TranslateUniverse(offset, standingPose, sittingPose, physQuad, true, data.UpdateChaperone);
         }
         else
         {
@@ -97,17 +97,21 @@ public static class SpaceMover
                     );
                 }
 
-                vr.TranslateUniverse(offset, standingPose, sittingPose, physQuad);
+                vr.TranslateUniverse(offset, standingPose, sittingPose, physQuad, true, data.UpdateChaperone);
 
                 timeSpent = (double)(DateTime.Now.Ticks - timeLoopStarted) / TimeSpan.TicksPerMillisecond;
                 Thread.Sleep((int)Math.Round(Math.Max(1.0, msPerFrame - timeSpent))); // Animation time per frame adjusted by the time it took to animate.
             }
         }
 
+        /*
+         * A full vr.ResetUniverse() here actually resets the position to the wrong place, it acts like doing the standing location reset from the dashboard.
+         * Due to this, we simply translate the space to a zero offset, to go back to where we started this sequence.
+         * This would seem natural as resetting at the start would need to be a global reset, while this just resets the current one.
+         */
         if (data.ResetAfterRun)
         {
-            Thread.Sleep(1);
-            vr.ResetUniverse(); // TODO: For some reason this resets the univrse _to the location of the headset_ !?!?!?!?!?!?!?!
+            vr.TranslateUniverse(new HmdVector3_t(), standingPose, sittingPose, physQuad);
         }
 
         callback($"Moved play space over {totalFrames} frames.");
@@ -143,8 +147,8 @@ public static class SpaceMover
     private static double StartEndEase(int totalFrames, int currentFrame, int easeInFrames, Func<double, double> easeInFunc, int easeOutFrames, Func<double, double> easeOutFunc)
     {
         var value = 1.0;
-        if (currentFrame <= easeInFrames) value *= easeInFunc(currentFrame / (double)easeInFrames);
-        if (currentFrame >= totalFrames - easeOutFrames) value *= easeOutFunc((totalFrames - currentFrame) / (double)easeOutFrames);
+        if (easeInFrames > 0 && currentFrame <= easeInFrames) value *= easeInFunc(currentFrame / (double)easeInFrames);
+        if (easeOutFrames > 0 && currentFrame >= totalFrames - easeOutFrames) value *= easeOutFunc((totalFrames - currentFrame) / (double)easeOutFrames);
         return value;
     }
 

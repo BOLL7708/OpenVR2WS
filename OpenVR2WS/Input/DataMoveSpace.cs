@@ -14,6 +14,7 @@ public class DataMoveSpace
     public int EaseOutMs = 0;
     public bool ResetBeforeRun = false;
     public bool ResetAfterRun = false;
+    public bool UpdateChaperone = false;
     public DataMoveSpaceEntry[] Entries = [];
 
     public static DataMoveSpace BuildEmpty(bool withChild = false)
@@ -26,8 +27,8 @@ public class DataMoveSpace
 
 public class DataMoveSpaceEntry
 {
-    public EasingUtils.EasingType EasingType = EasingUtils.EasingType.Linear;
-    public EasingUtils.EasingMode EasingMode = EasingUtils.EasingMode.In;
+    public EasingUtils.EasingType EaseType = EasingUtils.EasingType.Linear;
+    public EasingUtils.EasingMode EaseMode = EasingUtils.EasingMode.In;
     public float OffsetX = 0;
     public float OffsetY = 0;
     public float OffsetZ = 0;
