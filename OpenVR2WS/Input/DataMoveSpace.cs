@@ -15,6 +15,7 @@ public class DataMoveSpace
     public bool ResetBeforeRun = false;
     public bool ResetAfterRun = false;
     public bool UpdateChaperone = false;
+    public Correction Correction = Correction.PlaySpace;
     public DataMoveSpaceEntry[] Entries = [];
 
     public static DataMoveSpace BuildEmpty(bool withChild = false)
@@ -23,6 +24,14 @@ public class DataMoveSpace
             ? new DataMoveSpace { Entries = [new DataMoveSpaceEntry()] }
             : new DataMoveSpace();
     }
+}
+
+public enum Correction
+{
+    PlaySpace,
+    Hmd,
+    HmdYaw,
+    HmdPitch
 }
 
 public class DataMoveSpaceEntry

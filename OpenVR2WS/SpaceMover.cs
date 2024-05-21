@@ -59,11 +59,19 @@ public static class SpaceMover
         }
 
         // Fetch current setup
-        var standingPose = new HmdMatrix34_t();
-        OpenVR.ChaperoneSetup.GetWorkingStandingZeroPoseToRawTrackingPose(ref standingPose);
-        var sittingPose = new HmdMatrix34_t();
-        OpenVR.ChaperoneSetup.GetWorkingSeatedZeroPoseToRawTrackingPose(ref sittingPose);
+        var originPose = vr.GetOriginPose();
         OpenVR.ChaperoneSetup.GetWorkingCollisionBoundsInfo(out var physQuad);
+        var poses = vr.GetDeviceToAbsoluteTrackingPose();
+        var hmdPose = poses[0].mDeviceToAbsoluteTracking;
+        HmdVector3_t hmdAnchorEuler = hmdPose.EulerAngles();
+        if (data.Correction != Correction.HmdYaw) hmdAnchorEuler.v1 = 0;
+        if (data.Correction != Correction.HmdPitch) hmdAnchorEuler.v0 = 0;
+        var correctionPose = (data.Correction switch
+        {
+            Correction.PlaySpace => originPose,
+            Correction.Hmd => hmdPose,
+            _ => hmdPose.FromEuler(hmdAnchorEuler).Translate(hmdPose.GetPosition())
+        });
         
         // Loop the animation
         var timeLoopStarted = 0L;
@@ -76,7 +84,7 @@ public static class SpaceMover
         {
             var offset = new HmdVector3_t();
             foreach (var entry in entries) offset = offset.Add(entry.Offset);
-            vr.TranslateUniverse(offset, standingPose, sittingPose, physQuad, true, data.UpdateChaperone);
+            vr.TranslateUniverse(offset, originPose, correctionPose, physQuad, true, data.UpdateChaperone);
         }
         else
         {
@@ -96,8 +104,8 @@ public static class SpaceMover
                         )
                     );
                 }
-
-                vr.TranslateUniverse(offset, standingPose, sittingPose, physQuad, true, data.UpdateChaperone);
+                
+                vr.TranslateUniverse(offset, originPose, correctionPose, physQuad, true, data.UpdateChaperone);
 
                 timeSpent = (double)(DateTime.Now.Ticks - timeLoopStarted) / TimeSpan.TicksPerMillisecond;
                 Thread.Sleep((int)Math.Round(Math.Max(1.0, msPerFrame - timeSpent))); // Animation time per frame adjusted by the time it took to animate.
@@ -111,7 +119,7 @@ public static class SpaceMover
          */
         if (data.ResetAfterRun)
         {
-            vr.TranslateUniverse(new HmdVector3_t(), standingPose, sittingPose, physQuad);
+            vr.TranslateUniverse(new HmdVector3_t(), originPose, correctionPose, physQuad, true, data.UpdateChaperone);
         }
 
         callback($"Moved play space over {totalFrames} frames.");
