@@ -1,8 +1,10 @@
 using EasyOpenVR;
+using TypeGen.Core.TypeAnnotations;
 using Valve.VR;
 
 namespace OpenVR2WS.Output;
 
+[ExportTsInterface]
 internal class JsonInputDigital(
     EasyOpenVRSingleton.InputSource source,
     InputDigitalActionData_t data,

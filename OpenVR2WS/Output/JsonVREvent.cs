@@ -1,9 +1,11 @@
 using System;
 using System.Diagnostics;
+using TypeGen.Core.TypeAnnotations;
 using Valve.VR;
 
 namespace OpenVR2WS.Output;
 
+[ExportTsInterface]
 internal class JsonVREvent
 {
     public string TypeFull;

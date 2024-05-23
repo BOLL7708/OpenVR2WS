@@ -1,7 +1,9 @@
-﻿using Valve.VR;
+﻿using TypeGen.Core.TypeAnnotations;
+using Valve.VR;
 
 namespace OpenVR2WS.Output;
 
+[ExportTsInterface]
 internal class JsonCumulativeStats
 {
     public double SystemTimeMs; // Time when we fetched the statistics

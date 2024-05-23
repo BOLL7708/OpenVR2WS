@@ -1,7 +1,9 @@
+using TypeGen.Core.TypeAnnotations;
 using Valve.VR;
 
 namespace OpenVR2WS.Input;
 
+[ExportTsInterface]
 internal class DataDeviceProperty
 {
     public int DeviceIndex = -1;

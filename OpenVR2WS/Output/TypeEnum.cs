@@ -1,5 +1,8 @@
+using TypeGen.Core.TypeAnnotations;
+
 namespace OpenVR2WS.Output;
 
+[ExportTsEnum]
 internal enum TypeEnum
 {
     None,

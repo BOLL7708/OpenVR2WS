@@ -1,7 +1,9 @@
 using OpenVR2WS.Input;
+using TypeGen.Core.TypeAnnotations;
 
 namespace OpenVR2WS.Output;
 
+[ExportTsInterface]
 internal class JsonFindOverlay
 {
     public ulong Handle;

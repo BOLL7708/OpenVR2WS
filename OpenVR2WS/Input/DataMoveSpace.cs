@@ -1,8 +1,10 @@
 using EasyOpenVR.Utils;
+using TypeGen.Core.TypeAnnotations;
 using Valve.VR;
 
 namespace OpenVR2WS.Input;
 
+[ExportTsInterface]
 public class DataMoveSpace
 {
     public int DurationMs = 0;
@@ -26,6 +28,7 @@ public class DataMoveSpace
     }
 }
 
+[ExportTsEnum]
 public enum Correction
 {
     PlaySpace,
@@ -34,6 +37,7 @@ public enum Correction
     HmdPitch
 }
 
+[ExportTsInterface]
 public class DataMoveSpaceEntry
 {
     public EasingUtils.EasingType EaseType = EasingUtils.EasingType.Linear;

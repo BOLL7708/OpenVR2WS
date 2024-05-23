@@ -1,8 +1,9 @@
 ﻿using OpenVR2WS.Input;
+using TypeGen.Core.TypeAnnotations;
 
 namespace OpenVR2WS.Output;
 
-// ReSharper disable InconsistentNaming
+[ExportTsInterface]
 internal class Response
 {
     public ResponseTypeEnum Type = ResponseTypeEnum.Undefined;

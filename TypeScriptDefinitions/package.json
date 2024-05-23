@@ -1,0 +1,23 @@
+{
+  "name": "openvr2ws-typedefs",
+  "version": "2.3.2-alpha.0",
+  "description": "TypeScript type definitions for the input and output of OpenVR2WS.",
+  "types": "types/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BOLL7708/OpenVR2WS.git"
+  },
+  "keywords": [
+    "OpenVR2WS",
+    "Types",
+    "Definitions",
+    "TypeScript",
+    "OpenVR"
+  ],
+  "author": "BOLL7708",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BOLL7708/OpenVR2WS/issues"
+  },
+  "homepage": "https://github.com/BOLL7708/OpenVR2WS#readme"
+}

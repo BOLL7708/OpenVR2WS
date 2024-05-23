@@ -1,7 +1,9 @@
-﻿using Valve.VR;
+﻿using TypeGen.Core.TypeAnnotations;
+using Valve.VR;
 
 namespace OpenVR2WS.Output;
 
+[ExportTsInterface]
 internal class JsonPlayArea
 {
     public Vec3[] Corners = new Vec3[8];

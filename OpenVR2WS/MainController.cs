@@ -496,14 +496,14 @@ internal class MainController
     private void SendDeviceProperty(RequestKeyEnum key, DataDeviceProperty? data, string? nonce = null, WebSocketSession? session = null)
     {
         if (data == null || data.DeviceIndex == -1) {
-            SendResult(Response.CreateError("The value of DeviceIndex was missing or -1 which means no valid device was specified.", nonce), session);
+            SendResult(Response.CreateError("The value of DeviceIndex was missing or -1 which means no valid device was specified.", null, nonce), session);
             return; 
         }
         var index = (uint)data.DeviceIndex;
         var propName = Enum.GetName(typeof(ETrackedDeviceProperty), data.Property);
         if (propName == null || data.Property == ETrackedDeviceProperty.Prop_Invalid)
         {
-            SendResult(Response.CreateError($"The provided Property was invalid: {data.Property}.", nonce), session);
+            SendResult(Response.CreateError($"The provided Property was invalid: {data.Property}.", null, nonce), session);
             return;
         }
         var propArray = propName.Split('_');

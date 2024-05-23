@@ -1,5 +1,8 @@
+using TypeGen.Core.TypeAnnotations;
+
 namespace OpenVR2WS.Output;
 
+[ExportTsInterface]
 internal class JsonSetting(
     string section,
     string setting,

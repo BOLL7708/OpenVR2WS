@@ -1,0 +1,8 @@
+{
+  "outputPath": "../TypeScriptDefinitions/types",
+  "typeScriptFileExtension": "d.ts",
+  "propertyNameConverters": [],
+  "generationSpecs": ["TypeGenSpec"],
+  "generateFromAssemblies": true,
+  "clearOutputDirectory": true
+}

@@ -1,9 +1,11 @@
 ﻿using EasyOpenVR;
 using EasyOpenVR.Utils;
+using TypeGen.Core.TypeAnnotations;
 using Valve.VR;
 
 namespace OpenVR2WS.Output;
 
+[ExportTsInterface]
 internal class JsonPose
 {
     // public HmdMatrix34_t matrix = new HmdMatrix34_t(); // TODO: Figure out what to do with this...
