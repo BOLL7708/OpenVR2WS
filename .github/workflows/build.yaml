@@ -1,67 +1,97 @@
 name: Build & Release
 
 on:
-    release:
-      types: [published]
+  release:
+    types: [ published ]
 
 jobs:
-    build:
-      name: Build
-      runs-on: windows-latest
-        
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
-          with:
-            submodules: 'recursive'
-            
-        - name: Setup dotnet
-          uses: actions/setup-dotnet@v3
-          with:
-            dotnet-version: 8.x
-            dotnet-quality: ga
+  build:
+    name: Build
+    runs-on: windows-latest
 
-        - name: Install OpenVR Dependencies
-          shell: cmd
-          run: |
-            call cd EasyOpenVR
-            call download_openvr_api_dependencies.cmd
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
 
-        - name: Install dependencies
-          run: dotnet restore
-              
-        - name: Build
-          run: dotnet build OpenVR2WS/OpenVR2WS.csproj --configuration Release --runtime win-x64
-              
-        - name: Publish
-          run: dotnet publish OpenVR2WS/OpenVR2WS.csproj --no-build --configuration Release -o release
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.x
+          dotnet-quality: ga
 
-        - name: Zip release build
-          shell: bash
-          run: |
-            7z a -tzip "OpenVR2WS_${{github.event.release.tag_name}}.zip" "./release/*"
+      - name: Install OpenVR Dependencies
+        shell: cmd
+        run: |
+          call cd EasyOpenVR
+          call download_openvr_api_dependencies.cmd
 
-        - name: Upload release artifact
-          uses: actions/upload-artifact@v4
-          with:
-            name: release
-            path: OpenVR2WS_${{github.event.release.tag_name}}.zip
+      - name: Install dependencies
+        run: dotnet restore
 
+      - name: Build
+        run: dotnet build OpenVR2WS/OpenVR2WS.csproj --configuration Release --runtime win-x64
 
-    release:
-      name: Upload Release
-      runs-on: ubuntu-latest
-      needs: build
+      - name: Publish
+        run: dotnet publish OpenVR2WS/OpenVR2WS.csproj --no-build --configuration Release -o release
 
-      steps:
-        - name: Download artifact
-          uses: actions/download-artifact@v4
-          
-        - name: Display structure of downloaded files
-          run: ls -R .
+      - name: Zip release build
+        shell: bash
+        run: |
+          7z a -tzip "OpenVR2WS_${{github.event.release.tag_name}}.zip" "./release/*"
 
-        - name: Upload file to release
-          uses: softprops/action-gh-release@v2
-          with:
-            files: |
-              **/*.zip
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: OpenVR2WS_${{github.event.release.tag_name}}.zip
+
+      - name: Restore local tools
+        run: dotnet tool restore
+
+      - name: Generate TypeScript
+        run: dotnet dotnet-typegen generate -p OpenVR2WS
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TypeScriptDefinitions
+          path: TypeScriptDefinitions
+
+  release:
+    name: Upload Release
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release
+
+      - name: Display structure of downloaded files
+        run: ls -R .
+
+      - name: Upload file to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            **/*.zip
+
+  publishNPM:
+    name: Publish NPM Package
+    runs-on: ubuntu-latest
+    needs: build
+
+    step:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: TypeScriptDefinitions
+
+      - run: |
+          cd TypeScriptDefinitions
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
