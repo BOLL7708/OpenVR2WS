@@ -1,6 +1,6 @@
 {
-  "name": "openvr2ws-typedefs",
-  "version": "2.3.2-alpha.1",
+  "name": "openvr2ws-types",
+  "version": "2.3.2",
   "description": "TypeScript type definitions for the input and output of OpenVR2WS.",
   "types": "types/index.d.ts",
   "repository": {
