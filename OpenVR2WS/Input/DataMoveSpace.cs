@@ -16,7 +16,6 @@ public class DataMoveSpace
     public int EaseOutMs = 0;
     public bool ResetBeforeRun = false;
     public bool ResetAfterRun = false;
-    public bool UpdateChaperone = false;
     public Correction Correction = Correction.PlaySpace;
     public DataMoveSpaceEntry[] Entries = [];
 
@@ -45,6 +44,7 @@ public class DataMoveSpaceEntry
     public float OffsetX = 0;
     public float OffsetY = 0;
     public float OffsetZ = 0;
+    public float Rotate = 0;
     public int StartOffsetMs = 0;
     public int EndOffsetMs = 0;
     public bool PingPong = false;

@@ -55,15 +55,21 @@ public static class SpaceMover
             var easeFunc = EasingUtils.Get(entry.EaseType, entry.EaseMode);
             var startOffsetFrames = (int)Math.Round(entry.StartOffsetMs / msPerFrame);
             var endOffsetFrames = (int)Math.Round(entry.EndOffsetMs / msPerFrame);
-            entries.Add(new SpaceMoverEntry(entry.GetOffset(), easeFunc, entry, startOffsetFrames, endOffsetFrames));
+            entries.Add(new SpaceMoverEntry(
+                entry.GetOffset(), 
+                entry.Rotate, 
+                easeFunc, 
+                entry, 
+                startOffsetFrames, 
+                endOffsetFrames)
+            );
         }
 
         // Fetch current setup
         var originPose = vr.GetOriginPose();
-        OpenVR.ChaperoneSetup.GetWorkingCollisionBoundsInfo(out var physQuad);
         var poses = vr.GetDeviceToAbsoluteTrackingPose();
         var hmdPose = poses[0].mDeviceToAbsoluteTracking;
-        HmdVector3_t hmdAnchorEuler = hmdPose.EulerAngles();
+        var hmdAnchorEuler = hmdPose.EulerAngles();
         if (data.Correction != Correction.HmdYaw) hmdAnchorEuler.v1 = 0;
         if (data.Correction != Correction.HmdPitch) hmdAnchorEuler.v0 = 0;
         var correctionPose = (data.Correction switch
@@ -83,8 +89,13 @@ public static class SpaceMover
         if (totalFrames == 0 && data.Entries.Length > 0)
         {
             var offset = new HmdVector3_t();
-            foreach (var entry in entries) offset = offset.Add(entry.Offset);
-            vr.TranslateUniverse(offset, originPose, correctionPose, physQuad, true, data.UpdateChaperone);
+            var rotate = 0f;
+            foreach (var entry in entries)
+            {
+                offset = offset.Add(entry.Offset);
+                rotate += entry.Rotate;
+            }
+            vr.ModifyUniverse(offset, rotate, originPose, correctionPose, true);
         }
         else
         {
@@ -92,6 +103,7 @@ public static class SpaceMover
             {
                 timeLoopStarted = DateTime.Now.Ticks;
                 var offset = new HmdVector3_t();
+                var rotate = 0f;
 
                 // Apply all offsets to the final offset and apply it to the play space
                 foreach (var entry in entries)
@@ -103,9 +115,9 @@ public static class SpaceMover
                             (float)(entry.EaseFunc(value) * easeValue)
                         )
                     );
+                    rotate += entry.Rotate * (float)(entry.EaseFunc(value) * easeValue);
                 }
-                
-                vr.TranslateUniverse(offset, originPose, correctionPose, physQuad, true, data.UpdateChaperone);
+                vr.ModifyUniverse(offset, rotate, originPose, correctionPose, true);
 
                 timeSpent = (double)(DateTime.Now.Ticks - timeLoopStarted) / TimeSpan.TicksPerMillisecond;
                 Thread.Sleep((int)Math.Round(Math.Max(1.0, msPerFrame - timeSpent))); // Animation time per frame adjusted by the time it took to animate.
@@ -119,7 +131,7 @@ public static class SpaceMover
          */
         if (data.ResetAfterRun)
         {
-            vr.TranslateUniverse(new HmdVector3_t(), originPose, correctionPose, physQuad, true, data.UpdateChaperone);
+            vr.ModifyUniverse(new HmdVector3_t(), 0f, originPose, correctionPose, true);
         }
 
         callback($"Moved play space over {totalFrames} frames.");
@@ -162,12 +174,14 @@ public static class SpaceMover
 
     struct SpaceMoverEntry(
         HmdVector3_t offset,
+        float rotate,
         Func<double, double> easeFunc,
         DataMoveSpaceEntry move,
         int startOffsetFrames,
         int endOffsetFrames)
     {
         public HmdVector3_t Offset = offset;
+        public float Rotate = rotate;
         public Func<double, double> EaseFunc = easeFunc;
         public DataMoveSpaceEntry Entry = move;
         public int StartOffsetFrames = startOffsetFrames;
