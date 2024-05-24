@@ -2,7 +2,12 @@
   "outputPath": "../Types/types",
   "typeScriptFileExtension": "d.ts",
   "propertyNameConverters": [],
-  "generationSpecs": ["TypeGenSpec"],
+  "generationSpecs": [
+    "TypeGenSpec"
+  ],
   "generateFromAssemblies": true,
-  "clearOutputDirectory": true
+  "clearOutputDirectory": true,
+  "csNullableTranslation": "null",
+  "useDefaultExport": true,
+  "singleQuotes": true
 }
