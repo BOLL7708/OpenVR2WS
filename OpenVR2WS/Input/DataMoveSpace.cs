@@ -4,7 +4,7 @@ using Valve.VR;
 
 namespace OpenVR2WS.Input;
 
-[ExportTsInterface]
+[ExportTsClass]
 public class DataMoveSpace
 {
     public int DurationMs = 0;

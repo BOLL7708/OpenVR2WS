@@ -3,7 +3,7 @@ using Valve.VR;
 
 namespace OpenVR2WS.Input;
 
-[ExportTsInterface]
+[ExportTsClass]
 internal class DataDeviceProperty
 {
     public int DeviceIndex = -1;
