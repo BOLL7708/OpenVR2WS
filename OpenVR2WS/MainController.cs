@@ -11,6 +11,7 @@ using EasyOpenVR;
 using OpenVR2WS.Input;
 using OpenVR2WS.Output;
 using OpenVR2WS.Properties;
+using SuperSocket;
 using SuperSocket.WebSocket.Server;
 using Valve.VR;
 using static EasyOpenVR.EasyOpenVRSingleton;
@@ -99,7 +100,7 @@ internal class MainController
             Debug.WriteLine($"Could not serialize output for {outputMessage.Type}|{outputMessage.Key}: {e.Message}");
         }
 
-        if (jsonString != string.Empty) _server.SendMessage(session, jsonString);
+        if (jsonString != string.Empty) _server.SendMessageToSingleOrAll(session, jsonString).DoNotAwait();
     }
 
     private void SendInput(OutputMessageTypeEnum type, InputDigitalActionData_t data, InputActionInfo info, WebSocketSession? session = null)
@@ -509,35 +510,35 @@ internal class MainController
         var dataType = propArray.Last();
         var dataName = propArray.Length >= 1 ? propArray[1] : propName;
         var arrayType = dataType == "Array" ? propArray[^2] : string.Empty; // Matrix34, Int32, Float, Vector4, 
-        Enum.TryParse(dataType, out Output.OuputTypeEnum dataTypeEnum);
+        Enum.TryParse(dataType, out OuputTypeEnum dataTypeEnum);
         dynamic? propertyValue = null;
         switch (dataTypeEnum)
         {
-            case Output.OuputTypeEnum.String:
+            case OuputTypeEnum.String:
                 propertyValue = _vr.GetStringTrackedDeviceProperty(index, data.Property);
                 break;
-            case Output.OuputTypeEnum.Bool:
+            case OuputTypeEnum.Bool:
                 propertyValue = _vr.GetBooleanTrackedDeviceProperty(index, data.Property);
                 break;
-            case Output.OuputTypeEnum.Float:
+            case OuputTypeEnum.Float:
                 propertyValue = _vr.GetFloatTrackedDeviceProperty(index, data.Property);
                 break;
-            case Output.OuputTypeEnum.Matrix34:
+            case OuputTypeEnum.Matrix34:
                 Debug.WriteLine($"{dataType} property: {propArray[1]}");
                 break;
-            case Output.OuputTypeEnum.Uint64:
+            case OuputTypeEnum.Uint64:
                 propertyValue = _vr.GetLongTrackedDeviceProperty(index, data.Property);
                 break;
-            case Output.OuputTypeEnum.Int32:
+            case OuputTypeEnum.Int32:
                 propertyValue = _vr.GetIntegerTrackedDeviceProperty(index, data.Property);
                 break;
-            case Output.OuputTypeEnum.Binary:
+            case OuputTypeEnum.Binary:
                 Debug.WriteLine($"{dataType} property: {propArray[1]}");
                 break;
-            case Output.OuputTypeEnum.Array:
+            case OuputTypeEnum.Array:
                 Debug.WriteLine($"{dataType}<{arrayType}> property: {propArray[1]}");
                 break;
-            case Output.OuputTypeEnum.Vector3:
+            case OuputTypeEnum.Vector3:
                 Debug.WriteLine($"{dataType} property: {propArray[1]}");
                 break;
             default:
@@ -569,10 +570,10 @@ internal class MainController
 
         dynamic? value = data.Type switch
         {
-            Output.OuputTypeEnum.Float => _vr.GetFloatSetting(data.Section, data.Setting),
-            Output.OuputTypeEnum.Int32 => _vr.GetIntSetting(data.Section, data.Setting),
-            Output.OuputTypeEnum.Bool => _vr.GetBoolSetting(data.Section, data.Setting),
-            Output.OuputTypeEnum.String => _vr.GetStringSetting(data.Section, data.Setting),
+            OuputTypeEnum.Float => _vr.GetFloatSetting(data.Section, data.Setting),
+            OuputTypeEnum.Int32 => _vr.GetIntSetting(data.Section, data.Setting),
+            OuputTypeEnum.Bool => _vr.GetBoolSetting(data.Section, data.Setting),
+            OuputTypeEnum.String => _vr.GetStringSetting(data.Section, data.Setting),
             _ => null
         };
         var json = new JsonSetting(data.Section, data.Setting, value);
