@@ -8,6 +8,5 @@
   "generateFromAssemblies": true,
   "clearOutputDirectory": true,
   "csNullableTranslation": "null",
-  "useDefaultExport": true,
   "singleQuotes": true
 }
