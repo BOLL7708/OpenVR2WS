@@ -1,6 +1,6 @@
 namespace OpenVR2WS.Output;
 
-public enum ResponseTypeEnum
+public enum OutputMessageTypeEnum
 {
     Undefined,
     Error,

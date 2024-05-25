@@ -6,9 +6,9 @@ using TypeGen.Core.TypeAnnotations;
 namespace OpenVR2WS.Input;
 
 [ExportTsClass]
-internal class Request
+internal class InputMessage
 {
-    public RequestKeyEnum Key = RequestKeyEnum.None;
+    public InputMessageKeyEnum Key = InputMessageKeyEnum.None;
     public dynamic? Data;
     public string? Password = null;
     public string? Nonce = null;
