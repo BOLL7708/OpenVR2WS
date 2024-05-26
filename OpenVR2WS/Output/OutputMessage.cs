@@ -6,7 +6,7 @@ namespace OpenVR2WS.Output;
 [ExportTsInterface]
 internal class OutputMessage
 {
-    public OutputMessageTypeEnum Type = OutputMessageTypeEnum.Undefined;
+    public OutputValueTypeEnum Type = OutputValueTypeEnum.Undefined;
     public InputMessageKeyEnum Key = InputMessageKeyEnum.None;
     public string Message = "";
     public dynamic? Data = null;
@@ -16,7 +16,7 @@ internal class OutputMessage
     {
         return new OutputMessage
         {
-            Type = OutputMessageTypeEnum.Error,
+            Type = OutputValueTypeEnum.Error,
             Message = message,
             Data = shape,
             Nonce = nonce
@@ -27,7 +27,7 @@ internal class OutputMessage
     {
         return new OutputMessage
         {
-            Type = OutputMessageTypeEnum.Message,
+            Type = OutputValueTypeEnum.Message,
             Message = message,
             Nonce = nonce
         };
@@ -37,7 +37,7 @@ internal class OutputMessage
     {
         return new OutputMessage
         {
-            Type = OutputMessageTypeEnum.Result,
+            Type = OutputValueTypeEnum.Result,
             Key = inputMessageKey,
             Data = data,
             Nonce = nonce
@@ -48,12 +48,12 @@ internal class OutputMessage
     {
         return new OutputMessage
         {
-            Type = OutputMessageTypeEnum.VREvent,
+            Type = OutputValueTypeEnum.VREvent,
             Data = data
         };
     }
 
-    public static OutputMessage Create(OutputMessageTypeEnum type, dynamic data, string? nonce = null)
+    public static OutputMessage Create(OutputValueTypeEnum type, dynamic data, string? nonce = null)
     {
         return new OutputMessage
         {

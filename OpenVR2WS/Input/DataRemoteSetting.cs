@@ -8,5 +8,5 @@ internal class DataRemoteSetting
     public string Section = "";
     public string Setting = "";
     public string Value = "";
-    public InputMessageTypeEnum Type = InputMessageTypeEnum.None;
+    public InputValueTypeEnum Type = InputValueTypeEnum.None;
 }

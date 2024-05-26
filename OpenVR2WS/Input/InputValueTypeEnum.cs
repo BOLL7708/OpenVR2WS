@@ -1,6 +1,6 @@
 namespace OpenVR2WS.Input;
 
-internal enum InputMessageTypeEnum
+internal enum InputValueTypeEnum
 {
     None,
     String,

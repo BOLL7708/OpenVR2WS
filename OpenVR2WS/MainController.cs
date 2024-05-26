@@ -103,7 +103,7 @@ internal class MainController
         if (jsonString != string.Empty) _server.SendMessageToSingleOrAll(session, jsonString).DoNotAwait();
     }
 
-    private void SendInput(OutputMessageTypeEnum type, InputDigitalActionData_t data, InputActionInfo info, WebSocketSession? session = null)
+    private void SendInput(OutputValueTypeEnum type, InputDigitalActionData_t data, InputActionInfo info, WebSocketSession? session = null)
     {
         var source = DataStore.handleToSource[info.sourceHandle];
         var json = new JsonInputDigital(source, data, info);
@@ -354,7 +354,7 @@ internal class MainController
 
         void SendDigitalInput(InputDigitalActionData_t data, InputActionInfo info)
         {
-            SendInput(OutputMessageTypeEnum.InputDigital, data, info);
+            SendInput(OutputValueTypeEnum.InputDigital, data, info);
         }
     }
 
@@ -690,19 +690,19 @@ internal class MainController
             : OutputMessage.CreateError("Password string did not match, b64-encode a binary SHA256 hash.");
     }
 
-    private bool ApplySetting(string section, string setting, string value, InputMessageTypeEnum inputMessageType)
+    private bool ApplySetting(string section, string setting, string value, InputValueTypeEnum inputValueType)
     {
         var boolSuccess = bool.TryParse(value, out var boolValue);
         var intSuccess = int.TryParse(value, out var intValue);
         var floatSuccess = float.TryParse(value, out var floatValue);
-        if (inputMessageType != InputMessageTypeEnum.None)
+        if (inputValueType != InputValueTypeEnum.None)
         {
-            return inputMessageType switch
+            return inputValueType switch
             {
-                InputMessageTypeEnum.String => _vr.SetStringSetting(section, setting, value),
-                InputMessageTypeEnum.Bool => _vr.SetBoolSetting(section, setting, boolValue),
-                InputMessageTypeEnum.Float => _vr.SetFloatSetting(section, setting, floatValue),
-                InputMessageTypeEnum.Int32 => _vr.SetIntSetting(section, setting, intValue),
+                InputValueTypeEnum.String => _vr.SetStringSetting(section, setting, value),
+                InputValueTypeEnum.Bool => _vr.SetBoolSetting(section, setting, boolValue),
+                InputValueTypeEnum.Float => _vr.SetFloatSetting(section, setting, floatValue),
+                InputValueTypeEnum.Int32 => _vr.SetIntSetting(section, setting, intValue),
                 _ => false
             };
         }
