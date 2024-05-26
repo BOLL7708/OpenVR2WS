@@ -165,6 +165,11 @@ internal class MainController
                 SendMoveSpace(inputMessage, session);
                 break;
             }
+            case InputMessageKeyEnum.EditBindings:
+            {
+                SendEditBindings(inputMessage, session);
+                break;
+            }
         }
     }
 
@@ -619,6 +624,19 @@ internal class MainController
             ApplyMoveSpace(data, inputMessage, session);
         }
         else SendResult(OutputMessage.CreateError("Input was invalid, see Data as a reference.", DataMoveSpace.BuildEmpty(true), inputMessage.Nonce), session);
+    }
+
+    private void SendEditBindings(InputMessage inputMessage, WebSocketSession? session)
+    {
+        var error = OpenVR.Input.OpenBindingUI("", 0, 0, true);
+        if (error != EVRInputError.None)
+        {
+            SendResult(OutputMessage.CreateError($"Failed to open bindings editor: {error}", null, inputMessage.Nonce), session);
+            return;
+        }
+        var response = OutputMessage.CreateMessage("Opened bindings for application in editor.", inputMessage.Nonce);
+        response.Key = inputMessage.Key;
+        SendResult(response, session);
     }
 
     private void SendEvent(EVREventType eventType, WebSocketSession? session = null)

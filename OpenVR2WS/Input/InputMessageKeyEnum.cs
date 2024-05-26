@@ -13,5 +13,6 @@ internal enum InputMessageKeyEnum
     Setting,
     RemoteSetting,
     FindOverlay,
-    MoveSpace
+    MoveSpace,
+    EditBindings
 }
