@@ -13,6 +13,16 @@
                "path" : "/user/hand/right/pose/handgrip"
             }
          ],
+         "skeleton" : [
+            {
+               "output" : "/actions/default/in/skeletonhandright",
+               "path" : "/user/hand/right/input/skeleton/right"
+            },
+            {
+               "output" : "/actions/default/in/skeletonhandleft",
+               "path" : "/user/hand/left/input/skeleton/left"
+            }
+         ],
          "sources" : [
             {
                "inputs" : {

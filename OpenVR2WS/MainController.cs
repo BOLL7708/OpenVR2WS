@@ -145,6 +145,9 @@ internal class MainController
             case InputMessageKeyEnum.InputPose:
                 SendCommandResult(inputMessage.Key, DataStore.poseInputActionData, inputMessage.Nonce, session);
                 break;
+            case InputMessageKeyEnum.SkeletonSummary:
+                SendCommandResult(inputMessage.Key, DataStore.skeletonSummaryInputActionData, inputMessage.Nonce, session);
+                break;
             case InputMessageKeyEnum.Setting:
             {
                 SendSetting(inputMessage, session);
@@ -221,22 +224,28 @@ internal class MainController
                     // Happens every loop
                     _vr.UpdateEvents();
                     _vr.UpdateActionStates([
-                        DataStore.sourceToHandle[InputSource.Head],
-                        DataStore.sourceToHandle[InputSource.Chest],
-                        DataStore.sourceToHandle[InputSource.LeftShoulder],
-                        DataStore.sourceToHandle[InputSource.RightShoulder],
-                        DataStore.sourceToHandle[InputSource.LeftElbow],
-                        DataStore.sourceToHandle[InputSource.RightElbow],
-                        DataStore.sourceToHandle[InputSource.LeftHand],
-                        DataStore.sourceToHandle[InputSource.RightHand],
-                        DataStore.sourceToHandle[InputSource.Waist],
-                        DataStore.sourceToHandle[InputSource.LeftKnee],
-                        DataStore.sourceToHandle[InputSource.RightKnee],
-                        DataStore.sourceToHandle[InputSource.LeftFoot],
-                        DataStore.sourceToHandle[InputSource.RightFoot],
-                        DataStore.sourceToHandle[InputSource.Camera],
-                        DataStore.sourceToHandle[InputSource.Gamepad]
-                    ]);
+                            DataStore.sourceToHandle[InputSource.Head],
+                            DataStore.sourceToHandle[InputSource.Chest],
+                            DataStore.sourceToHandle[InputSource.LeftShoulder],
+                            DataStore.sourceToHandle[InputSource.RightShoulder],
+                            DataStore.sourceToHandle[InputSource.LeftElbow],
+                            DataStore.sourceToHandle[InputSource.RightElbow],
+                            DataStore.sourceToHandle[InputSource.LeftWrist],
+                            DataStore.sourceToHandle[InputSource.RightWrist],
+                            DataStore.sourceToHandle[InputSource.LeftHand],
+                            DataStore.sourceToHandle[InputSource.RightHand],
+                            DataStore.sourceToHandle[InputSource.Waist],
+                            DataStore.sourceToHandle[InputSource.LeftKnee],
+                            DataStore.sourceToHandle[InputSource.RightKnee],
+                            DataStore.sourceToHandle[InputSource.LeftAnkle],
+                            DataStore.sourceToHandle[InputSource.RightAnkle],
+                            DataStore.sourceToHandle[InputSource.LeftFoot],
+                            DataStore.sourceToHandle[InputSource.RightFoot],
+                            DataStore.sourceToHandle[InputSource.Camera],
+                            DataStore.sourceToHandle[InputSource.Gamepad]
+                        ],
+                        DataStore.sourceToHandle[InputSource.Any]
+                    );
                     if (_settings.UseDevicePoses)
                     {
                         var poses = _vr.GetDeviceToAbsoluteTrackingPose();
@@ -283,6 +292,9 @@ internal class MainController
         _vr.ClearInputActions();
         _vr.RegisterActionSet(GetAction());
         _vr.RegisterDigitalAction(GetAction("Proximity"), SendDigitalInput);
+
+        _vr.RegisterSkeletonSummaryAction(GetAction("SkeletonHandLeft"), StoreSkeletonSummaryInput);
+        _vr.RegisterSkeletonSummaryAction(GetAction("SkeletonHandRight"), StoreSkeletonSummaryInput);
 
         _vr.RegisterDigitalAction(GetAction("TriggerClick"), SendDigitalInput);
         _vr.RegisterDigitalAction(GetAction("TriggerTouch"), SendDigitalInput);
@@ -355,6 +367,11 @@ internal class MainController
         void StoreAnalogInput(InputAnalogActionData_t data, InputActionInfo info)
         {
             DataStore.UpdateOrAddAnalogInputActionData(data, info);
+        }
+        
+        void StoreSkeletonSummaryInput(VRSkeletalSummaryData_t data, InputActionInfo info)
+        {
+            DataStore.UpdateOrAddSkeletonSummaryInputData(data, info);
         }
 
         void SendDigitalInput(InputDigitalActionData_t data, InputActionInfo info)

@@ -74,6 +74,18 @@
 			"name": "/actions/default/in/Proximity",
 			"type": "boolean"
 		},
+
+		{
+			"name": "/actions/default/in/SkeletonHandLeft",
+			"type": "skeleton",
+			"skeleton": "/skeleton/hand/left"
+		},
+		{
+			"name": "/actions/default/in/SkeletonHandRight",
+			"type": "skeleton",
+			"skeleton": "/skeleton/hand/right"
+		},
+		
 		{
 			"name": "/actions/default/in/TriggerClick",
 			"type": "boolean"
@@ -262,6 +274,9 @@
 		"/actions/default": "Default",
 		
 		"/actions/default/in/Proximity": "Proximity Sensor",
+		
+		"/actions/default/in/SkeletonHandLeft": "Skeleton Hand Left",
+		"/actions/default/in/SkeletonHandRight": "Skeleton Hand Right",
 		
 		"/actions/default/in/TriggerClick": "Trigger Click",
 		"/actions/default/in/TriggerTouch": "Trigger Touch",

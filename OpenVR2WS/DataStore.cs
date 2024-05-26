@@ -17,6 +17,7 @@ internal static class DataStore
     public static readonly ConcurrentDictionary<InputSource, ulong> sourceToHandle = new();
     public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData = new();
     public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, JsonPose>> poseInputActionData = new();
+    public static readonly ConcurrentDictionary<string, JsonSkeletonSummary> skeletonSummaryInputActionData = new();
     public static readonly ConcurrentDictionary<InputSource, int> sourceToIndex = new();
     public static readonly ConcurrentDictionary<int, InputSource> indexToSource = new();
 
@@ -57,15 +58,19 @@ internal static class DataStore
     public static void UpdateInputDeviceHandles()
     {
         GetInputHandle(InputSource.LeftHand);
+        GetInputHandle(InputSource.LeftWrist);
         GetInputHandle(InputSource.LeftElbow);
         GetInputHandle(InputSource.LeftShoulder);
         GetInputHandle(InputSource.LeftKnee);
+        GetInputHandle(InputSource.LeftAnkle);
         GetInputHandle(InputSource.LeftFoot);
 
         GetInputHandle(InputSource.RightHand);
+        GetInputHandle(InputSource.RightWrist);
         GetInputHandle(InputSource.RightElbow);
         GetInputHandle(InputSource.RightShoulder);
         GetInputHandle(InputSource.RightKnee);
+        GetInputHandle(InputSource.RightAnkle);
         GetInputHandle(InputSource.RightFoot);
 
         GetInputHandle(InputSource.Head);
@@ -74,6 +79,9 @@ internal static class DataStore
 
         GetInputHandle(InputSource.Gamepad);
         GetInputHandle(InputSource.Camera);
+        
+        GetInputHandle(InputSource.Devices);
+        GetInputHandle(InputSource.Any);
         return;
 
         void GetInputHandle(InputSource source)
@@ -105,6 +113,11 @@ internal static class DataStore
         if (!poseInputActionData.ContainsKey(source))
             poseInputActionData[source] = new ConcurrentDictionary<string, JsonPose>();
         poseInputActionData[source][info.pathEnd] = new JsonPose(data.pose);
+    }
+
+    public static void UpdateOrAddSkeletonSummaryInputData(VRSkeletalSummaryData_t data, InputActionInfo info)
+    {
+        skeletonSummaryInputActionData[info.pathEnd] = new JsonSkeletonSummary(data);
     }
 
     public static void UpdateOrAddPoseData(TrackedDevicePose_t pose, int deviceIndex)

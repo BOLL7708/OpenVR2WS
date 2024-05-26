@@ -14,5 +14,6 @@ internal enum InputMessageKeyEnum
     RemoteSetting,
     FindOverlay,
     MoveSpace,
-    EditBindings
+    EditBindings,
+    SkeletonSummary
 }
