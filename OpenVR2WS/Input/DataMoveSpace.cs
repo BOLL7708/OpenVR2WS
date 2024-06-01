@@ -14,8 +14,8 @@ public class DataMoveSpace
     public EasingUtils.EasingType EaseOutType = EasingUtils.EasingType.Linear;
     public EasingUtils.EasingMode EaseOutMode = EasingUtils.EasingMode.Out;
     public int EaseOutMs = 0;
-    public bool ResetBeforeRun = false;
-    public bool ResetAfterRun = false;
+    public bool ResetSpaceBeforeRun = false;
+    public bool ResetOffsetAfterRun = false;
     public Correction Correction = Correction.PlaySpace;
     public DataMoveSpaceEntry[] Entries = [];
 
@@ -49,6 +49,7 @@ public class DataMoveSpaceEntry
     public int EndOffsetMs = 0;
     public bool PingPong = false;
     public int Repeat = 0;
+    public bool Accumulate = false;
 
     public HmdVector3_t GetOffset()
     {

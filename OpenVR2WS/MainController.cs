@@ -415,16 +415,15 @@ internal class MainController
         ], (_) => { SendPlayArea(); });
         _vr.RegisterEvent(EVREventType.VREvent_PropertyChanged, (data) =>
         {
-            // Look for things here that is useful, like battery states
-            // Debug.WriteLine(Enum.GetName(typeof(ETrackedDeviceProperty), data.data.property.prop));
             var deviceProperty = DataDeviceProperty.CreateFromEvent(data);
             SendDeviceProperty(InputMessageKeyEnum.DeviceProperty, deviceProperty);
         });
-        _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (_) =>
+        _vr.RegisterEvent(EVREventType.VREvent_SteamVRSectionSettingChanged, (data) =>
         {
+            // TODO: No idea how to actually get which setting was changed.
             // SendResult("Debug", data);
-            var fakeData = new Dictionary<string, dynamic> { { "Issue", "https://github.com/ValveSoftware/openvr/issues/1335" } };
-            SendCommandResult(InputMessageKeyEnum.Setting, fakeData);
+            // var fakeData = new Dictionary<string, dynamic> { { "Issue", "https://github.com/ValveSoftware/openvr/issues/1335" } };
+            // SendCommandResult(InputMessageKeyEnum.Setting, fakeData);
         });
         _vr.RegisterEvents([
             EVREventType.VREvent_SceneApplicationChanged,

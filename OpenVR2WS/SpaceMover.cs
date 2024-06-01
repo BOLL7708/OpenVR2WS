@@ -30,7 +30,7 @@ public static class SpaceMover
     {
         Thread.CurrentThread.IsBackground = true;
         var vr = EasyOpenVRSingleton.Instance;
-        if (data.ResetBeforeRun)
+        if (data.ResetSpaceBeforeRun)
         {
             vr.ResetUniverse();
             Thread.Sleep(1);
@@ -82,11 +82,12 @@ public static class SpaceMover
         // Loop the animation
         var timeLoopStarted = 0L;
         var timeSpent = 0.0;
-        var value = 0.0;
         var easeValue = 0.0;
+        var valueResult = new Progress();
+        var repetition = 0.0;
 
         // Animation loop
-        if (totalFrames == 0 && data.Entries.Length > 0)
+        if (totalFrames == 0 && data.Entries.Length > 0) // No duration is instant
         {
             var offset = new HmdVector3_t();
             var rotate = 0f;
@@ -97,7 +98,7 @@ public static class SpaceMover
             }
             vr.ModifyUniverse(offset, rotate, originPose, correctionPose, true);
         }
-        else
+        else // With duration so we animate
         {
             for (var currentFrame = 0; currentFrame < totalFrames; currentFrame++)
             {
@@ -108,14 +109,15 @@ public static class SpaceMover
                 // Apply all offsets to the final offset and apply it to the play space
                 foreach (var entry in entries)
                 {
-                    value = AnimationProgress(totalFrames, currentFrame, entry);
+                    valueResult = AnimationProgress(totalFrames, currentFrame, entry);
                     easeValue = StartEndEase(totalFrames, currentFrame, easeInFrames, easeInFunc, easeOutFrames, easeOutFunc);
+                    repetition = entry.Entry.Accumulate ? (double)valueResult.Repetition : 0.0;
                     offset = offset.Add(
                         entry.Offset.Multiply(
-                            (float)(entry.EaseFunc(value) * easeValue)
+                            (float)(entry.EaseFunc(valueResult.Value) * easeValue + repetition)
                         )
                     );
-                    rotate += entry.Rotate * (float)(entry.EaseFunc(value) * easeValue);
+                    rotate += entry.Rotate * (float)(entry.EaseFunc(valueResult.Value) * easeValue);
                 }
                 vr.ModifyUniverse(offset, rotate, originPose, correctionPose, true);
 
@@ -129,7 +131,7 @@ public static class SpaceMover
          * Due to this, we simply translate the space to a zero offset, to go back to where we started this sequence.
          * This would seem natural as resetting at the start would need to be a global reset, while this just resets the current one.
          */
-        if (data.ResetAfterRun)
+        if (data.ResetOffsetAfterRun)
         {
             vr.ModifyUniverse(new HmdVector3_t(), 0f, originPose, correctionPose, true);
         }
@@ -145,23 +147,47 @@ public static class SpaceMover
      * @param entry The entry to calculate the progress for
      * @return The progress of the animation
      */
-    private static double AnimationProgress(int totalFrames, int currentFrame, SpaceMoverEntry entry)
+    private static Progress AnimationProgress(int totalFrames, int currentFrame, SpaceMoverEntry entry)
     {
+        var progressResult = new Progress();
+        
+        // Prep
         var totalAnimationFrames = totalFrames - entry.StartOffsetFrames - entry.EndOffsetFrames;
+        var currentAnimationFrame = currentFrame - entry.StartOffsetFrames;
         var repeatCount = Math.Max(1, entry.Entry.Repeat);
-        if (currentFrame < entry.StartOffsetFrames) return 0.0;
-        if (currentFrame >= totalFrames - entry.EndOffsetFrames) return entry.Entry.PingPong ? 0.0 : 1.0;
-
         var cycleFrameCount = Math.Round((double)totalAnimationFrames / repeatCount);
-        var currentCycleFrame = (currentFrame - entry.StartOffsetFrames) % cycleFrameCount;
+        var currentCycleFrame = currentAnimationFrame % cycleFrameCount;
         var progress = currentCycleFrame / cycleFrameCount;
-        if (entry.Entry.PingPong)
+        progressResult.Repetition = (int) Math.Floor(currentAnimationFrame / cycleFrameCount);
+        
+        // Progress limits
+        if (currentFrame < entry.StartOffsetFrames)
+        {
+            progressResult.Value = 0;
+        }
+        else if (currentFrame >= totalFrames - entry.EndOffsetFrames)
+        {
+            progressResult.Value = entry.Entry.PingPong ? 0.0 : 1.0;
+        }
+        else if (entry.Entry.PingPong)
         {
             if (progress > 0.5) progress = (1.0 - progress);
             progress *= 2;
         }
 
-        return progress;
+        progressResult.Value = progress;
+
+        return progressResult;
+    }
+
+    private struct Progress
+    {
+        public double Value = 0;
+        public int Repetition = 0;
+
+        public Progress()
+        {
+        }
     }
 
     private static double StartEndEase(int totalFrames, int currentFrame, int easeInFrames, Func<double, double> easeInFunc, int easeOutFrames, Func<double, double> easeOutFunc)
