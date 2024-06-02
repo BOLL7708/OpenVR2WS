@@ -17,17 +17,14 @@
                     <Label x:Name="LabelServerStatus" Content="server status" Background="Gray" Foreground="White"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
-                    <TextBlock x:Name="TextBlockExample" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="5 0 0 0">
-                        <Hyperlink NavigateUri="example.html" Click="ClickedUrl">Example</Hyperlink>
-                    </TextBlock>
                     <TextBlock x:Name="TextBlockHelp" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="10 0 10 0">
-                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS" Click="ClickedUrl">Help</Hyperlink>
+                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS" Click="ClickedUrl">Read Help</Hyperlink>
                     </TextBlock>
                     <TextBlock x:Name="TextBlockIssue" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
-                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS/issues" Click="ClickedUrl">Report issue</Hyperlink>
+                        <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS/issues" Click="ClickedUrl">Report Issue</Hyperlink>
                     </TextBlock>
-                    <TextBlock x:Name="TextBlockTwitter" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
-                        <Hyperlink NavigateUri="https://twitter.com/BOLL7708" Click="ClickedUrl">Contact</Hyperlink>
+                    <TextBlock x:Name="TextBlockCommunity" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
+                        <Hyperlink NavigateUri="https://discord.gg/vBjHeMW47f" Click="ClickedUrl">Join Discord</Hyperlink>
                     </TextBlock>
                     <Label x:Name="LabelVersion" Content="version" Padding="0"/>
                 </StackPanel>

@@ -134,7 +134,7 @@ public partial class MainWindow
     private void ClickedUrl(object sender, RoutedEventArgs e)
     {
         var link = (Hyperlink)sender;
-        Process.Start(link.NavigateUri.ToString());
+        MiscUtils.OpenUrl(link.NavigateUri.ToString());
     }
 
     private void Window_Closing(object sender, CancelEventArgs e)
