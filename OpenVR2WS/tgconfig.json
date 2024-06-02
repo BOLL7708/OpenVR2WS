@@ -1,6 +1,5 @@
 {
   "outputPath": "../Types/types",
-  "typeScriptFileExtension": "d.ts",
   "propertyNameConverters": [],
   "generationSpecs": [
     "TypeGenSpec"

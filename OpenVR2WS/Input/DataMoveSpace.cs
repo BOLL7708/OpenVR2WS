@@ -4,7 +4,7 @@ using Valve.VR;
 
 namespace OpenVR2WS.Input;
 
-[ExportTsClass]
+[ExportTsInterface]
 public class DataMoveSpace
 {
     public int DurationMs = 0;
@@ -27,7 +27,6 @@ public class DataMoveSpace
     }
 }
 
-[ExportTsEnum]
 public enum Correction
 {
     PlaySpace,
