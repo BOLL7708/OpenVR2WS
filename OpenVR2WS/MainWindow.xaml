@@ -24,7 +24,7 @@
                         <Hyperlink NavigateUri="https://github.com/BOLL7708/OpenVR2WS/issues" Click="ClickedUrl">Report Issue</Hyperlink>
                     </TextBlock>
                     <TextBlock x:Name="TextBlockCommunity" HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Margin="0 0 10 0">
-                        <Hyperlink NavigateUri="https://discord.gg/vBjHeMW47f" Click="ClickedUrl">Join Discord</Hyperlink>
+                        <Hyperlink NavigateUri="https://discord.gg/BxePpsxajs" Click="ClickedUrl">Join Discord</Hyperlink>
                     </TextBlock>
                     <Label x:Name="LabelVersion" Content="version" Padding="0"/>
                 </StackPanel>
