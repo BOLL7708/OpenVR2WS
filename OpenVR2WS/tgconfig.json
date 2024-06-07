@@ -1,5 +1,5 @@
 {
-  "outputPath": "../Types/types",
+  "outputPath": "../Types/src",
   "propertyNameConverters": [],
   "generationSpecs": [
     "TypeGenSpec"
