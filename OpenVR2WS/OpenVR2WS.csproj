@@ -76,9 +76,6 @@
         </None>
     </ItemGroup>
     <ItemGroup>
-        <Content Include="example.html">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
         <Resource Include="resources\Logo.ico"/>
         <None Update="actions.json">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
