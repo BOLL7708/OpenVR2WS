@@ -12,25 +12,35 @@ internal class OutputMessage
     public dynamic? Data = null;
     public string? Nonce = null;
 
-    public static OutputMessage CreateError(string message, dynamic? shape = null, string? nonce = null)
+    public static OutputMessage CreateError(string message, dynamic? shape = null, string? nonce = null, InputMessageKeyEnum key = InputMessageKeyEnum.None)
     {
         return new OutputMessage
         {
             Type = OutputValueTypeEnum.Error,
+            Key = key,
             Message = message,
             Data = shape,
             Nonce = nonce
         };
     }
+    public static OutputMessage CreateError(string message, InputMessage inputMessage, dynamic? shape = null)
+    {
+        return CreateError(message, shape, inputMessage.Nonce, inputMessage.Key);
+    }
 
-    public static OutputMessage CreateMessage(string message, string? nonce = null)
+    public static OutputMessage CreateMessage(string message, string? nonce = null, InputMessageKeyEnum key = InputMessageKeyEnum.None)
     {
         return new OutputMessage
         {
             Type = OutputValueTypeEnum.Message,
+            Key = key,
             Message = message,
             Nonce = nonce
         };
+    }
+    public static OutputMessage CreateMessage(string message, InputMessage inputMessage)
+    {
+        return CreateMessage(message, inputMessage.Nonce, inputMessage.Key);
     }
 
     public static OutputMessage CreateCommand(InputMessageKeyEnum inputMessageKey, dynamic data, string? nonce = null)

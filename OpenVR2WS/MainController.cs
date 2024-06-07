@@ -58,7 +58,7 @@ internal class MainController
                 Debug.WriteLine($"JSON Parsing Exception: {e.Message}");
             }
 
-            if (request == null) SendResult(OutputMessage.CreateError($"Invalid command: {errorMessage}"), session);
+            if (request == null) SendResult(OutputMessage.CreateError($"Invalid request: {errorMessage}"), session);
             else HandleRequest(session, request); 
         };
         _server.StatusMessageAction += (session, connected, status) =>
@@ -113,7 +113,12 @@ internal class MainController
     private void HandleRequest(WebSocketSession? session, InputMessage inputMessage)
     {
         // Debug.WriteLine($"Command receieved: {Enum.GetName(typeof(CommandEnum), command.key)}");
-        if (_stopRunning || !_vr.IsInitialized()) return;
+        if (_stopRunning || !_vr.IsInitialized())
+        {
+            var errorMessage = OutputMessage.CreateError("Server is not attached to any VR instance, please launch an OpenVR implementation.", inputMessage);
+            SendResult(errorMessage, session);
+            return;
+        }
         switch (inputMessage.Key)
         {
             case InputMessageKeyEnum.None: break;
@@ -507,7 +512,7 @@ internal class MainController
 
         if (data == null || data.Property == ETrackedDeviceProperty.Prop_Invalid)
         {
-            SendResult(OutputMessage.CreateError($"Faulty property: {data?.Property}", new DataDeviceProperty(), inputMessage.Nonce), session);
+            SendResult(OutputMessage.CreateError($"Faulty property: {data?.Property}", inputMessage, new DataDeviceProperty()), session);
             return;
         }
 
@@ -517,14 +522,14 @@ internal class MainController
     private void SendDeviceProperty(InputMessageKeyEnum key, DataDeviceProperty? data, string? nonce = null, WebSocketSession? session = null)
     {
         if (data == null || data.DeviceIndex == -1) {
-            SendResult(OutputMessage.CreateError("The value of DeviceIndex was missing or -1 which means no valid device was specified.", null, nonce), session);
+            SendResult(OutputMessage.CreateError("The value of DeviceIndex was missing or -1 which means no valid device was specified.", null, nonce, key), session);
             return; 
         }
         var index = (uint)data.DeviceIndex;
         var propName = Enum.GetName(typeof(ETrackedDeviceProperty), data.Property);
         if (propName == null || data.Property == ETrackedDeviceProperty.Prop_Invalid)
         {
-            SendResult(OutputMessage.CreateError($"The provided Property was invalid: {data.Property}.", null, nonce), session);
+            SendResult(OutputMessage.CreateError($"The provided Property was invalid: {data.Property}.", null, nonce, key), session);
             return;
         }
         var propArray = propName.Split('_');
@@ -585,7 +590,7 @@ internal class MainController
 
         if (data == null)
         {
-            SendResult(OutputMessage.CreateError("Input was invalid, see Data as a reference.", new DataSetting(), inputMessage.Nonce), session);
+            SendResult(OutputMessage.CreateError("Input was invalid, see Data as a reference.", inputMessage, new DataSetting()), session);
             return;
         }
 
@@ -620,7 +625,7 @@ internal class MainController
             remoteSettingResponse.Nonce = inputMessage.Nonce;
             SendResult(remoteSettingResponse, session);
         }
-        else SendResult(OutputMessage.CreateError("Input was invalid, see Data as a reference.", new DataRemoteSetting(), inputMessage.Nonce), session);
+        else SendResult(OutputMessage.CreateError("Input was invalid, see Data as a reference.", inputMessage, new DataRemoteSetting()), session);
     }
 
     private void SendMoveSpace(InputMessage inputMessage, WebSocketSession? session)
@@ -639,7 +644,7 @@ internal class MainController
         {
             ApplyMoveSpace(data, inputMessage, session);
         }
-        else SendResult(OutputMessage.CreateError("Input was invalid, see Data as a reference.", DataMoveSpace.BuildEmpty(true), inputMessage.Nonce), session);
+        else SendResult(OutputMessage.CreateError("Input was invalid, see Data as a reference.", inputMessage, DataMoveSpace.BuildEmpty(true)), session);
     }
 
     private void SendEditBindings(InputMessage inputMessage, WebSocketSession? session)
@@ -647,10 +652,10 @@ internal class MainController
         var error = OpenVR.Input.OpenBindingUI("", 0, 0, true);
         if (error != EVRInputError.None)
         {
-            SendResult(OutputMessage.CreateError($"Failed to open bindings editor: {error}", null, inputMessage.Nonce), session);
+            SendResult(OutputMessage.CreateError($"Failed to open bindings editor: {error}", inputMessage), session);
             return;
         }
-        var response = OutputMessage.CreateMessage("Opened bindings for application in editor.", inputMessage.Nonce);
+        var response = OutputMessage.CreateMessage("Opened bindings for application in editor.", inputMessage);
         response.Key = inputMessage.Key;
         SendResult(response, session);
     }
@@ -681,24 +686,24 @@ internal class MainController
             var json = new JsonFindOverlay(data, handle);
             SendCommandResult(inputMessage.Key, json, inputMessage.Nonce, session);
         }
-        else SendResult(OutputMessage.CreateError("Input was invalid, see Data as a reference.", new DataFindOverlay(), inputMessage.Nonce), session);
+        else SendResult(OutputMessage.CreateError("Input was invalid, see Data as a reference.", inputMessage, new DataFindOverlay()), session);
     }
 
     private OutputMessage ApplyRemoteSetting(DataRemoteSetting data, InputMessage inputMessage)
     {
-        var errorResponse = CheckRemoteSetting(InputMessageKeyEnum.RemoteSetting, inputMessage.Password ?? "");
+        var errorResponse = CheckRemoteSetting(InputMessageKeyEnum.RemoteSetting, inputMessage);
         if (errorResponse != null) return errorResponse;
 
         var settingSuccess = ApplySetting(data.Section, data.Setting, data.Value, data.Type);
 
         return !settingSuccess
-            ? OutputMessage.CreateError($"Failed to set {data.Section}/{data.Setting} to {data.Value}.")
-            : OutputMessage.CreateMessage($"Succeeded setting {data.Section}/{data.Setting} to {data.Value}.");
+            ? OutputMessage.CreateError($"Failed to set {data.Section}/{data.Setting} to {data.Value}.", inputMessage)
+            : OutputMessage.CreateMessage($"Succeeded setting {data.Section}/{data.Setting} to {data.Value}.", inputMessage);
     }
 
     private void ApplyMoveSpace(DataMoveSpace data, InputMessage inputMessage, WebSocketSession? session = null)
     {
-        var errorResponse = CheckRemoteSetting(InputMessageKeyEnum.MoveSpace, inputMessage.Password ?? "");
+        var errorResponse = CheckRemoteSetting(InputMessageKeyEnum.MoveSpace, inputMessage);
         if (errorResponse != null)
         {
                 SendResult(errorResponse);
@@ -706,22 +711,21 @@ internal class MainController
         }
         SpaceMover.MoveSpace(data, result =>
         {
-            var response = OutputMessage.CreateMessage(result, inputMessage.Nonce);
-            response.Key = inputMessage.Key;
+            var response = OutputMessage.CreateMessage(result, inputMessage);
             SendResult(response, session);
         });
     }
 
-    private OutputMessage? CheckRemoteSetting(InputMessageKeyEnum key, string password)
+    private OutputMessage? CheckRemoteSetting(InputMessageKeyEnum key, InputMessage inputMessage)
     {
         if (!_settings.RemoteSettings)
         {
-            return OutputMessage.CreateError($"The command '{key}' relies on Remote Settings which is disabled. Enable it in the application interface.");
+            return OutputMessage.CreateError($"The command '{key}' relies on Remote Settings which is disabled. Enable it in the application interface.", inputMessage);
         }
 
-        return password.Equals(_settings.RemoteSettingsPasswordHash)
+        return (inputMessage.Password ?? "").Equals(_settings.RemoteSettingsPasswordHash)
             ? null
-            : OutputMessage.CreateError("Password string did not match, b64-encode a binary SHA256 hash.");
+            : OutputMessage.CreateError("Password string did not match, b64-encode a binary SHA256 hash.", inputMessage);
     }
 
     private bool ApplySetting(string section, string setting, string value, InputValueTypeEnum inputValueType)
