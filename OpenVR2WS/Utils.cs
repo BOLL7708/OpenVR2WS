@@ -27,9 +27,9 @@ static class Utils
     
     public static void DebugPrintBar(double normalizedValue, int totalSymbols = 50)
     {
-        normalizedValue = Math.Max(0, Math.Min(1, normalizedValue));
-        int symbolsToPrint = Math.Max(0, (int)(normalizedValue * totalSymbols));
+        double clampedValue = Math.Max(0, Math.Min(1, normalizedValue));
+        int symbolsToPrint = Math.Max(0, (int)(clampedValue * totalSymbols));
         string graph = new string('■', symbolsToPrint).PadRight(totalSymbols, '□');
-        Debug.WriteLine(graph);
+        Debug.WriteLine(graph+' '+normalizedValue.ToString("N2"));
     }
 }

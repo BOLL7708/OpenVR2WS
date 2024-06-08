@@ -98,7 +98,7 @@ public static class SpaceMover
             }
             vr.ModifyUniverse(offset, rotate, originPose, correctionPose, true);
         }
-        else // With duration so we animate
+        else // With duration so we animate 
         {
             for (var currentFrame = 0; currentFrame < totalFrames; currentFrame++)
             {
@@ -163,11 +163,11 @@ public static class SpaceMover
         // Progress limits
         if (currentFrame < entry.StartOffsetFrames)
         {
-            progressResult.Value = 0;
+            progress = 0;
         }
         else if (currentFrame >= totalFrames - entry.EndOffsetFrames)
         {
-            progressResult.Value = entry.Entry.PingPong ? 0.0 : 1.0;
+            progress = entry.Entry.PingPong ? 0.0 : 1.0;
         }
         else if (entry.Entry.PingPong)
         {

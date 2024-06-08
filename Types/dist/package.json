@@ -1,6 +1,6 @@
 {
   "name": "openvr2ws-types",
-  "version": "2.8.4",
+  "version": "2.8.5",
   "description": "TypeScript type definitions for the input and output of OpenVR2WS.",
   "type": "module",
   "types": "types/index.d.ts",

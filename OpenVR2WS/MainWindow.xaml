@@ -43,7 +43,7 @@
                     <Button x:Name="ButtonServerPort" Content="Set port" Margin="5 0 0 0" Padding="10 0 10 0" Click="Button_ServerPort_Click"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
-                    <CheckBox x:Name="CheckBoxUseDevicePoses" Content="Use device pose instead of input pose" ToolTip="Devic poses are still retrieved when the SteamVR dashboard is up, input poses can be rebound." Checked="CheckBox_UseDevicePoses_Checked" Unchecked="CheckBox_UseDevicePoses_Checked"/>
+                    <CheckBox x:Name="CheckBoxUseDevicePoses" Content="Use device pose instead of input pose" ToolTip="Device poses are still retrieved when the SteamVR dashboard is up, input poses can be rebound." Checked="CheckBox_UseDevicePoses_Checked" Unchecked="CheckBox_UseDevicePoses_Checked"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5 0 5 5">
                     <CheckBox x:Name="CheckBoxRemoteSettings" VerticalAlignment="Center" Content="Enable remote setting updates" ToolTip="Enables updating of SteamVR settings by sending specific messages upstream." Checked="CheckBox_RemoteSettings_Checked" Unchecked="CheckBox_RemoteSettings_Checked"/>
