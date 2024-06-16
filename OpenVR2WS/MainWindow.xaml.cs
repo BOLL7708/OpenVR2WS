@@ -31,7 +31,7 @@ public partial class MainWindow
 
         // Tray icon
         var icon = Properties.Resources.Logo.Clone() as Icon;
-        WindowUtils.CreateTrayIcon(this, icon, Properties.Resources.AppName);
+        WindowUtils.CreateTrayIcon(this, icon, Properties.Resources.AppName, Properties.Resources.Version);
 
         // Window setup
         Title = Properties.Resources.AppName;
