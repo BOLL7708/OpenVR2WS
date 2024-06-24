@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Versioning;
@@ -50,7 +49,7 @@ internal class MainController
             var request = new InputMessage();
             try
             {
-                request = JsonSerializer.Deserialize<InputMessage>(message, JsonOptions.get());
+                request = JsonSerializer.Deserialize<InputMessage>(message, JsonOptions.Get());
             }
             catch (Exception e)
             {
@@ -93,7 +92,7 @@ internal class MainController
         var jsonString = "";
         try
         {
-            jsonString = JsonSerializer.Serialize(outputMessage, JsonOptions.get());
+            jsonString = JsonSerializer.Serialize(outputMessage, JsonOptions.Get());
         }
         catch (Exception e)
         {
@@ -503,7 +502,7 @@ internal class MainController
         DataDeviceProperty? data = null;
         try
         {
-            data = JsonSerializer.Deserialize<DataDeviceProperty>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.get());
+            data = JsonSerializer.Deserialize<DataDeviceProperty>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.Get());
         }
         catch (Exception e)
         {
@@ -581,7 +580,7 @@ internal class MainController
         DataSetting? data = null;
         try
         {
-            data = JsonSerializer.Deserialize<DataSetting>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.get());
+            data = JsonSerializer.Deserialize<DataSetting>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.Get());
         }
         catch (Exception e)
         {
@@ -611,7 +610,7 @@ internal class MainController
         DataRemoteSetting? data = null;
         try
         {
-            data = JsonSerializer.Deserialize<DataRemoteSetting>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.get());
+            data = JsonSerializer.Deserialize<DataRemoteSetting>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.Get());
         }
         catch (Exception e)
         {
@@ -633,7 +632,7 @@ internal class MainController
         DataMoveSpace? data = null;
         try
         {
-            data = JsonSerializer.Deserialize<DataMoveSpace>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.get());
+            data = JsonSerializer.Deserialize<DataMoveSpace>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.Get());
         }
         catch (Exception e)
         {
@@ -673,7 +672,7 @@ internal class MainController
         DataFindOverlay? data = null;
         try
         {
-            data = JsonSerializer.Deserialize<DataFindOverlay>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.get());
+            data = JsonSerializer.Deserialize<DataFindOverlay>(inputMessage.Data?.GetRawText() ?? "", JsonOptions.Get());
         }
         catch (Exception e)
         {
