@@ -1,6 +1,8 @@
 {
   "outputPath": "../Types/src",
-  "propertyNameConverters": [],
+  "propertyNameConverters": [
+    "PascalCaseToCamelCase"
+  ],
   "generationSpecs": [
     "TypeGenSpec"
   ],
