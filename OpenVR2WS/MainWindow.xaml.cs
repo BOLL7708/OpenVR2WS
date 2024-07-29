@@ -60,11 +60,11 @@ public partial class MainWindow
                         {
                             case SuperServer.ServerStatus.Connected:
                                 LabelServerStatus.Background = Brushes.OliveDrab;
-                                LabelServerStatus.Content = "Connected";
+                                LabelServerStatus.Content = "Available";
                                 break;
                             case SuperServer.ServerStatus.Disconnected:
                                 LabelServerStatus.Background = Brushes.Tomato;
-                                LabelServerStatus.Content = "Disconnected";
+                                LabelServerStatus.Content = "Unavailable";
                                 break;
                             case SuperServer.ServerStatus.Error:
                                 LabelServerStatus.Background = Brushes.Gray;
@@ -202,10 +202,7 @@ public partial class MainWindow
         SingleInputDialog dlg = new(this, "", "Password");
         dlg.ShowDialog();
         var value = dlg.DialogResult == true ? dlg.Value : "";
-        var enc = Encoding.UTF8;
-        var hash = SHA256.HashData(enc.GetBytes(value));
-        var hashBase64String = Convert.ToBase64String(hash);
-        _settings.RemoteSettingsPasswordHash = hashBase64String;
+        _settings.RemoteSettingsPasswordHash = MiscUtils.HashPassword(value);
         _settings.Save();
     }
 }
