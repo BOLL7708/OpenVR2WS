@@ -3,7 +3,7 @@ using TypeGen.Core.TypeAnnotations;
 namespace OpenVR2WS.Input;
 
 [ExportTsInterface]
-internal class DataFindOverlay
+internal class InputDataFindOverlay
 {
     public string OverlayKey = "";
 }

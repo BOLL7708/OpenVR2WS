@@ -3,10 +3,10 @@ using TypeGen.Core.TypeAnnotations;
 namespace OpenVR2WS.Input;
 
 [ExportTsInterface]
-internal class DataRemoteSetting
+internal class InputDataRemoteSetting
 {
     public string Section = "";
     public string Setting = "";
     public string Value = "";
-    public InputValueTypeEnum Type = InputValueTypeEnum.None;
+    public InputEnumValueType Type = InputEnumValueType.None;
 }

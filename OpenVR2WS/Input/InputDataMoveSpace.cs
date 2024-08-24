@@ -5,7 +5,7 @@ using Valve.VR;
 namespace OpenVR2WS.Input;
 
 [ExportTsInterface]
-public class DataMoveSpace
+public class InputDataMoveSpace
 {
     public int DurationMs = 0;
     public EasingUtils.EasingType EaseInType = EasingUtils.EasingType.Linear;
@@ -19,11 +19,11 @@ public class DataMoveSpace
     public Correction Correction = Correction.PlaySpace;
     public DataMoveSpaceEntry[] Entries = [];
 
-    public static DataMoveSpace BuildEmpty(bool withChild = false)
+    public static InputDataMoveSpace BuildEmpty(bool withChild = false)
     {
         return withChild
-            ? new DataMoveSpace { Entries = [new DataMoveSpaceEntry()] }
-            : new DataMoveSpace();
+            ? new InputDataMoveSpace { Entries = [new DataMoveSpaceEntry()] }
+            : new InputDataMoveSpace();
     }
 }
 

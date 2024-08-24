@@ -6,11 +6,11 @@ using Valve.VR;
 namespace OpenVR2WS.Output;
 
 [ExportTsInterface]
-internal class JsonVREvent
+internal class OutputDataVREvent
 {
     public string TypeFull;
     public string Type;
-    public JsonVREvent (EVREventType eventType)
+    public OutputDataVREvent (EVREventType eventType)
     {
         TypeFull = string.Empty;
         try

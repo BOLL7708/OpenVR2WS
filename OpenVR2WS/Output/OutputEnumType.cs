@@ -1,6 +1,6 @@
 namespace OpenVR2WS.Output;
 
-internal enum OuputTypeEnum
+internal enum OutputEnumType
 {
     None,
     String,

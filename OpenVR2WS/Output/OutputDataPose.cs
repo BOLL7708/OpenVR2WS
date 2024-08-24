@@ -6,7 +6,7 @@ using Valve.VR;
 namespace OpenVR2WS.Output;
 
 [ExportTsInterface]
-internal class JsonPose
+internal class OutputDataPose
 {
     // public HmdMatrix34_t matrix = new HmdMatrix34_t(); // TODO: Figure out what to do with this...
     public float[] RotationMatrix = new float[9];
@@ -17,7 +17,7 @@ internal class JsonPose
     public bool IsConnected = false;
     public bool IsTracking = false;
 
-    public JsonPose(TrackedDevicePose_t poseData)
+    public OutputDataPose(TrackedDevicePose_t poseData)
     {
         Update(poseData);
     }

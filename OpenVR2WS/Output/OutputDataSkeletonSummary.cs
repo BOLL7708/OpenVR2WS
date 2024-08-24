@@ -5,7 +5,7 @@ using Valve.VR;
 namespace OpenVR2WS.Output;
 
 [ExportTsInterface]
-internal class JsonSkeletonSummary
+internal class OutputDataSkeletonSummary
 {
     public float FingerCurlThumb = 0f;
     public float FingerCurlIndex = 0f;
@@ -17,7 +17,7 @@ internal class JsonSkeletonSummary
     public float FingerSplayMiddleRing = 0f;
     public float FingerSplayRingPinky = 0f;
 
-    public JsonSkeletonSummary(VRSkeletalSummaryData_t skeletonData)
+    public OutputDataSkeletonSummary(VRSkeletalSummaryData_t skeletonData)
     {
         Update(skeletonData);
     }

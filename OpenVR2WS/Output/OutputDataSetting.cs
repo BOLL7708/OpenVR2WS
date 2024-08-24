@@ -3,7 +3,7 @@ using TypeGen.Core.TypeAnnotations;
 namespace OpenVR2WS.Output;
 
 [ExportTsInterface]
-internal class JsonSetting(
+internal class OutputDataSetting(
     string section,
     string setting,
     dynamic? value

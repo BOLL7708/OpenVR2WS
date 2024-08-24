@@ -4,18 +4,18 @@ using Valve.VR;
 namespace OpenVR2WS.Output;
 
 [ExportTsInterface]
-internal class JsonCumulativeStats
+internal class OutputDataCumulativeStats
 {
     public double SystemTimeMs; // Time when we fetched the statistics
 
     public long
         FramesPresented, // Total frames presented, includes reprojected
-        FramesDropped, // Total frames reepeated without reprojection
+        FramesDropped, // Total frames repeated without reprojection
         FramesReprojected, // Total frames repeated with reprojection
         FramesLoading, // Total frames presented during loading
         FramesTimedOut; // Total frames that timeout, drops to compositor (2.5 repeated frames)
 
-    public JsonCumulativeStats(Compositor_CumulativeStats stats = new Compositor_CumulativeStats())
+    public OutputDataCumulativeStats(Compositor_CumulativeStats stats = new Compositor_CumulativeStats())
     {
         Update(stats);
     }

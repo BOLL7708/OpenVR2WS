@@ -4,13 +4,13 @@ using TypeGen.Core.TypeAnnotations;
 namespace OpenVR2WS.Output;
 
 [ExportTsInterface]
-internal class JsonFindOverlay
+internal class OutputDataFindOverlay
 {
     public ulong Handle;
     public string Key;
 
-    public JsonFindOverlay(
-        DataFindOverlay data,
+    public OutputDataFindOverlay(
+        InputDataFindOverlay data,
         ulong handle
     )
     {

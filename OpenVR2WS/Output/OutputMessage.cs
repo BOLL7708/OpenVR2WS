@@ -6,17 +6,17 @@ namespace OpenVR2WS.Output;
 [ExportTsInterface]
 internal class OutputMessage
 {
-    public OutputValueTypeEnum Type = OutputValueTypeEnum.Undefined;
-    public InputMessageKeyEnum Key = InputMessageKeyEnum.None;
+    public OutputEnumValueType Type = OutputEnumValueType.Undefined;
+    public InputMessageEnumKey Key = InputMessageEnumKey.None;
     public string Message = "";
     public dynamic? Data = null;
     public string? Nonce = null;
 
-    public static OutputMessage CreateError(string message, dynamic? shape = null, string? nonce = null, InputMessageKeyEnum key = InputMessageKeyEnum.None)
+    public static OutputMessage CreateError(string message, dynamic? shape = null, string? nonce = null, InputMessageEnumKey key = InputMessageEnumKey.None)
     {
         return new OutputMessage
         {
-            Type = OutputValueTypeEnum.Error,
+            Type = OutputEnumValueType.Error,
             Key = key,
             Message = message,
             Data = shape,
@@ -28,11 +28,11 @@ internal class OutputMessage
         return CreateError(message, shape, inputMessage.Nonce, inputMessage.Key);
     }
 
-    public static OutputMessage CreateMessage(string message, string? nonce = null, InputMessageKeyEnum key = InputMessageKeyEnum.None)
+    public static OutputMessage CreateMessage(string message, string? nonce = null, InputMessageEnumKey key = InputMessageEnumKey.None)
     {
         return new OutputMessage
         {
-            Type = OutputValueTypeEnum.Message,
+            Type = OutputEnumValueType.Message,
             Key = key,
             Message = message,
             Nonce = nonce
@@ -43,11 +43,11 @@ internal class OutputMessage
         return CreateMessage(message, inputMessage.Nonce, inputMessage.Key);
     }
 
-    public static OutputMessage CreateCommand(InputMessageKeyEnum inputMessageKey, dynamic data, string? nonce = null)
+    public static OutputMessage CreateCommand(InputMessageEnumKey inputMessageKey, dynamic data, string? nonce = null)
     {
         return new OutputMessage
         {
-            Type = OutputValueTypeEnum.Result,
+            Type = OutputEnumValueType.Result,
             Key = inputMessageKey,
             Data = data,
             Nonce = nonce
@@ -58,12 +58,12 @@ internal class OutputMessage
     {
         return new OutputMessage
         {
-            Type = OutputValueTypeEnum.VREvent,
+            Type = OutputEnumValueType.VREvent,
             Data = data
         };
     }
 
-    public static OutputMessage Create(OutputValueTypeEnum type, dynamic data, string? nonce = null)
+    public static OutputMessage Create(OutputEnumValueType type, dynamic data, string? nonce = null)
     {
         return new OutputMessage
         {

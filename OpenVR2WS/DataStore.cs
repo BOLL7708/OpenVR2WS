@@ -15,8 +15,8 @@ internal static class DataStore
         new (Environment.ProcessorCount, (int)OpenVR.k_unMaxTrackedDeviceCount);
     public static readonly ConcurrentDictionary<InputSource, ulong> sourceToHandle = new();
     public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, Vec3>> analogInputActionData = new();
-    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, JsonPose>> poseInputActionData = new();
-    public static readonly ConcurrentDictionary<string, JsonSkeletonSummary> skeletonSummaryInputActionData = new();
+    public static readonly ConcurrentDictionary<InputSource, ConcurrentDictionary<string, OutputDataPose>> poseInputActionData = new();
+    public static readonly ConcurrentDictionary<string, OutputDataSkeletonSummary> skeletonSummaryInputActionData = new();
     public static readonly ConcurrentDictionary<InputSource, int> sourceToIndex = new();
     public static readonly ConcurrentDictionary<int, InputSource> indexToSource = new();
 
@@ -110,13 +110,13 @@ internal static class DataStore
     {
         var source = handleToSource[info.sourceHandle];
         if (!poseInputActionData.ContainsKey(source))
-            poseInputActionData[source] = new ConcurrentDictionary<string, JsonPose>();
-        poseInputActionData[source][info.pathEnd] = new JsonPose(data.pose);
+            poseInputActionData[source] = new ConcurrentDictionary<string, OutputDataPose>();
+        poseInputActionData[source][info.pathEnd] = new OutputDataPose(data.pose);
     }
 
     public static void UpdateOrAddSkeletonSummaryInputData(VRSkeletalSummaryData_t data, InputActionInfo info)
     {
-        skeletonSummaryInputActionData[info.pathEnd] = new JsonSkeletonSummary(data);
+        skeletonSummaryInputActionData[info.pathEnd] = new OutputDataSkeletonSummary(data);
     }
 
     public static void UpdateOrAddPoseData(TrackedDevicePose_t pose, int deviceIndex)
@@ -124,8 +124,8 @@ internal static class DataStore
         if (indexToSource.TryGetValue(deviceIndex, out var source))
         {
             if (!poseInputActionData.ContainsKey(source))
-                poseInputActionData[source] = new ConcurrentDictionary<string, JsonPose>();
-            poseInputActionData[source]["Pose"] = new JsonPose(pose);
+                poseInputActionData[source] = new ConcurrentDictionary<string, OutputDataPose>();
+            poseInputActionData[source]["Pose"] = new OutputDataPose(pose);
         }
     }
 

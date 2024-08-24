@@ -13,7 +13,7 @@ public static class SpaceMover
 {
     private static Thread? _thread;
 
-    public static void MoveSpace(DataMoveSpace data, Action<string> callback)
+    public static void MoveSpace(InputDataMoveSpace data, Action<string> callback)
     {
         if (_thread == null || !_thread.IsAlive)
         {
@@ -26,7 +26,7 @@ public static class SpaceMover
         }
     }
 
-    private static void AnimationWorker(DataMoveSpace data, Action<string> callback)
+    private static void AnimationWorker(InputDataMoveSpace data, Action<string> callback)
     {
         Thread.CurrentThread.IsBackground = true;
         var vr = EasyOpenVRSingleton.Instance;

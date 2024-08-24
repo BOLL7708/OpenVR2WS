@@ -4,12 +4,12 @@ using Valve.VR;
 namespace OpenVR2WS.Output;
 
 [ExportTsInterface]
-internal class JsonPlayArea
+internal class OutputDataPlayArea
 {
     public Vec3[] Corners = new Vec3[8];
     public Vec3 Size = new Vec3();
 
-    public JsonPlayArea(HmdQuad_t rect = new HmdQuad_t(), HmdVector2_t size = new HmdVector2_t(), float height = 0)
+    public OutputDataPlayArea(HmdQuad_t rect = new HmdQuad_t(), HmdVector2_t size = new HmdVector2_t(), float height = 0)
     {
         Update(rect, size, height);
     }

@@ -3,9 +3,9 @@ using TypeGen.Core.TypeAnnotations;
 namespace OpenVR2WS.Input;
 
 [ExportTsInterface]
-internal class DataSetting
+internal class InputDataSetting
 {
     public string Section = "";
     public string Setting = "";
-    public Output.OuputTypeEnum Type = Output.OuputTypeEnum.None;
+    public Output.OutputEnumType Type = Output.OutputEnumType.None;
 }

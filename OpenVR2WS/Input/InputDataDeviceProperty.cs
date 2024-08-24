@@ -4,16 +4,16 @@ using Valve.VR;
 namespace OpenVR2WS.Input;
 
 [ExportTsInterface]
-internal class DataDeviceProperty
+internal class InputDataDeviceProperty
 {
     public int DeviceIndex = -1;
     public ETrackedDeviceProperty Property = ETrackedDeviceProperty.Prop_Invalid;
 
-    public static DataDeviceProperty CreateFromEvent(
+    public static InputDataDeviceProperty CreateFromEvent(
         VREvent_t data
     )
     {
-        var output = new DataDeviceProperty
+        var output = new InputDataDeviceProperty
         {
             DeviceIndex = (int)data.trackedDeviceIndex,
             Property = data.data.property.prop
