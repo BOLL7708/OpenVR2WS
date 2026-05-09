@@ -1,3 +1,6 @@
+# DEPRECATED
+This project has been archived with the intent of transferring the features to [BVRTK](https://github.com/BOLL7708/BVRTK) which will then act as direct replacement.
+
 # OpenVR2WS
 This is a WebSocket server that provides SteamVR I/O as JSON; allows for fetching of various kinds of data, as well as providing changes to SteamVR settings when sending data upstream. Download the latest release [here](https://github.com/BOLL7708/OpenVR2WS/releases).
 
